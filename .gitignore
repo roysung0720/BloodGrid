@@ -1,0 +1,19 @@
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/**/*.py[cod]
+.pytest_cache/
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Generated files
+coverage/
+.DS_Store
