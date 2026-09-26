@@ -1,9 +1,14 @@
 import { Crosshair, MapPin, ShieldCheck } from "lucide-react";
 
-import type { FeatureSelection, ScenarioData } from "../lib/types";
+import type {
+  BaselineCoverageResult,
+  FeatureSelection,
+  ScenarioData,
+} from "../lib/types";
 
 type FeatureDetailsProps = {
   scenario: ScenarioData;
+  coverage: BaselineCoverageResult | null;
   selection: FeatureSelection | null;
 };
 
@@ -15,6 +20,7 @@ type Detail = {
 
 function findDetails(
   scenario: ScenarioData,
+  coverage: BaselineCoverageResult | null,
   selection: FeatureSelection,
 ): Detail | null {
   if (selection.type === "station") {
@@ -66,6 +72,33 @@ function findDetails(
     const incident = scenario.historical_incidents.find(
       (item) => item.incident_id === selection.id,
     );
+    const coveragePoint = coverage?.demand_points.find(
+      (item) => item.incident_id === selection.id,
+    );
+    const coverageEntries: Array<[string, string]> = coveragePoint
+      ? [
+          ["Coverage", coveragePoint.covered ? "Covered" : "Not covered"],
+          ["Fastest resource", coveragePoint.best_resource_id ?? "None"],
+          [
+            "Response estimate",
+            coveragePoint.total_response_minutes === null
+              ? "No road route"
+              : `${coveragePoint.total_response_minutes} min`,
+          ],
+          [
+            "Drive time",
+            coveragePoint.driving_minutes === null
+              ? "Not available"
+              : `${coveragePoint.driving_minutes} min`,
+          ],
+          [
+            "Mobilization",
+            coveragePoint.mobilization_minutes === null
+              ? "Not available"
+              : `${coveragePoint.mobilization_minutes} min`,
+          ],
+        ]
+      : [];
     return incident
       ? {
           title: incident.incident_type.replace("_", " "),
@@ -74,6 +107,7 @@ function findDetails(
             ["Severity proxy", incident.severity_proxy],
             ["Source", incident.source.replaceAll("_", " ")],
             ["Recorded", incident.timestamp.slice(0, 10)],
+            ...coverageEntries,
           ],
         }
       : null;
@@ -112,8 +146,8 @@ function findDetails(
     : null;
 }
 
-export function FeatureDetails({ scenario, selection }: FeatureDetailsProps) {
-  const detail = selection ? findDetails(scenario, selection) : null;
+export function FeatureDetails({ scenario, coverage, selection }: FeatureDetailsProps) {
+  const detail = selection ? findDetails(scenario, coverage, selection) : null;
 
   return (
     <section className="rail-section feature-section">

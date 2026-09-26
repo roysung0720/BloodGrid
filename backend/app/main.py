@@ -1,9 +1,19 @@
 from __future__ import annotations
 
+from functools import lru_cache
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from .config import FRONTEND_ORIGINS, SCENARIO_ID
+from .config import (
+    FRONTEND_ORIGINS,
+    MAPBOX_ACCESS_TOKEN,
+    MAPBOX_ROUTING_PROFILE,
+    ROUTING_TIMEOUT_SECONDS,
+    SCENARIO_ID,
+)
+from .coverage.models import BaselineCoverageResult
+from .coverage.service import calculate_baseline_coverage
 from .models import (
     BloodUnit,
     HistoricalIncident,
@@ -16,6 +26,7 @@ from .models import (
     Station,
 )
 from .scenario_loader import ScenarioLoadError, load_scenario
+from .routing.mapbox_provider import MapboxMatrixProvider, RoutingError
 
 
 app = FastAPI(
@@ -38,6 +49,15 @@ def get_active_scenario() -> ScenarioData:
         return load_scenario()
     except ScenarioLoadError as error:
         raise HTTPException(status_code=500, detail=str(error)) from error
+
+
+@lru_cache
+def get_routing_provider() -> MapboxMatrixProvider:
+    return MapboxMatrixProvider(
+        access_token=MAPBOX_ACCESS_TOKEN or "",
+        profile=MAPBOX_ROUTING_PROFILE,
+        timeout_seconds=ROUTING_TIMEOUT_SECONDS,
+    )
 
 
 @app.get("/health")
@@ -88,3 +108,11 @@ def rendezvous_points() -> list[RendezvousPoint]:
 @app.get("/live-incidents", response_model=list[LiveIncident])
 def live_incidents() -> list[LiveIncident]:
     return get_active_scenario().live_incidents
+
+
+@app.get("/coverage/baseline", response_model=BaselineCoverageResult)
+def baseline_coverage() -> BaselineCoverageResult:
+    try:
+        return calculate_baseline_coverage(get_active_scenario(), get_routing_provider())
+    except (RoutingError, ValueError) as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error

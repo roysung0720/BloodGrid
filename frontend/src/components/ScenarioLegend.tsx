@@ -3,7 +3,8 @@ const LEGEND_ITEMS = [
   ["unit-available", "Available unit"],
   ["unit-on-call", "On-call unit"],
   ["hospital", "Hospital"],
-  ["incident", "Demand proxy"],
+  ["incident-covered", "Covered demand"],
+  ["incident-uncovered", "Uncovered demand"],
   ["rendezvous", "Approved rendezvous"],
   ["live-incident", "Blood requested"],
 ] as const;

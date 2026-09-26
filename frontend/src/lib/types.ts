@@ -120,3 +120,39 @@ export type FeatureSelection = {
   type: "station" | "unit" | "hospital" | "incident" | "rendezvous" | "liveIncident";
   id: string;
 };
+
+export type CoverageStatus =
+  | "COVERED"
+  | "UNCOVERED"
+  | "NO_ELIGIBLE_RESOURCE"
+  | "NO_ROUTE";
+
+export type ResourceEligibility = {
+  unit_id: string;
+  eligible: boolean;
+  valid_blood_units: number;
+  reasons: string[];
+};
+
+export type BaselineCoveragePoint = {
+  incident_id: string;
+  status: CoverageStatus;
+  covered: boolean;
+  best_resource_id: string | null;
+  driving_minutes: number | null;
+  mobilization_minutes: number | null;
+  total_response_minutes: number | null;
+  route_distance_miles: number | null;
+};
+
+export type BaselineCoverageResult = {
+  scenario_id: string;
+  target_coverage_minutes: number;
+  routing_provider: string;
+  routing_profile: string;
+  eligible_resource_count: number;
+  covered_demand_count: number;
+  uncovered_demand_count: number;
+  resource_eligibility: ResourceEligibility[];
+  demand_points: BaselineCoveragePoint[];
+};

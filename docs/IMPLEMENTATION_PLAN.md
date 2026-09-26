@@ -12,9 +12,9 @@ The first versioned scenario, `rural_ga_initial_v1`, includes 8 staging location
 
 The Next.js dashboard and FastAPI data service load `rural_ga_initial_v1` through one read-only API. The map displays stations, response units, hospitals, incident-demand proxies, approved rendezvous points, and the simulated blood request. Layer controls, unit status, marker selection, and a persistent synthetic-data label are included. No optimizer or routing logic is included in this phase.
 
-## 4. Routing and baseline coverage
+## 4. Routing and baseline coverage - complete
 
-Add the Mapbox routing adapter, verify road travel-time results, and calculate the current eligible-unit coverage baseline.
+The Mapbox Matrix adapter is isolated behind a provider-neutral routing interface. The baseline coverage service evaluates valid blood, vehicle availability, clinician qualification, and allowable crew status; adds on-call mobilization delay; and compares each synthetic demand point with the scenario's configured target. The dashboard displays covered and uncovered demand points with inspectable timing details.
 
 ## 5. Strategic deployment
 

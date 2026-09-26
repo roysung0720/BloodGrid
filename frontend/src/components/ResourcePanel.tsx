@@ -45,7 +45,7 @@ export function ResourcePanel({ scenario, onSelect }: ResourcePanelProps) {
       </div>
       <div className="panel-note">
         <Clock3 size={14} aria-hidden="true" />
-        <span>On-call mobilization is shown now and used later in routing.</span>
+        <span>On-call mobilization is included in baseline coverage.</span>
       </div>
     </section>
   );

@@ -30,3 +30,9 @@ A unit is eligible for a blood response only when all of the following are true:
 ## Data lifecycle
 
 Blood is represented simply enough for the MVP to determine usability: reserve supply may be assigned to a response unit, become onboard, then be transfused, returned, reassigned, or unavailable/expired. BloodGrid is not a blood-bank information system.
+
+## Baseline coverage result
+
+`GET /coverage/baseline` produces a calculated view, not a new source-data file. For each synthetic demand proxy, it returns the coverage status, fastest eligible response unit, estimated driving minutes, on-call mobilization minutes, combined response estimate, and road distance. The result also exposes each unit's eligibility assessment and the scenario coverage target.
+
+The calculation uses the provider-neutral routing interface. Mapbox-specific response data stays inside `backend/app/routing/`; coverage logic consumes only standardized duration and distance estimates.

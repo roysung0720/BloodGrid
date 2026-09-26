@@ -1,16 +1,18 @@
 "use client";
 
 import { Activity, Database, Layers3, MapPinned } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { FeatureDetails } from "../components/FeatureDetails";
+import { CoveragePanel } from "../components/CoveragePanel";
 import { IncidentPanel } from "../components/IncidentPanel";
 import { LayerControls } from "../components/LayerControls";
 import { OperationsMap } from "../components/OperationsMap";
 import { ResourcePanel } from "../components/ResourcePanel";
 import { ScenarioLegend } from "../components/ScenarioLegend";
-import { getScenario } from "../lib/api";
+import { getBaselineCoverage, getScenario } from "../lib/api";
 import type {
+  BaselineCoverageResult,
   FeatureSelection,
   LayerVisibility,
   ScenarioData,
@@ -27,28 +29,25 @@ const DEFAULT_LAYERS: LayerVisibility = {
 
 export default function HomePage() {
   const [scenario, setScenario] = useState<ScenarioData | null>(null);
+  const [coverage, setCoverage] = useState<BaselineCoverageResult | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<FeatureSelection | null>(
     null,
   );
   const [visibleLayers, setVisibleLayers] =
     useState<LayerVisibility>(DEFAULT_LAYERS);
   const [error, setError] = useState<string | null>(null);
+  const [coverageError, setCoverageError] = useState<string | null>(null);
 
   useEffect(() => {
     getScenario()
       .then(setScenario)
       .catch((requestError: Error) => setError(requestError.message));
+    getBaselineCoverage()
+      .then(setCoverage)
+      .catch((requestError: Error) => setCoverageError(requestError.message));
   }, []);
 
-  const activeUnitCount = useMemo(
-    () =>
-      scenario?.response_units.filter(
-        (unit) =>
-          unit.vehicle_status === "AVAILABLE" &&
-          ["AVAILABLE", "ON_CALL"].includes(unit.crew_status),
-      ).length ?? 0,
-    [scenario],
-  );
+  const activeUnitCount = coverage ? coverage.eligible_resource_count : "-";
 
   if (error) {
     return (
@@ -102,6 +101,7 @@ export default function HomePage() {
         <section className="map-stage" aria-label="Regional operations map">
           <OperationsMap
             scenario={scenario}
+            coverage={coverage}
             visibleLayers={visibleLayers}
             onFeatureSelect={setSelectedFeature}
           />
@@ -138,9 +138,14 @@ export default function HomePage() {
             </div>
           </section>
 
+          <CoveragePanel coverage={coverage} error={coverageError} />
           <ResourcePanel scenario={scenario} onSelect={setSelectedFeature} />
           <IncidentPanel scenario={scenario} onSelect={setSelectedFeature} />
-          <FeatureDetails scenario={scenario} selection={selectedFeature} />
+          <FeatureDetails
+            scenario={scenario}
+            coverage={coverage}
+            selection={selectedFeature}
+          />
         </aside>
       </section>
     </main>

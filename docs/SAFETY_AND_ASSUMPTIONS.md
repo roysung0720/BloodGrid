@@ -15,6 +15,14 @@ It must not decide whether blood is medically indicated, select a product or dos
 - Availability, credentialing, valid blood, storage status, and on-call mobilization time materially affect recommendations.
 - Results are prototype decision support and remain subject to local EMS protocols and medical direction in real deployment.
 
+## Baseline coverage assumptions
+
+- Baseline coverage uses the fastest estimated road response from a currently eligible response unit to each synthetic historical demand proxy.
+- An `ON_CALL` unit's configured mobilization time is added to its driving estimate before comparison with the coverage target.
+- The selected scenario supplies the default target coverage time; a local environment override is for demo exploration only.
+- Mapbox's `mapbox/driving` Matrix profile supplies estimated road duration and distance. The MVP does not model emergency vehicle driving privileges, live traffic, road closures, weather, dispatch workload, handoff time, or clinical readiness beyond the explicit synthetic records.
+- A covered result means only that the modeled unit meets the configured synthetic logistics target. It is not a dispatch order, clinical assessment, guarantee, or real-world service-level claim.
+
 ## Explainability
 
 Every recommendation should expose the calculated facts behind it: eligible status, travel times, time-to-blood, wait times, direct-hospital baseline, and added hospital delay. The MVP does not require an LLM to explain these results.

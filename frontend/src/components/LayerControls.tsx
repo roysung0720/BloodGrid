@@ -6,7 +6,7 @@ const LAYERS: Array<{ key: LayerKey; label: string; color: string }> = [
   { key: "stations", label: "Stations", color: "var(--station)" },
   { key: "units", label: "Response units", color: "var(--unit-available)" },
   { key: "hospitals", label: "Hospitals", color: "var(--hospital)" },
-  { key: "incidents", label: "Demand points", color: "var(--incident)" },
+  { key: "incidents", label: "Demand coverage", color: "var(--coverage-covered)" },
   { key: "rendezvous", label: "Rendezvous", color: "var(--rendezvous)" },
   { key: "liveIncident", label: "Live incident", color: "var(--live-incident)" },
 ];

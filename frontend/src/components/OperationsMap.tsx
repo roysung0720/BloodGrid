@@ -4,6 +4,7 @@ import mapboxgl from "mapbox-gl";
 import { useEffect, useRef } from "react";
 
 import type {
+  BaselineCoverageResult,
   FeatureSelection,
   LayerKey,
   LayerVisibility,
@@ -12,6 +13,7 @@ import type {
 
 type OperationsMapProps = {
   scenario: ScenarioData;
+  coverage: BaselineCoverageResult | null;
   visibleLayers: LayerVisibility;
   onFeatureSelect: (selection: FeatureSelection) => void;
 };
@@ -43,6 +45,7 @@ function createMarkerElement(
 
 export function OperationsMap({
   scenario,
+  coverage,
   visibleLayers,
   onFeatureSelect,
 }: OperationsMapProps) {
@@ -75,6 +78,9 @@ export function OperationsMap({
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-left");
 
+    const coverageByIncident = new Map(
+      coverage?.demand_points.map((point) => [point.incident_id, point]),
+    );
     const markerDefinitions: MarkerDefinition[] = [
       ...scenario.stations.map((station) => ({
         id: station.station_id,
@@ -108,9 +114,17 @@ export function OperationsMap({
         layer: "incidents" as const,
         longitude: incident.longitude,
         latitude: incident.latitude,
-        title: `${incident.incident_type.replace("_", " ")} demand proxy`,
+        title: coverageByIncident.has(incident.incident_id)
+          ? coverageByIncident.get(incident.incident_id)?.covered
+            ? `${incident.incident_type.replace("_", " ")} demand proxy: covered`
+            : `${incident.incident_type.replace("_", " ")} demand proxy: not covered`
+          : `${incident.incident_type.replace("_", " ")} demand proxy: coverage unavailable`,
         type: "incident" as const,
-        variant: "incident",
+        variant: coverageByIncident.get(incident.incident_id)?.covered
+          ? "incident-covered"
+          : coverageByIncident.has(incident.incident_id)
+            ? "incident-uncovered"
+            : "incident",
       })),
       ...scenario.rendezvous_points.map((point) => ({
         id: point.rendezvous_id,
@@ -147,7 +161,7 @@ export function OperationsMap({
       markers.forEach((marker) => marker.remove());
       map.remove();
     };
-  }, [scenario, visibleLayers]);
+  }, [coverage, scenario, visibleLayers]);
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) {
     return (

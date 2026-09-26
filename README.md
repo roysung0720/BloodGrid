@@ -6,7 +6,7 @@ It is decision support for logistics, not a clinical decision-maker. BloodGrid d
 
 ## Project status
 
-The project foundation, first versioned demo dataset, and map-first operations dashboard are in place. The next milestone is road-based routing and a baseline coverage calculation.
+The project foundation, first versioned demo dataset, map-first operations dashboard, and road-based baseline coverage calculation are in place. The next milestone is strategic deployment recommendations.
 
 ## Planned application
 
@@ -46,8 +46,8 @@ npm install
 npm run dev
 ```
 
-Copy `.env.example` to `.env` and supply a Mapbox access token before testing road routing. Do not commit `.env` or any real keys.
+Copy `.env.example` to `.env` and supply a Mapbox access token before testing road routing. `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` draws the browser map; `MAPBOX_ACCESS_TOKEN` is the backend routing token. For this local prototype, the backend can fall back to the browser token, but keeping the routing token separate is recommended. Do not commit `.env` or any real keys.
 
 `BLOODGRID_SCENARIO` identifies the data bundle the backend will load. The initial bundle is `rural_ga_initial_v1`; see `data/scenarios/` for its contents and provenance.
 
-The map dashboard uses `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`. This is a public browser-map token and is intentionally separate from the server-only token that will be used for routing later.
+The map dashboard uses `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`. The baseline coverage endpoint uses the Mapbox Matrix API through the backend and returns estimated road time, road distance, and the fastest eligible unit for each synthetic demand point.

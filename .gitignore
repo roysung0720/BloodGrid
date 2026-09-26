@@ -17,4 +17,6 @@ frontend/out/
 
 # Generated files
 coverage/
+!backend/app/coverage/
+!backend/app/coverage/**
 .DS_Store

@@ -21,23 +21,26 @@ FastAPI service
 CSV / JSON data files
 ```
 
-## Current Display Slice
+## Current Routing and Coverage Slice
 
-The initial map dashboard is complete.
+The initial map dashboard and baseline coverage calculation are complete.
 
 - `backend/app/scenario_loader.py` reads the scenario selected by `BLOODGRID_SCENARIO`, validates its record relationships, and returns typed data.
-- `backend/app/main.py` exposes read-only endpoints for the complete scenario and each map layer.
+- `backend/app/routing/` defines the provider-neutral travel-time interface and confines Mapbox Matrix API requests to `mapbox_provider.py`.
+- `backend/app/coverage/service.py` checks eligibility, obtains road travel estimates, adds any on-call mobilization delay, and classifies each synthetic demand point against the configured target.
+- `backend/app/main.py` exposes read-only scenario endpoints plus `GET /coverage/baseline`.
 - `frontend/src/app/page.tsx` presents one interactive operations dashboard.
-- `frontend/src/components/OperationsMap.tsx` renders the Mapbox basemap and scenario markers.
+- `frontend/src/components/OperationsMap.tsx` renders the Mapbox basemap and colors demand markers by baseline coverage status.
+- `frontend/src/components/CoveragePanel.tsx` summarizes the current coverage result; `FeatureDetails.tsx` explains an individual demand point's result.
 - The frontend reads all map data from the backend. It does not duplicate scenario CSV files.
 
-The display slice has no travel-time, coverage, deployment, or rendezvous recommendation logic. Those additions belong in later modules so the current map remains a straightforward view of operational state.
+The baseline uses the scenario's `target_coverage_minutes` by default. `BLOODGRID_COVERAGE_TARGET_MINUTES` may override it locally for a demo. Mapbox's `mapbox/driving` Matrix profile returns estimated driving duration and road distance; the system does not claim live dispatch-grade timing or use traffic-aware routing in this phase.
 
 ## Boundaries
 
 - The frontend displays operational state, sends control actions, and explains calculated results.
 - The backend owns data validation, eligibility rules, routing calls, optimization, and response shaping.
-- `routing.py` exposes provider-neutral functions such as route and travel-time lookups. Optimizers must not call Mapbox directly.
+- The `routing/` package exposes provider-neutral matrix travel-time lookups. Optimizers must not call Mapbox directly.
 - Strategic placement uses OR-Tools because it is an explicit discrete optimization problem.
 - Live rendezvous selection evaluates approved candidate points deterministically. It does not require OR-Tools.
 
