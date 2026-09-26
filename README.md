@@ -6,7 +6,7 @@ It is decision support for logistics, not a clinical decision-maker. BloodGrid d
 
 ## Project status
 
-The project foundation and first versioned demo dataset are in place. The next milestone is a map that displays its stations, hospitals, units, incident-demand points, and approved rendezvous locations.
+The project foundation, first versioned demo dataset, and map-first operations dashboard are in place. The next milestone is road-based routing and a baseline coverage calculation.
 
 ## Planned application
 
@@ -30,7 +30,7 @@ The project foundation and first versioned demo dataset are in place. The next m
 
 ## Local development
 
-The runnable applications will be added in subsequent phases. The expected workflow is:
+Run the backend and frontend in separate terminals:
 
 ```bash
 # Backend
@@ -49,3 +49,5 @@ npm run dev
 Copy `.env.example` to `.env` and supply a Mapbox access token before testing road routing. Do not commit `.env` or any real keys.
 
 `BLOODGRID_SCENARIO` identifies the data bundle the backend will load. The initial bundle is `rural_ga_initial_v1`; see `data/scenarios/` for its contents and provenance.
+
+The map dashboard uses `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`. This is a public browser-map token and is intentionally separate from the server-only token that will be used for routing later.

@@ -21,6 +21,18 @@ FastAPI service
 CSV / JSON data files
 ```
 
+## Current Display Slice
+
+The initial map dashboard is complete.
+
+- `backend/app/scenario_loader.py` reads the scenario selected by `BLOODGRID_SCENARIO`, validates its record relationships, and returns typed data.
+- `backend/app/main.py` exposes read-only endpoints for the complete scenario and each map layer.
+- `frontend/src/app/page.tsx` presents one interactive operations dashboard.
+- `frontend/src/components/OperationsMap.tsx` renders the Mapbox basemap and scenario markers.
+- The frontend reads all map data from the backend. It does not duplicate scenario CSV files.
+
+The display slice has no travel-time, coverage, deployment, or rendezvous recommendation logic. Those additions belong in later modules so the current map remains a straightforward view of operational state.
+
 ## Boundaries
 
 - The frontend displays operational state, sends control actions, and explains calculated results.

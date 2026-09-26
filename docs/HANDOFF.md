@@ -1,7 +1,8 @@
 # BloodGrid Handoff
 
-**Last updated:** 2026-09-25  
-**Current phase:** Minimal demo data world complete; map display not yet created.
+**Last updated:** 2026-09-26
+
+**Current phase:** Map display complete; routing and baseline coverage not yet started.
 
 **Audience:** Alex, project teammates, and coding agents joining the work.
 
@@ -36,7 +37,7 @@ The project is map-first and intended for a clear HackGT demo. It is not a clini
 
 ## Current State
 
-The GitHub remote is connected on the `main` branch. The foundation commit is published. The repository now contains documentation and a versioned CSV scenario, but no runnable frontend, backend, API endpoints, dependencies, or tests yet.
+The GitHub remote is connected on the `main` branch. The foundation and initial scenario commits are published. The repository now contains a runnable FastAPI data service and Next.js map dashboard backed by the versioned scenario data.
 
 Completed foundation work:
 
@@ -48,6 +49,10 @@ Completed foundation work:
 - Versioned CSV schema contract created under `data/schemas/v1/`.
 - Complete synthetic scenario `rural_ga_initial_v1` created under `data/scenarios/`.
 - Scenario metadata, provenance, a live incident, and configuration selection guidance added.
+- Read-only FastAPI endpoints added for the scenario and every map layer.
+- Next.js operations dashboard added with a real Mapbox basemap, scenario markers, layer controls, unit status, and marker details.
+- Local browser-map token wiring added through the root `.env` file; no token is stored in Git.
+- Backend loader test, frontend type check, production frontend build, and live browser map check passed.
 
 The scenario uses synthetic modeled rural-Georgia geography and operational data. It must not be presented as live or facility-accurate information.
 
@@ -55,8 +60,8 @@ The scenario uses synthetic modeled rural-Georgia geography and operational data
 
 | Location | Purpose now | What will go there next |
 | --- | --- | --- |
-| `frontend/` | Dashboard guidance | Next.js app, map, controls, metrics, incident view |
-| `backend/` | Service guidance | FastAPI app, models, routing, coverage, optimizer, rendezvous logic |
+| `frontend/` | Runnable Next.js operations dashboard | Routing results and later decision controls |
+| `backend/` | Runnable read-only FastAPI scenario API | Routing, coverage, optimizer, and rendezvous logic |
 | `data/raw/` | Empty | Untouched public source datasets |
 | `data/processed/` | Empty | Cleaned geographic and demand-proxy data |
 | `data/synthetic/` | Empty | Demo inventory, staffing, availability, and simulated incidents |
@@ -77,13 +82,13 @@ The scenario uses synthetic modeled rural-Georgia geography and operational data
 
 ## Next Recommended Work
 
-Build the map display for the initial scenario:
+Build routing and baseline coverage:
 
-1. Scaffold the Next.js application in `frontend/`.
-2. Load `rural_ga_initial_v1` through a temporary local data layer or the initial FastAPI endpoint.
-3. Display stations, hospitals, response units, demand-proxy incidents, and approved rendezvous points on one map-first dashboard.
-4. Show each unit's availability state and clearly label the scenario as synthetic.
-5. Do not add routing, coverage, optimization, or clinical logic yet.
+1. Add `backend/app/routing.py` with provider-neutral route and travel-time functions.
+2. Keep the Mapbox implementation confined to that adapter and use a server-only `MAPBOX_ACCESS_TOKEN` for requests.
+3. Verify point-to-point road duration, distance, and a small travel-time matrix using the initial scenario.
+4. Add a deterministic baseline coverage calculation using only eligible units and the configured target time.
+5. Display the baseline coverage result without adding strategic optimization yet.
 
 ## Important Decisions Still Open
 

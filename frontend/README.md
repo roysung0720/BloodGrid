@@ -1,5 +1,15 @@
 # Frontend
 
-This folder will contain the Next.js dashboard. Its initial job is to make the simulated regional EMS world understandable at a glance: map features, unit state, coverage metrics, live incident routes, and concise calculation-based explanations.
+This folder contains the Next.js dashboard. The first increment is a map-first display of the selected scenario: stations, hospitals, Blood Response Units, demand proxies, approved rendezvous points, and the simulated blood request.
 
 Do not add a multi-page marketing site. The main operational dashboard is the product's first screen.
+
+## Run locally
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The dashboard expects the FastAPI service at `http://localhost:8000`. It reads the Mapbox browser token from the root `.env` file and uses `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`.

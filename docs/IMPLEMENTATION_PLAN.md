@@ -8,9 +8,9 @@ Create the repository layout, project contract, environment placeholders, and lo
 
 The first versioned scenario, `rural_ga_initial_v1`, includes 8 staging locations, 3 Blood Response Units, 3 hospitals, 30 synthetic demand-proxy incidents, 8 approved rendezvous points, a live incident, and clearly labeled synthetic operational data. Its CSV rules are in `data/schemas/v1/` and its provenance is stored with the scenario.
 
-## 3. Display the world
+## 3. Display the world - complete
 
-Build the dashboard map and display stations, units, hospitals, incidents, and availability state. Do not wait for the optimizer.
+The Next.js dashboard and FastAPI data service load `rural_ga_initial_v1` through one read-only API. The map displays stations, response units, hospitals, incident-demand proxies, approved rendezvous points, and the simulated blood request. Layer controls, unit status, marker selection, and a persistent synthetic-data label are included. No optimizer or routing logic is included in this phase.
 
 ## 4. Routing and baseline coverage
 
