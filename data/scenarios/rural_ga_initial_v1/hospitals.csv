@@ -1,0 +1,4 @@
+hospital_id,name,latitude,longitude,trauma_level,active
+H-01,North Valley Trauma Center,34.200,-83.610,LEVEL_II,true
+H-02,Pine County Trauma Center,34.045,-83.465,LEVEL_III,true
+H-03,East Ridge Community Hospital,34.245,-83.410,NONE,true

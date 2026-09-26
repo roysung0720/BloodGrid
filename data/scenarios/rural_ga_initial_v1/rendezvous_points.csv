@@ -1,0 +1,9 @@
+rendezvous_id,name,latitude,longitude,location_type,approved,active
+RV-01,Cedar Ridge EMS Bay,34.145,-83.820,EMS_STATION,true,true
+RV-02,Lakeview Fire and EMS,34.250,-83.670,FIRE_EMS,true,true
+RV-03,Route 17 Safe Staging Area,34.178,-83.565,SAFE_STAGING_AREA,true,true
+RV-04,Riverbend Interchange,34.276,-83.485,HIGHWAY_INTERCHANGE,true,true
+RV-05,Eastgate EMS Bay,34.155,-83.425,EMS_STATION,true,true
+RV-06,South County EMS Bay,33.985,-83.690,EMS_STATION,true,true
+RV-07,Highland EMS Bay,34.345,-83.755,EMS_STATION,true,true
+RV-08,Oak Crossing Fire and EMS,34.020,-83.415,FIRE_EMS,true,true

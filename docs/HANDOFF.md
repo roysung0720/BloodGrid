@@ -1,7 +1,8 @@
 # BloodGrid Handoff
 
 **Last updated:** 2026-09-25  
-**Current phase:** Foundation and documentation complete; minimal demo data world not yet created.  
+**Current phase:** Minimal demo data world complete; map display not yet created.
+
 **Audience:** Alex, project teammates, and coding agents joining the work.
 
 ## Start Here
@@ -35,7 +36,7 @@ The project is map-first and intended for a clear HackGT demo. It is not a clini
 
 ## Current State
 
-The GitHub remote is connected on the `main` branch. The repository currently contains documentation and folder-level READMEs, but no runnable frontend, backend, CSV data, API endpoints, dependencies, or tests yet.
+The GitHub remote is connected on the `main` branch. The foundation commit is published. The repository now contains documentation and a versioned CSV scenario, but no runnable frontend, backend, API endpoints, dependencies, or tests yet.
 
 Completed foundation work:
 
@@ -44,8 +45,11 @@ Completed foundation work:
 - `.env.example` and `.gitignore` created.
 - Folder homes created for frontend, backend, data, scripts, and tests.
 - Local Python and Node installations verified.
+- Versioned CSV schema contract created under `data/schemas/v1/`.
+- Complete synthetic scenario `rural_ga_initial_v1` created under `data/scenarios/`.
+- Scenario metadata, provenance, a live incident, and configuration selection guidance added.
 
-No work has yet been committed or pushed after this foundation setup.
+The scenario uses synthetic modeled rural-Georgia geography and operational data. It must not be presented as live or facility-accurate information.
 
 ## Repository Map
 
@@ -56,7 +60,8 @@ No work has yet been committed or pushed after this foundation setup.
 | `data/raw/` | Empty | Untouched public source datasets |
 | `data/processed/` | Empty | Cleaned geographic and demand-proxy data |
 | `data/synthetic/` | Empty | Demo inventory, staffing, availability, and simulated incidents |
-| `data/schemas/` | Empty | CSV field definitions and validation notes |
+| `data/schemas/v1/` | CSV data contract | Future schema versions when needed |
+| `data/scenarios/rural_ga_initial_v1/` | Complete initial demo world | Subsequent data scenarios |
 | `scripts/` | Empty | Repeatable data-preparation and scenario-generation utilities |
 | `tests/` | Empty | Deterministic tests for core calculations and API behavior |
 
@@ -72,13 +77,13 @@ No work has yet been committed or pushed after this foundation setup.
 
 ## Next Recommended Work
 
-Build the minimal demo data world before application code:
+Build the map display for the initial scenario:
 
-1. Choose a temporary Georgia demo area; keep the selection configurable.
-2. Define the CSV schemas from `docs/DATA_MODEL.md`.
-3. Create a small, explicitly synthetic scenario with 5-10 staging locations, 2-3 response units, 1-3 hospitals, about 30 demand-proxy incidents, and approved rendezvous points.
-4. Add provenance notes identifying every dataset as REAL, REAL PROXY, or SYNTHETIC.
-5. Then build the map page that displays this world before adding routing or optimization.
+1. Scaffold the Next.js application in `frontend/`.
+2. Load `rural_ga_initial_v1` through a temporary local data layer or the initial FastAPI endpoint.
+3. Display stations, hospitals, response units, demand-proxy incidents, and approved rendezvous points on one map-first dashboard.
+4. Show each unit's availability state and clearly label the scenario as synthetic.
+5. Do not add routing, coverage, optimization, or clinical logic yet.
 
 ## Important Decisions Still Open
 

@@ -1,0 +1,9 @@
+station_id,name,latitude,longitude,station_type,active,capacity
+S-01,Cedar Ridge EMS,34.145,-83.820,EMS_STATION,true,1
+S-02,Lakeview Fire and EMS,34.250,-83.670,FIRE_EMS,true,1
+S-03,Pine Valley EMS,34.095,-83.570,EMS_STATION,true,1
+S-04,Riverbend EMS,34.290,-83.470,EMS_STATION,true,1
+S-05,Eastgate EMS,34.155,-83.425,EMS_STATION,true,1
+S-06,South County EMS,33.985,-83.690,EMS_STATION,true,1
+S-07,Highland EMS,34.345,-83.755,EMS_STATION,true,1
+S-08,Oak Crossing Fire and EMS,34.020,-83.415,FIRE_EMS,true,1

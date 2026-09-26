@@ -19,3 +19,5 @@ Every file added under `data/` needs a short provenance record containing:
 | Live incidents | Controlled demo scenarios | SYNTHETIC |
 
 Synthetic values must never be represented as live EMS, blood-bank, or patient data. Source notes will live beside each dataset or in a central manifest as the data world is created.
+
+For runnable bundles, keep the scenario-specific provenance in `data/scenarios/<scenario_id>/README.md`. It must describe all source classifications, transformations, and scenario limitations in one place.

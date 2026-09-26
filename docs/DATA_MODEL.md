@@ -14,6 +14,8 @@ The MVP uses the following data files and corresponding backend models:
 
 The detailed field contract is in `PRODUCT_SPEC.md` and will become Pydantic models in the backend.
 
+The runnable CSV contract is maintained in `data/schemas/v1/DATA_CONTRACT.md`. Each complete data bundle belongs in `data/scenarios/<scenario_id>/` and declares its schema version in `scenario.json`.
+
 ## Eligibility invariant
 
 A unit is eligible for a blood response only when all of the following are true:

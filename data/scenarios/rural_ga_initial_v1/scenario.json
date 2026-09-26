@@ -1,0 +1,18 @@
+{
+  "scenario_id": "rural_ga_initial_v1",
+  "name": "Initial Rural Georgia Demo",
+  "schema_version": "v1",
+  "classification": "SYNTHETIC",
+  "geographic_area": "Modeled rural Georgia demonstration area",
+  "coordinate_system": "WGS84 decimal degrees",
+  "bounding_box": {
+    "min_latitude": 33.95,
+    "max_latitude": 34.36,
+    "min_longitude": -83.95,
+    "max_longitude": -83.38
+  },
+  "default_live_incident_id": "LIVE-001",
+  "target_coverage_minutes": 20,
+  "purpose": "Initial map, eligibility, coverage, strategic deployment, and rendezvous demonstration.",
+  "limitations": "All facilities, unit positions, inventory, staffing, and demand points are synthetic and are not for operational use."
+}

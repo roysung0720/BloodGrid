@@ -4,9 +4,9 @@
 
 Create the repository layout, project contract, environment placeholders, and local setup guidance. This milestone is complete when contributors can understand the system boundaries before application code exists.
 
-## 2. Minimal data world
+## 2. Minimal data world - complete
 
-Create 5-10 staging locations, 2-3 Blood Response Units, 1-3 hospitals, roughly 30 demand-proxy incidents, approved rendezvous points, and clearly labeled synthetic operational fields.
+The first versioned scenario, `rural_ga_initial_v1`, includes 8 staging locations, 3 Blood Response Units, 3 hospitals, 30 synthetic demand-proxy incidents, 8 approved rendezvous points, a live incident, and clearly labeled synthetic operational data. Its CSV rules are in `data/schemas/v1/` and its provenance is stored with the scenario.
 
 ## 3. Display the world
 

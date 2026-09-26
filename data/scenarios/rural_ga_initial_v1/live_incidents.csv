@@ -1,0 +1,2 @@
+incident_id,latitude,longitude,destination_hospital_id,blood_requested,patient_unit_id,status,created_at
+LIVE-001,34.120,-83.515,H-01,true,MEDIC-12,OPEN,2026-09-25T09:30:00Z
