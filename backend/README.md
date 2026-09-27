@@ -22,6 +22,8 @@ The API starts at `http://localhost:8000`. Open `http://localhost:8000/docs` to 
 
 `GET /live-incidents/{incident_id}/rendezvous` validates the supplied active destination, compares direct patient transport with every approved active rendezvous point, and returns an explainable logistics result. A point is eligible only when an eligible resource can deliver before direct arrival and the modeled added hospital delay remains within the configured limit. The service never chooses or changes the destination hospital.
 
+`GET /scenario?availability_profile=<profile_id>` applies a named synthetic operating state to an in-memory scenario copy. The same optional query parameter is accepted by the coverage, deployment, and live-rendezvous endpoints, so all calculations use one consistent availability state. `GET /availability-profiles` lists the available demo cases. No profile changes CSV or JSON source data.
+
 Set `MAPBOX_ACCESS_TOKEN` in the root `.env` file for backend routing. During local development only, the backend falls back to `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` when no separate routing token is present.
 
 Run the loader test with:

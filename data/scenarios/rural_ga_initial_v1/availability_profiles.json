@@ -1,0 +1,49 @@
+{
+  "profiles": [
+    {
+      "profile_id": "baseline",
+      "name": "Baseline",
+      "description": "Original synthetic staffing, blood inventory, and on-call status."
+    },
+    {
+      "profile_id": "br_02_out_of_service",
+      "name": "BR-02 unavailable",
+      "description": "Synthetic vehicle outage: BR-02 cannot respond or stage. All outputs recalculate without it.",
+      "resource_overrides": [
+        {"unit_id": "BR-02", "vehicle_status": "OUT_OF_SERVICE"}
+      ]
+    },
+    {
+      "profile_id": "br_03_staffed",
+      "name": "BR-03 staffed now",
+      "description": "Synthetic staffing change: BR-03 is immediately available instead of on call.",
+      "resource_overrides": [
+        {"unit_id": "BR-03", "crew_status": "AVAILABLE", "mobilization_minutes": 0}
+      ]
+    },
+    {
+      "profile_id": "br_01_no_valid_blood",
+      "name": "BR-01 blood unavailable",
+      "description": "Synthetic inventory exception: BR-01 has no usable onboard blood.",
+      "resource_overrides": [
+        {
+          "unit_id": "BR-01",
+          "blood_units_onboard": 0,
+          "blood_availability_status": "UNAVAILABLE"
+        }
+      ]
+    },
+    {
+      "profile_id": "br_03_unqualified",
+      "name": "BR-03 unqualified",
+      "description": "Synthetic credentialing change: BR-03 lacks a qualified blood clinician.",
+      "resource_overrides": [
+        {
+          "unit_id": "BR-03",
+          "crew_status": "NO_QUALIFIED_CLINICIAN",
+          "blood_credentialed": false
+        }
+      ]
+    }
+  ]
+}

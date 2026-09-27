@@ -12,6 +12,7 @@ from .config import (
     ROUTING_TIMEOUT_SECONDS,
     SCENARIO_ID,
 )
+from .availability.service import AvailabilityProfileError, apply_availability_profile
 from .coverage.models import BaselineCoverageResult
 from .coverage.service import calculate_baseline_coverage
 from .deployment.models import StrategicDeploymentResult
@@ -19,6 +20,7 @@ from .deployment.service import DeploymentError, calculate_strategic_deployment
 from .rendezvous.models import LiveRendezvousResult
 from .rendezvous.service import RendezvousError, calculate_live_rendezvous
 from .models import (
+    AvailabilityProfile,
     BloodUnit,
     HistoricalIncident,
     Hospital,
@@ -48,11 +50,13 @@ app.add_middleware(
 )
 
 
-def get_active_scenario() -> ScenarioData:
+def get_active_scenario(availability_profile: str = "baseline") -> ScenarioData:
     try:
-        return load_scenario()
+        return apply_availability_profile(load_scenario(), availability_profile)
     except ScenarioLoadError as error:
         raise HTTPException(status_code=500, detail=str(error)) from error
+    except AvailabilityProfileError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @lru_cache
@@ -70,8 +74,13 @@ def health() -> dict[str, str]:
 
 
 @app.get("/scenario", response_model=ScenarioData)
-def scenario() -> ScenarioData:
-    return get_active_scenario()
+def scenario(availability_profile: str = "baseline") -> ScenarioData:
+    return get_active_scenario(availability_profile)
+
+
+@app.get("/availability-profiles", response_model=list[AvailabilityProfile])
+def availability_profiles() -> list[AvailabilityProfile]:
+    return load_scenario().availability_profiles
 
 
 @app.get("/scenario/metadata", response_model=ScenarioMetadata)
@@ -115,18 +124,22 @@ def live_incidents() -> list[LiveIncident]:
 
 
 @app.get("/coverage/baseline", response_model=BaselineCoverageResult)
-def baseline_coverage() -> BaselineCoverageResult:
+def baseline_coverage(availability_profile: str = "baseline") -> BaselineCoverageResult:
     try:
-        return calculate_baseline_coverage(get_active_scenario(), get_routing_provider())
+        return calculate_baseline_coverage(
+            get_active_scenario(availability_profile), get_routing_provider()
+        )
     except (RoutingError, ValueError) as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
 
 
 @app.get("/deployment/strategic", response_model=StrategicDeploymentResult)
-def strategic_deployment() -> StrategicDeploymentResult:
+def strategic_deployment(
+    availability_profile: str = "baseline",
+) -> StrategicDeploymentResult:
     try:
         return calculate_strategic_deployment(
-            get_active_scenario(), get_routing_provider()
+            get_active_scenario(availability_profile), get_routing_provider()
         )
     except (DeploymentError, RoutingError, ValueError) as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
@@ -135,10 +148,12 @@ def strategic_deployment() -> StrategicDeploymentResult:
 @app.get(
     "/live-incidents/{incident_id}/rendezvous", response_model=LiveRendezvousResult
 )
-def live_incident_rendezvous(incident_id: str) -> LiveRendezvousResult:
+def live_incident_rendezvous(
+    incident_id: str, availability_profile: str = "baseline"
+) -> LiveRendezvousResult:
     try:
         return calculate_live_rendezvous(
-            get_active_scenario(), incident_id, get_routing_provider()
+            get_active_scenario(availability_profile), incident_id, get_routing_provider()
         )
     except RendezvousError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error

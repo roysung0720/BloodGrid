@@ -57,6 +57,17 @@ function findDetails(
 
   if (selection.type === "unit") {
     const unit = scenario.response_units.find((item) => item.unit_id === selection.id);
+    const eligibility = coverage?.resource_eligibility.find(
+      (item) => item.unit_id === selection.id,
+    );
+    const eligibilityEntries: Array<[string, string]> = eligibility
+      ? [
+          ["Eligible now", eligibility.eligible ? "Yes" : "No"],
+          ...(eligibility.reasons.length
+            ? [["Eligibility note", eligibility.reasons.join("; ")] as [string, string]]
+            : []),
+        ]
+      : [];
     return unit
       ? {
           title: unit.unit_id,
@@ -66,6 +77,7 @@ function findDetails(
             ["Crew", unit.crew_status.replace("_", " ")],
             ["Blood onboard", `${unit.blood_units_onboard} valid units`],
             ["Mobilization", `${unit.mobilization_minutes} minutes`],
+            ...eligibilityEntries,
           ],
         }
       : null;

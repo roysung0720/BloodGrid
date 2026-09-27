@@ -103,6 +103,12 @@ export function OperationsMap({
       }, new Map<string, string[]>()) ?? new Map<string, string[]>(),
     );
     const recommendedRendezvousId = rendezvous?.recommended_rendezvous_id;
+    const eligibilityByUnit = new Map(
+      coverage?.resource_eligibility.map((assessment) => [
+        assessment.unit_id,
+        assessment,
+      ]),
+    );
     const markerDefinitions: MarkerDefinition[] = [
       ...scenario.stations.map((station) => ({
         id: station.station_id,
@@ -121,15 +127,25 @@ export function OperationsMap({
             ? "station-recommended"
             : "station",
       })),
-      ...scenario.response_units.map((unit) => ({
-        id: unit.unit_id,
-        layer: "units" as const,
-        longitude: unit.current_longitude,
-        latitude: unit.current_latitude,
-        title: `${unit.unit_id} Blood Response Unit`,
-        type: "unit" as const,
-        variant: unit.crew_status === "ON_CALL" ? "unit-on-call" : "unit-available",
-      })),
+      ...scenario.response_units.map((unit) => {
+        const eligibility = eligibilityByUnit.get(unit.unit_id);
+        const unavailable = eligibility ? !eligibility.eligible : false;
+        return {
+          id: unit.unit_id,
+          layer: "units" as const,
+          longitude: unit.current_longitude,
+          latitude: unit.current_latitude,
+          title: unavailable
+            ? `${unit.unit_id} not eligible: ${eligibility?.reasons[0]}`
+            : `${unit.unit_id} Blood Response Unit`,
+          type: "unit" as const,
+          variant: unavailable
+            ? "unit-unavailable"
+            : unit.crew_status === "ON_CALL"
+              ? "unit-on-call"
+              : "unit-available",
+        };
+      }),
       ...scenario.hospitals.map((hospital) => ({
         id: hospital.hospital_id,
         layer: "hospitals" as const,

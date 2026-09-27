@@ -24,10 +24,10 @@ The OR-Tools CP-SAT deployment model assigns each eligible unit to one active st
 
 The deterministic live evaluator validates the supplied active hospital record, compares direct transport with every approved active rendezvous point, includes resource eligibility, on-call mobilization, both vehicles' wait time, time-to-blood, and added hospital delay, then returns either the best feasible point or direct transport. The dashboard makes every candidate inspectable and marks the selected point on the map.
 
-## 7. Dynamic availability
+## 7. Dynamic availability - complete
 
-Support unavailable, on-call, unqualified, and no-valid-blood states, and automatically recalculate affected outputs.
+Named synthetic availability profiles are stored beside the scenario and applied to an in-memory copy. The dashboard selector refreshes baseline coverage, strategic deployment, and live rendezvous together; resource markers and the unit list visibly identify ineligible units. Profiles cover unavailable vehicle, immediately staffed/on-call status, unavailable blood, and unqualified clinician states while preserving a resettable baseline.
 
 ## 8. Data improvement and polish
 
-Replace feasible placeholder geography with public real data, document provenance, refine the demo, and consider stretch features only after core tests pass.
+Refine the demo while retaining the tested MVP. First, expand the synthetic live-incident dataset beyond `LIVE-001` and add a dashboard live-incident selector. Selecting an incident must refresh its direct-transport comparison, approved-point review, eligible-resource options, and map context while preserving that incident's supplied hospital. Then replace feasible placeholder geography with public real data, document provenance, and consider stretch features only after core tests pass.

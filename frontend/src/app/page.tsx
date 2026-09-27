@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { FeatureDetails } from "../components/FeatureDetails";
 import { CoveragePanel } from "../components/CoveragePanel";
+import { AvailabilityProfilePanel } from "../components/AvailabilityProfilePanel";
 import { DeploymentPanel } from "../components/DeploymentPanel";
 import { IncidentPanel } from "../components/IncidentPanel";
 import { LayerControls } from "../components/LayerControls";
@@ -42,6 +43,7 @@ export default function HomePage() {
   const [coverage, setCoverage] = useState<BaselineCoverageResult | null>(null);
   const [deployment, setDeployment] = useState<StrategicDeploymentResult | null>(null);
   const [rendezvous, setRendezvous] = useState<LiveRendezvousResult | null>(null);
+  const [availabilityProfileId, setAvailabilityProfileId] = useState("baseline");
   const [coverageView, setCoverageView] = useState<CoverageView>("baseline");
   const [selectedFeature, setSelectedFeature] = useState<FeatureSelection | null>(
     null,
@@ -54,21 +56,67 @@ export default function HomePage() {
   const [rendezvousError, setRendezvousError] = useState<string | null>(null);
 
   useEffect(() => {
-    getScenario()
+    let cancelled = false;
+    setCoverage(null);
+    setDeployment(null);
+    setRendezvous(null);
+    setCoverageError(null);
+    setDeploymentError(null);
+    setRendezvousError(null);
+    setSelectedFeature(null);
+
+    getScenario(availabilityProfileId)
       .then((loadedScenario) => {
-        setScenario(loadedScenario);
-        getLiveRendezvous(loadedScenario.metadata.default_live_incident_id)
-          .then(setRendezvous)
-          .catch((requestError: Error) => setRendezvousError(requestError.message));
+        if (!cancelled) {
+          setScenario(loadedScenario);
+          getLiveRendezvous(
+            loadedScenario.metadata.default_live_incident_id,
+            availabilityProfileId,
+          )
+            .then((result) => {
+              if (!cancelled) {
+                setRendezvous(result);
+              }
+            })
+            .catch((requestError: Error) => {
+              if (!cancelled) {
+                setRendezvousError(requestError.message);
+              }
+            });
+        }
       })
-      .catch((requestError: Error) => setError(requestError.message));
-    getBaselineCoverage()
-      .then(setCoverage)
-      .catch((requestError: Error) => setCoverageError(requestError.message));
-    getStrategicDeployment()
-      .then(setDeployment)
-      .catch((requestError: Error) => setDeploymentError(requestError.message));
-  }, []);
+      .catch((requestError: Error) => {
+        if (!cancelled) {
+          setError(requestError.message);
+        }
+      });
+    getBaselineCoverage(availabilityProfileId)
+      .then((result) => {
+        if (!cancelled) {
+          setCoverage(result);
+        }
+      })
+      .catch((requestError: Error) => {
+        if (!cancelled) {
+          setCoverageError(requestError.message);
+        }
+      });
+    getStrategicDeployment(availabilityProfileId)
+      .then((result) => {
+        if (!cancelled) {
+          setDeployment(result);
+        }
+      })
+      .catch((requestError: Error) => {
+        if (!cancelled) {
+          setDeploymentError(requestError.message);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [availabilityProfileId]);
 
   const activeUnitCount = coverage ? coverage.eligible_resource_count : "-";
 
@@ -167,6 +215,11 @@ export default function HomePage() {
             </div>
           </section>
 
+          <AvailabilityProfilePanel
+            profiles={scenario.availability_profiles}
+            selectedProfileId={availabilityProfileId}
+            onChange={setAvailabilityProfileId}
+          />
           <CoveragePanel coverage={coverage} error={coverageError} />
           <DeploymentPanel
             baseline={coverage}
@@ -175,7 +228,11 @@ export default function HomePage() {
             view={coverageView}
             onViewChange={setCoverageView}
           />
-          <ResourcePanel scenario={scenario} onSelect={setSelectedFeature} />
+          <ResourcePanel
+            scenario={scenario}
+            coverage={coverage}
+            onSelect={setSelectedFeature}
+          />
           <IncidentPanel scenario={scenario} onSelect={setSelectedFeature} />
           <RendezvousPanel
             result={rendezvous}

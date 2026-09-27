@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -100,6 +102,24 @@ class LiveIncident(BaseModel):
     created_at: str
 
 
+class ResourceAvailabilityOverride(BaseModel):
+    unit_id: str
+    vehicle_status: Optional[str] = None
+    crew_status: Optional[str] = None
+    blood_credentialed: Optional[bool] = None
+    mobilization_minutes: Optional[float] = Field(default=None, ge=0)
+    blood_units_onboard: Optional[int] = Field(default=None, ge=0)
+    blood_availability_status: Optional[str] = None
+    blood_temperature_status: Optional[str] = None
+
+
+class AvailabilityProfile(BaseModel):
+    profile_id: str
+    name: str
+    description: str
+    resource_overrides: list[ResourceAvailabilityOverride] = Field(default_factory=list)
+
+
 class ScenarioData(BaseModel):
     metadata: ScenarioMetadata
     stations: list[Station]
@@ -109,3 +129,5 @@ class ScenarioData(BaseModel):
     historical_incidents: list[HistoricalIncident]
     rendezvous_points: list[RendezvousPoint]
     live_incidents: list[LiveIncident]
+    availability_profiles: list[AvailabilityProfile] = Field(default_factory=list)
+    active_availability_profile_id: str = "baseline"

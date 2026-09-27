@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-26
 
-**Current phase:** Live incident and approved-rendezvous evaluation complete; dynamic availability simulation is next.
+**Current phase:** Dynamic availability simulation complete; data improvement and demo polish are next.
 
 **Audience:** Alex, project teammates, and coding agents joining the work.
 
@@ -68,6 +68,10 @@ Completed foundation work:
 - Live evaluation validates the supplied active destination without selecting or changing it; it compares direct transport with every approved active rendezvous point, then returns the best feasible logistics option or direct transport.
 - Dashboard live incident panel added with direct transport, supplied hospital context, every candidate's status, and a map marker for the recommended approved point.
 - Rendezvous tests cover an explainable recommendation, direct transport when an intercept is too late, on-call mobilization, unapproved points, and ineligible resources. The Mapbox adapter now also handles a single origin/destination comparison internally.
+- Versioned synthetic availability profiles added in `data/scenarios/rural_ga_initial_v1/availability_profiles.json`.
+- `backend/app/availability/service.py` applies a selected profile to an in-memory scenario copy, preserving the source scenario and resettable `baseline` state.
+- Dashboard Synthetic operating state selector added. It refreshes baseline coverage, strategic deployment, live rendezvous, map markers, and resource eligibility together.
+- Availability tests cover immutable baseline data, unknown-profile rejection, and consistent exclusion of an unavailable unit from coverage, deployment, and rendezvous results.
 
 The scenario uses synthetic modeled rural-Georgia geography and operational data. It must not be presented as live or facility-accurate information.
 
@@ -75,8 +79,8 @@ The scenario uses synthetic modeled rural-Georgia geography and operational data
 
 | Location | Purpose now | What will go there next |
 | --- | --- | --- |
-| `frontend/` | Runnable Next.js dashboard with baseline, strategic, and live-rendezvous views | Dynamic scenario controls |
-| `backend/` | FastAPI scenario API, routing adapter, coverage, deployment, and rendezvous evaluation | Dynamic availability simulation |
+| `frontend/` | Runnable Next.js dashboard with baseline, strategic, live-rendezvous, and availability views | Data-story and demo polish |
+| `backend/` | FastAPI scenario API, routing adapter, availability overlays, coverage, deployment, and rendezvous evaluation | Data refinement and demo support |
 | `data/raw/` | Empty | Untouched public source datasets |
 | `data/processed/` | Empty | Cleaned geographic and demand-proxy data |
 | `data/synthetic/` | Empty | Demo inventory, staffing, availability, and simulated incidents |
@@ -94,6 +98,7 @@ The scenario uses synthetic modeled rural-Georgia geography and operational data
 - **Strategic optimizer:** Google OR-Tools CP-SAT in `backend/app/deployment/`. It assigns every eligible unit to one active station, respects station capacity, and maximizes the number of demand points covered within the target. Routing and eligibility remain outside the optimizer.
 - **Live rendezvous:** deterministic candidate evaluation in `backend/app/rendezvous/`, not OR-Tools. It requires an existing authorized request, uses only approved active points, includes direct transport as the feasibility reference, and preserves the supplied destination hospital.
 - **Rendezvous assumptions:** `BLOODGRID_RENDEZVOUS_MAX_ADDED_HOSPITAL_DELAY_MINUTES` defaults to `10`; `BLOODGRID_RENDEZVOUS_HOSPITAL_DELAY_WEIGHT` defaults to `0.5`. Both are local configuration values and must not be hard-coded elsewhere.
+- **Availability profiles:** `availability_profiles.json` provides named, synthetic demo overlays. `baseline` is required. The overlay service is the sole owner of profile application; it returns a copied scenario, and no source CSV/JSON data are changed during a demo.
 - **Persistence:** CSV and JSON for the MVP; no database required.
 - **Optional AI:** only a later explanation layer, never core decision logic.
 
@@ -132,6 +137,20 @@ With the same synthetic scenario, live Mapbox verification for `LIVE-001` produc
 
 This is synthetic logistics output, not a clinical transfusion, transport, or destination recommendation.
 
+## Current Dynamic Availability Result
+
+The dashboard now offers five synthetic operating states: Baseline, BR-02 unavailable, BR-03 staffed now, BR-01 blood unavailable, and BR-03 unqualified.
+
+For the verified `BR-02 unavailable` state:
+
+- BR-02 is marked `OUT_OF_SERVICE` and excluded by the shared eligibility rule.
+- Eligible resources drop from 3 to 2.
+- Current synthetic coverage drops from 11 of 30 to 5 of 30 demand points; optimized coverage drops from 18 of 30 to 14 of 30.
+- Strategic staging assigns only BR-01 and BR-03.
+- The live `LIVE-001` comparison changes from a rendezvous recommendation to direct transport.
+
+The selector is a synthetic demonstration control, not a live unit-status command.
+
 ## Working Across Agents
 
 This section is the practical integration contract for Alex, Claude, Codex, and any future coding agent. The goal is for one agent's work to fit the repository cleanly rather than creating a parallel implementation.
@@ -151,6 +170,7 @@ This section is the practical integration contract for Alex, Claude, Codex, and 
 | Configuration and private environment values | `backend/app/config.py` and root `.env` | Add configurable values centrally. Never commit `.env` or paste token values into source, docs, logs, or chat. |
 | Road routing | `backend/app/routing/provider.py` | New coverage, deployment, or rendezvous code must use `RoutingProvider`; only `backend/app/routing/mapbox_provider.py` may contain Mapbox request details. |
 | Eligibility and baseline coverage | `backend/app/coverage/service.py` | Reuse or extend the explicit eligibility rule. Do not create a second, slightly different eligibility check elsewhere. |
+| Availability profiles | `backend/app/availability/service.py` | Apply named profile overlays only here. Never mutate source scenario data or duplicate its override behavior in frontend code. |
 | Live rendezvous evaluation | `backend/app/rendezvous/service.py` | Use the existing routing and eligibility interfaces. Only approved, active points may be evaluated; preserve the incident's supplied destination. |
 | HTTP API | `backend/app/main.py` | Keep endpoint functions thin: receive a request, call a service, return typed data. Put business logic in focused modules. |
 | Dashboard API client and types | `frontend/src/lib/api.ts` and `frontend/src/lib/types.ts` | Add backend response shapes here before displaying them. Do not calculate coverage or optimization results in the browser. |
@@ -164,9 +184,10 @@ This section is the practical integration contract for Alex, Claude, Codex, and 
 - `GET /coverage/baseline` returns typed results for all 30 synthetic demand points. It uses the scenario's `target_coverage_minutes` unless `BLOODGRID_COVERAGE_TARGET_MINUTES` is set locally.
 - `GET /deployment/strategic` returns the OR-Tools result for the same scenario. Its core code is `backend/app/deployment/service.py`; tests must use a fake `RoutingProvider`, not live Mapbox requests.
 - `GET /live-incidents/{incident_id}/rendezvous` returns the deterministic live comparison. Its core code is `backend/app/rendezvous/service.py`; tests must use a fake `RoutingProvider`, not live Mapbox requests.
+- `GET /scenario?availability_profile=<profile_id>` returns the selected copied scenario. The same optional query parameter is accepted by `/coverage/baseline`, `/deployment/strategic`, and `/live-incidents/{incident_id}/rendezvous`; `/availability-profiles` lists all profile definitions.
 - The current routing profile is `mapbox/driving`, and `MapboxMatrixProvider` batches the initial three eligible units and 30 demand points into two Matrix API requests.
 - The coverage result is a logistics estimate only. It does not provide a dispatch order, clinical recommendation, hospital selection, or real-world response guarantee.
-- The next approved work is dynamic availability simulation. It should change scenario resource status through a controlled demo mechanism, then recalculate baseline coverage, strategic deployment, and live rendezvous output using the same eligibility rule.
+- The next approved work is data improvement and demo polish. Preserve the current synthetic labels and repeatable profiles while improving only data sources, visual clarity, and presentation quality that can be explained confidently.
 
 ### Required Handoff From an Agent
 
@@ -196,19 +217,24 @@ For dashboard changes, also start the backend and frontend locally and inspect `
 
 ## Next Recommended Work
 
-Build dynamic availability simulation:
+Build data improvement and demo polish:
 
-1. Define a small synthetic availability change that can be triggered and reversed locally without editing the source scenario files.
-2. Reuse the shared eligibility rule so unavailable vehicle, on-call, unqualified clinician, and invalid-blood states affect every calculation consistently.
-3. Recalculate the current baseline, strategic staging plan, and live rendezvous result from the changed state.
-4. Make the before/after operational effect understandable in the dashboard without implying a clinical recommendation.
-5. Add deterministic tests for each affected calculation and retain the original scenario as the resettable baseline.
+1. Expand `live_incidents.csv` with a small set of clearly synthetic, contrasting blood-request cases. Each must retain its own supplied active hospital and source/provenance label.
+2. Add a dashboard **Live incident** selector beside the synthetic operating-state selector. A change must refresh the direct-transport comparison, approved-point review, eligible-resource options, and map context for that selected incident.
+3. Keep the two selectors conceptually separate: availability profiles vary the operational resource state; the live-incident selector varies the response situation. Do not mutate source scenario files when either is selected.
+4. Add deterministic tests that each selected incident is evaluated independently and that its supplied hospital is preserved rather than chosen or replaced by BloodGrid.
+5. Then decide whether to replace any fictional geography with clearly sourced public geography while preserving privacy and provenance.
+6. Improve the dashboard's demo flow so a presenter can move from baseline coverage to strategic staging, then choose a live incident and availability case without explaining implementation details.
+7. Review marker density, map labels, and panel hierarchy for quick audience comprehension at common laptop and projector sizes.
+8. Keep all synthetic operational values visibly labeled and do not add clinical destination or treatment recommendations.
+9. Update the demo script, provenance notes, and screenshots only after the tested MVP behavior remains intact.
 
 ## Important Decisions Still Open
 
 - Exact Georgia demo region.
 - Coverage target, currently 20 minutes in `rural_ga_initial_v1`; whether it should differ for the final demo.
 - Whether the default 10-minute maximum hospital delay and 0.5 hospital-delay weight should change for the final demo.
+- Which, if any, real public geography sources should replace the modeled rural-Georgia locations before the final presentation.
 - How much real public geography to incorporate in the first demo dataset.
 - Whether the final demo includes optional OpenAI-generated wording.
 

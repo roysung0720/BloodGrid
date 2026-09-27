@@ -8,16 +8,28 @@ import type {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_BACKEND_BASE_URL ?? "http://localhost:8000";
 
-export async function getScenario(): Promise<ScenarioData> {
-  const response = await fetch(`${API_BASE_URL}/scenario`);
+function profileQuery(availabilityProfile: string) {
+  return `?availability_profile=${encodeURIComponent(availabilityProfile)}`;
+}
+
+export async function getScenario(
+  availabilityProfile = "baseline",
+): Promise<ScenarioData> {
+  const response = await fetch(
+    `${API_BASE_URL}/scenario${profileQuery(availabilityProfile)}`,
+  );
   if (!response.ok) {
     throw new Error(`The data service returned ${response.status}.`);
   }
   return response.json() as Promise<ScenarioData>;
 }
 
-export async function getBaselineCoverage(): Promise<BaselineCoverageResult> {
-  const response = await fetch(`${API_BASE_URL}/coverage/baseline`);
+export async function getBaselineCoverage(
+  availabilityProfile = "baseline",
+): Promise<BaselineCoverageResult> {
+  const response = await fetch(
+    `${API_BASE_URL}/coverage/baseline${profileQuery(availabilityProfile)}`,
+  );
   if (!response.ok) {
     const errorBody = (await response.json().catch(() => null)) as {
       detail?: string;
@@ -27,8 +39,12 @@ export async function getBaselineCoverage(): Promise<BaselineCoverageResult> {
   return response.json() as Promise<BaselineCoverageResult>;
 }
 
-export async function getStrategicDeployment(): Promise<StrategicDeploymentResult> {
-  const response = await fetch(`${API_BASE_URL}/deployment/strategic`);
+export async function getStrategicDeployment(
+  availabilityProfile = "baseline",
+): Promise<StrategicDeploymentResult> {
+  const response = await fetch(
+    `${API_BASE_URL}/deployment/strategic${profileQuery(availabilityProfile)}`,
+  );
   if (!response.ok) {
     const errorBody = (await response.json().catch(() => null)) as {
       detail?: string;
@@ -40,9 +56,10 @@ export async function getStrategicDeployment(): Promise<StrategicDeploymentResul
 
 export async function getLiveRendezvous(
   incidentId: string,
+  availabilityProfile = "baseline",
 ): Promise<LiveRendezvousResult> {
   const response = await fetch(
-    `${API_BASE_URL}/live-incidents/${encodeURIComponent(incidentId)}/rendezvous`,
+    `${API_BASE_URL}/live-incidents/${encodeURIComponent(incidentId)}/rendezvous${profileQuery(availabilityProfile)}`,
   );
   if (!response.ok) {
     const errorBody = (await response.json().catch(() => null)) as {

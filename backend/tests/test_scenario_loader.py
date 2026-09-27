@@ -17,6 +17,8 @@ class ScenarioLoaderTests(unittest.TestCase):
         self.assertEqual(len(scenario.historical_incidents), 30)
         self.assertEqual(len(scenario.rendezvous_points), 8)
         self.assertEqual(len(scenario.live_incidents), 1)
+        self.assertEqual(len(scenario.availability_profiles), 5)
+        self.assertEqual(scenario.availability_profiles[0].profile_id, "baseline")
 
 
 if __name__ == "__main__":

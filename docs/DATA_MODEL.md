@@ -48,3 +48,9 @@ The first objective is intentionally narrow and inspectable: maximize the number
 `GET /live-incidents/{incident_id}/rendezvous` returns a calculated comparison for an already-authorized synthetic blood request. It preserves the incident's supplied destination hospital, verifies that the record exists and is active, and reports its name and trauma level as context only.
 
 The result includes direct transport time, the configured maximum added hospital delay and score weight, and one record for every rendezvous point. Each point explains whether it was unavailable, unroutable, too late to beat direct arrival, an excessive detour, an eligible alternative, or the selected recommendation. For viable points, it exposes patient and resource travel, on-call mobilization, wait times, time-to-blood, modeled hospital arrival, and the added delay against direct transport.
+
+## Availability profiles
+
+`availability_profiles.json` is a versioned synthetic-demo input stored beside the scenario CSV files. Each named profile contains a description and targeted resource overrides, such as vehicle status, crew status, credentialing, mobilization delay, onboard count, or blood availability. `baseline` is required and has no overrides.
+
+The backend applies a selected profile to an in-memory copy of `ScenarioData`, exposing its ID as `active_availability_profile_id`. The original scenario files are never changed. The copied scenario is then supplied unchanged to coverage, deployment, and rendezvous services, ensuring every output uses the same availability state.

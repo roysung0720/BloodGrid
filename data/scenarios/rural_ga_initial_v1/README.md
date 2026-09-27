@@ -17,6 +17,7 @@ Every record in this scenario is **SYNTHETIC**. It is modeled around a rural-Geo
 - 30 incident-demand proxy points
 - 8 approved active rendezvous points
 - 1 simulated open blood-request incident
+- 5 named synthetic availability profiles, including a resettable baseline
 
 ## Provenance
 
@@ -29,6 +30,7 @@ Every record in this scenario is **SYNTHETIC**. It is modeled around a rural-Geo
 | `historical_incidents.csv` | SYNTHETIC | Hand-authored demand-proxy distribution | Not crash, EMS, or patient data |
 | `rendezvous_points.csv` | SYNTHETIC | Hand-authored approved-place examples | Not agency-approved real locations |
 | `live_incidents.csv` | SYNTHETIC | Controlled major-collision simulation | Not a live incident feed |
+| `availability_profiles.json` | SYNTHETIC | Hand-authored demo operating states | Not a live CAD, staffing, or inventory feed |
 
 **Created:** 2026-09-25  
 **Coordinate system:** WGS84 decimal degrees  
@@ -36,11 +38,12 @@ Every record in this scenario is **SYNTHETIC**. It is modeled around a rural-Geo
 
 ## How to Use It
 
-Set `BLOODGRID_SCENARIO=rural_ga_initial_v1`. The future backend will load the CSV files in this folder and validate them against `data/schemas/v1/DATA_CONTRACT.md`.
+Set `BLOODGRID_SCENARIO=rural_ga_initial_v1`. The backend loads the CSV and JSON files in this folder and validates their relationships against `data/schemas/v1/DATA_CONTRACT.md`.
 
 ## Known Limitations
 
 - Coordinates are useful for an initial map display only. Road travel times will not be meaningful until the Mapbox routing phase.
 - The three hospitals are supplied demo destinations. BloodGrid must not use them to make clinical destination decisions.
 - Unit status, credentialing, blood inventory, and mobilization timing are controlled inputs for a demo, not operational facts.
+- Availability profiles apply only to an in-memory scenario copy. They are intended for repeatable demonstrations, not live dispatch control.
 - When replacing any part of this scenario with public or real-derived data, create a new scenario version and update its provenance rather than silently relabeling these records.

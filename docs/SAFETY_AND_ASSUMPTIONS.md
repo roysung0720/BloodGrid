@@ -38,6 +38,12 @@ It must not decide whether blood is medically indicated, select a product or dos
 - A point must deliver an eligible resource before the modeled direct-hospital arrival and remain within the configured maximum added hospital-delay limit. Otherwise, the transparent result is direct transport.
 - The score is a logistics comparison: `time_to_blood + hospital_delay_weight * added_hospital_delay`. It does not determine treatment, transfusion, or clinical benefit.
 
+## Dynamic availability assumptions
+
+- Operating states are named, versioned, and explicitly labeled synthetic demo profiles. They are not a live CAD, staffing, credentialing, blood-bank, or dispatch feed.
+- A profile changes only an in-memory copy of the selected scenario. It never writes operational status back to source data or sends a recommendation to a field unit.
+- Every profile reuses the same explicit eligibility rule. A changed vehicle, crew, credential, mobilization, or blood status affects coverage, deployment, and rendezvous calculations consistently.
+
 ## Explainability
 
 Every recommendation should expose the calculated facts behind it: eligible status, travel times, time-to-blood, wait times, direct-hospital baseline, and added hospital delay. The MVP does not require an LLM to explain these results.

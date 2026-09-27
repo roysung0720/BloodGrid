@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from pathlib import Path
 from typing import TypeVar
 
@@ -8,6 +9,7 @@ from pydantic import BaseModel, ValidationError
 
 from .config import DATA_SCENARIOS_DIR, SCENARIO_ID
 from .models import (
+    AvailabilityProfile,
     BloodUnit,
     HistoricalIncident,
     Hospital,
@@ -50,12 +52,36 @@ def _read_csv(path: Path, model: type[ModelT]) -> list[ModelT]:
     return records
 
 
+def _read_availability_profiles(path: Path) -> list[AvailabilityProfile]:
+    if not path.is_file():
+        raise ScenarioLoadError(f"Missing scenario file: {path.name}")
+    try:
+        payload = json.loads(path.read_text())
+    except json.JSONDecodeError as error:
+        raise ScenarioLoadError(f"Invalid JSON in {path.name}") from error
+
+    profiles = payload.get("profiles")
+    if not isinstance(profiles, list) or not profiles:
+        raise ScenarioLoadError(f"{path.name} must contain a non-empty profiles list")
+    try:
+        return [AvailabilityProfile.model_validate(profile) for profile in profiles]
+    except ValidationError as error:
+        raise ScenarioLoadError(
+            f"Invalid availability profile in {path.name}: {error.errors()[0]['msg']}"
+        ) from error
+
+
 def _validate_relationships(data: ScenarioData) -> None:
     station_ids = {station.station_id for station in data.stations}
     unit_ids = {unit.unit_id for unit in data.response_units}
     active_hospital_ids = {
         hospital.hospital_id for hospital in data.hospitals if hospital.active
     }
+    profile_ids = {profile.profile_id for profile in data.availability_profiles}
+    if len(profile_ids) != len(data.availability_profiles):
+        raise ScenarioLoadError("Availability profile IDs must be unique")
+    if "baseline" not in profile_ids:
+        raise ScenarioLoadError("Availability profiles must include baseline")
 
     for unit in data.response_units:
         if unit.home_station_id not in station_ids:
@@ -92,6 +118,13 @@ def _validate_relationships(data: ScenarioData) -> None:
                 f"{incident.incident_id} references an inactive or unknown destination"
             )
 
+    for profile in data.availability_profiles:
+        for override in profile.resource_overrides:
+            if override.unit_id not in unit_ids:
+                raise ScenarioLoadError(
+                    f"{profile.profile_id} references unknown response unit {override.unit_id}"
+                )
+
 
 def load_scenario(scenario_id: str = SCENARIO_ID) -> ScenarioData:
     scenario_dir = DATA_SCENARIOS_DIR / scenario_id
@@ -127,6 +160,9 @@ def load_scenario(scenario_id: str = SCENARIO_ID) -> ScenarioData:
             scenario_dir / "rendezvous_points.csv", RendezvousPoint
         ),
         live_incidents=_read_csv(scenario_dir / "live_incidents.csv", LiveIncident),
+        availability_profiles=_read_availability_profiles(
+            scenario_dir / "availability_profiles.json"
+        ),
     )
     _validate_relationships(data)
     return data

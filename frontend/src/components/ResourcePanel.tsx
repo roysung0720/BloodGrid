@@ -1,13 +1,22 @@
 import { Ambulance, Clock3, Droplets } from "lucide-react";
 
-import type { FeatureSelection, ScenarioData } from "../lib/types";
+import type {
+  BaselineCoverageResult,
+  FeatureSelection,
+  ScenarioData,
+} from "../lib/types";
 
 type ResourcePanelProps = {
   scenario: ScenarioData;
+  coverage: BaselineCoverageResult | null;
   onSelect: (selection: FeatureSelection) => void;
 };
 
-export function ResourcePanel({ scenario, onSelect }: ResourcePanelProps) {
+export function ResourcePanel({ scenario, coverage, onSelect }: ResourcePanelProps) {
+  const eligibilityByUnit = new Map(
+    coverage?.resource_eligibility.map((assessment) => [assessment.unit_id, assessment]),
+  );
+
   return (
     <section className="rail-section resource-section">
       <div className="section-heading">
@@ -17,6 +26,13 @@ export function ResourcePanel({ scenario, onSelect }: ResourcePanelProps) {
       <div className="resource-list">
         {scenario.response_units.map((unit) => {
           const isOnCall = unit.crew_status === "ON_CALL";
+          const eligibility = eligibilityByUnit.get(unit.unit_id);
+          const unavailable = eligibility ? !eligibility.eligible : false;
+          const statusText = unavailable
+            ? eligibility?.reasons[0] ?? "Not eligible for response"
+            : isOnCall
+              ? `On call · ${unit.mobilization_minutes} min mobilization`
+              : "Staffed and available";
           return (
             <button
               className="resource-row"
@@ -25,14 +41,12 @@ export function ResourcePanel({ scenario, onSelect }: ResourcePanelProps) {
               type="button"
             >
               <span
-                className={`status-dot ${isOnCall ? "status-dot--on-call" : ""}`}
+                className={`status-dot ${unavailable ? "status-dot--unavailable" : isOnCall ? "status-dot--on-call" : ""}`}
               />
               <span className="resource-row__content">
                 <strong>{unit.unit_id}</strong>
                 <span>
-                  {isOnCall
-                    ? `On call · ${unit.mobilization_minutes} min mobilization`
-                    : "Staffed and available"}
+                  {statusText}
                 </span>
               </span>
               <span className="resource-row__inventory">

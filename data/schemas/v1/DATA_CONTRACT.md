@@ -100,6 +100,20 @@
 | `status` | text | `OPEN`, `RESOLVED`, or `CANCELLED` | Simulation state |
 | `created_at` | datetime | required | Scenario timeline input |
 
+## availability_profiles.json
+
+This optional-for-future but required-for-the-initial-demo JSON file defines named synthetic operating states without rewriting source CSV files.
+
+| Field | Type | Rule | Purpose |
+| --- | --- | --- | --- |
+| `profiles` | array | non-empty; includes `baseline` | Demo operating-state catalog |
+| `profile_id` | text | unique and stable | Query parameter and frontend selector value |
+| `name` | text | required | Human-readable demo label |
+| `description` | text | required | Synthetic-state explanation |
+| `resource_overrides` | array | defaults to empty | Targeted resource changes |
+| `resource_overrides[].unit_id` | text | references `response_units.csv` | Unit to overlay |
+| override fields | values | optional | `vehicle_status`, `crew_status`, `blood_credentialed`, `mobilization_minutes`, `blood_units_onboard`, `blood_availability_status`, or `blood_temperature_status` |
+
 ## Cross-File Validation
 
 1. Every `home_station_id` must exist in `stations.csv`.
@@ -109,3 +123,4 @@
 5. Every live-incident destination must exist in `hospitals.csv` and be active.
 6. Only rendezvous points with both `approved=true` and `active=true` may be evaluated.
 7. Any changed scenario data must keep the supplied bounding box valid and update the scenario provenance when its source classification changes.
+8. Availability profiles are synthetic overlays only. `baseline` must be present, profile IDs must be unique, and every override must reference an existing response unit.

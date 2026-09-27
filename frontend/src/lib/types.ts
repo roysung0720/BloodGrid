@@ -95,6 +95,24 @@ export type LiveIncident = {
   created_at: string;
 };
 
+export type ResourceAvailabilityOverride = {
+  unit_id: string;
+  vehicle_status: string | null;
+  crew_status: string | null;
+  blood_credentialed: boolean | null;
+  mobilization_minutes: number | null;
+  blood_units_onboard: number | null;
+  blood_availability_status: string | null;
+  blood_temperature_status: string | null;
+};
+
+export type AvailabilityProfile = {
+  profile_id: string;
+  name: string;
+  description: string;
+  resource_overrides: ResourceAvailabilityOverride[];
+};
+
 export type ScenarioData = {
   metadata: ScenarioMetadata;
   stations: Station[];
@@ -104,6 +122,8 @@ export type ScenarioData = {
   historical_incidents: HistoricalIncident[];
   rendezvous_points: RendezvousPoint[];
   live_incidents: LiveIncident[];
+  availability_profiles: AvailabilityProfile[];
+  active_availability_profile_id: string;
 };
 
 export type LayerKey =

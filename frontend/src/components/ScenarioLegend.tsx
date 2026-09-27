@@ -6,6 +6,7 @@ const BASE_LEGEND_ITEMS: LegendItem[] = [
   ["station", "Station"],
   ["unit-available", "Available unit"],
   ["unit-on-call", "On-call unit"],
+  ["unit-unavailable", "Unavailable unit"],
   ["hospital", "Hospital"],
   ["incident-covered", "Covered demand"],
   ["incident-uncovered", "Uncovered demand"],
@@ -32,9 +33,9 @@ export function ScenarioLegend({
   const legendItems: LegendItem[] = [
     ...BASE_LEGEND_ITEMS.slice(0, 1),
     ...strategicLegendItems,
-    ...BASE_LEGEND_ITEMS.slice(1, 7),
+    ...BASE_LEGEND_ITEMS.slice(1, 8),
     ...rendezvousLegendItems,
-    ...BASE_LEGEND_ITEMS.slice(7),
+    ...BASE_LEGEND_ITEMS.slice(8),
   ];
 
   return (
