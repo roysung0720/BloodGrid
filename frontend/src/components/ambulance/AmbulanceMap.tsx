@@ -39,12 +39,14 @@ type AmbulanceMapProps = {
   destinationHospitalId: string | null;
   rendezvousPoint: { longitude: number; latitude: number; name: string } | null;
   activeRoute: LngLat[] | null;
+  /** Road already driven: kept on the map in a dull red. */
+  drivenRoute: LngLat[][];
   upcomingRoute: LngLat[] | null;
   resourceRoute: LngLat[] | null;
   watchPoints: LngLat[];
 };
 
-const ROUTE_SOURCES = ["resource-route", "upcoming-route", "active-route"] as const;
+const ROUTE_SOURCES = ["resource-route", "upcoming-route", "driven-route", "active-route"] as const;
 const NAVIGATION_ZOOM = 16;
 const NAVIGATION_PITCH = 45;
 const SIDE_PADDING = 40;
@@ -56,6 +58,14 @@ function lineFeature(coordinates: LngLat[] | null) {
     type: "Feature" as const,
     properties: {},
     geometry: { type: "LineString" as const, coordinates: coordinates ?? [] },
+  };
+}
+
+function multiLineFeature(lines: LngLat[][]) {
+  return {
+    type: "Feature" as const,
+    properties: {},
+    geometry: { type: "MultiLineString" as const, coordinates: lines },
   };
 }
 
@@ -84,6 +94,7 @@ export function AmbulanceMap({
   destinationHospitalId,
   rendezvousPoint,
   activeRoute,
+  drivenRoute,
   upcomingRoute,
   resourceRoute,
   watchPoints,
@@ -135,6 +146,13 @@ export function AmbulanceMap({
         source: "upcoming-route",
         layout: { "line-cap": "round", "line-join": "round" },
         paint: { "line-color": "#d8d8e0", "line-width": 5, "line-opacity": 0.55, "line-dasharray": [1, 1.4] },
+      });
+      map.addLayer({
+        id: "driven-route",
+        type: "line",
+        source: "driven-route",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#a3444b", "line-width": 7, "line-opacity": 0.75 },
       });
       map.addLayer({
         id: "active-route-casing",
@@ -448,16 +466,15 @@ export function AmbulanceMap({
       return;
     }
     const data = {
-      "active-route": activeRoute,
-      "upcoming-route": upcomingRoute,
-      "resource-route": resourceRoute,
+      "active-route": lineFeature(activeRoute),
+      "upcoming-route": lineFeature(upcomingRoute),
+      "resource-route": lineFeature(resourceRoute),
+      "driven-route": multiLineFeature(drivenRoute),
     };
     for (const sourceId of ROUTE_SOURCES) {
-      (map.getSource(sourceId) as mapboxgl.GeoJSONSource | undefined)?.setData(
-        lineFeature(data[sourceId]),
-      );
+      (map.getSource(sourceId) as mapboxgl.GeoJSONSource | undefined)?.setData(data[sourceId]);
     }
-  }, [activeRoute, upcomingRoute, resourceRoute, styleReady]);
+  }, [activeRoute, drivenRoute, upcomingRoute, resourceRoute, styleReady]);
 
   if (!token) {
     return (

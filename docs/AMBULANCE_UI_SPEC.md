@@ -416,6 +416,9 @@ This section records where the working model differs from, or adds to, sections 
   - The evaluator picks the soonest blood that keeps the ambulance heading toward the hospital; see **Meeting Spots** in `docs/HANDOFF.md`.
   - Generic spots are labeled by the road they sit on, e.g. "Parking lot on GA 211".
   - The Ambulance UI no longer loads the scenario's rendezvous-point list; it uses the candidate's own coordinates.
+- **Driven road stays on the map (revision 8, 2026-09-27).** While driving, the route line behind the ambulance turns a dull red and only the road ahead stays bright red.
+  - The driven part of the first leg is kept after **Blood received**, and the driven part of a road abandoned by **Reroute** is kept too, so the whole trip stays visible for the demo until the request ends.
+  - The split comes from the leg's own route geometry (`splitRoute` in `src/lib/navigation.ts`). In simulation it is exact; with GPS it is the nearest point on the route.
 - **Demo menu (revision 3).** A **Demo** button in the Ambulance UI top bar sets the simulation speed to x1, x2, x5, or x10. The default is `BLOODGRID_AMBULANCE_SIM_SPEED_MULTIPLIER`, now 5.
   - Movement runs on a single simulation clock shared by the ambulance and the blood unit. The clock re-anchors when the speed changes, so neither vehicle jumps.
   - ETAs remain in modeled road minutes.
