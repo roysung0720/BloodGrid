@@ -1,0 +1,18 @@
+{
+  "scenario_id": "echols_valdosta_public_geography_v1",
+  "name": "Echols-Valdosta Public Geography Demo",
+  "schema_version": "v1",
+  "classification": "HYBRID_PUBLIC_GEOGRAPHY_SYNTHETIC_OPERATIONS",
+  "geographic_area": "Echols County and the Valdosta-Lakeland service corridor, south Georgia",
+  "coordinate_system": "WGS84 decimal degrees",
+  "bounding_box": {
+    "min_latitude": 30.5,
+    "max_latitude": 31.12,
+    "min_longitude": -83.42,
+    "max_longitude": -82.52
+  },
+  "default_live_incident_id": "LIVE-EV-001",
+  "target_coverage_minutes": 20,
+  "purpose": "Demonstrate BloodGrid logistics on documented public geography and public facility references while retaining synthetic operations.",
+  "limitations": "County boundary and listed facility locations are public-source-derived snapshots. All EMS resources, blood inventory, staffing, demand proxies, rendezvous points, incident records, operational status, trauma display attribute, and routing interpretation are synthetic demo inputs, not live operational information."
+}

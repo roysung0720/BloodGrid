@@ -1,0 +1,7 @@
+station_id,name,latitude,longitude,station_type,active,capacity
+S-EV-01,Synthetic Valdosta corridor staging,30.806,-83.250,STAGING_SITE,true,1
+S-EV-02,Synthetic Statenville area staging,30.704,-82.944,STAGING_SITE,true,1
+S-EV-03,Synthetic eastern Echols staging,30.735,-82.722,STAGING_SITE,true,1
+S-EV-04,Synthetic north corridor staging,30.920,-83.020,STAGING_SITE,true,1
+S-EV-05,Synthetic southern rural staging,30.582,-82.850,STAGING_SITE,true,1
+S-EV-06,Synthetic western county staging,30.686,-83.162,STAGING_SITE,true,1

@@ -1,0 +1,31 @@
+incident_id,source_road_name,source_road_class,source_road_oid,source_vertex_index,latitude,longitude,centerline_offset_meters,classification,method
+DP-EV-001,State Rte 401,PRIMARY,1106087287032,120,30.891671,-83.353665,29,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-002,State Hwy 93,PRIMARY,1104259613708,57,30.578475,-83.104596,46,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-003,I- 75,PRIMARY,110499211196,83,30.916250,-83.364651,20,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-004,US Hwy 41,PRIMARY,110499211168,4,30.895972,-83.356703,37,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-005,State Rte 7,PRIMARY,110499211132,12,30.899347,-83.358720,54,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-006,State Rte 401,PRIMARY,1106087287006,77,30.694369,-83.238697,28,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-007,State Hwy 93,PRIMARY,1104259612260,31,30.554352,-83.082781,45,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-008,I- 75,PRIMARY,11055773305,15,31.050576,-83.396936,19,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-009,US Hwy 41,PRIMARY,110499211168,32,30.915841,-83.364462,36,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-010,State Rte 7,PRIMARY,110499211133,71,30.901210,-83.360365,53,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-011,State Rte 401,PRIMARY,1106087287032,334,30.659548,-83.204631,27,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-012,State Hwy 93,PRIMARY,1104259613708,111,30.615639,-83.151754,44,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-013,I- 75,PRIMARY,1104259744236,95,30.604527,-83.129923,18,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-014,US Hwy 41,PRIMARY,110499211169,19,30.952869,-83.375841,35,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-015,State Rte 7,PRIMARY,110499211133,1,30.992154,-83.388674,52,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-016,State Rte 401,PRIMARY,1106087287032,181,30.839383,-83.328556,26,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-017,State Hwy 93,PRIMARY,1104259613708,3,30.511092,-83.050901,43,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-018,I- 75,PRIMARY,110499211195,90,30.924541,-83.367267,17,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-019,Lakes Blvd,SECONDARY,110499222931,30,30.683539,-83.212468,34,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-020,State Rte 376,SECONDARY,1106087286756,154,30.681070,-83.220274,51,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-021,Pearson Hwy,SECONDARY,1103720554265,2,31.070948,-82.785168,25,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-022,State Rte 37 E,SECONDARY,1104258178106,2,31.045206,-83.047371,42,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-023,N Patterson St,SECONDARY,110499240282,17,30.841883,-83.284756,16,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-024,E Church St,SECONDARY,11055819236,0,31.042631,-83.071643,33,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-025,Hwy 137,SECONDARY,1103998290545,8,31.057961,-83.151187,50,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-026,US Hwy 84,SECONDARY,1106073896821,86,30.823549,-83.298082,24,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-027,State Hwy 143,SECONDARY,11055234048,44,30.601340,-83.101195,41,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-028,US Hwy 221,SECONDARY,1106087245129,143,30.823101,-83.305393,15,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-029,N Carter St,SECONDARY,11055819207,1,31.042202,-83.075104,32,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset
+DP-EV-030,US Hwy 41 S,SECONDARY,1106073056580,302,30.894532,-83.353737,49,SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY,Deterministic sample from public Census road centerline with a 12-54 meter synthetic offset

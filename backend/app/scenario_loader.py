@@ -17,6 +17,7 @@ from .models import (
     RendezvousPoint,
     ResponseUnit,
     ScenarioData,
+    ScenarioCatalogEntry,
     ScenarioMetadata,
     Station,
 )
@@ -166,3 +167,44 @@ def load_scenario(scenario_id: str = SCENARIO_ID) -> ScenarioData:
     )
     _validate_relationships(data)
     return data
+
+
+def list_scenarios() -> list[ScenarioCatalogEntry]:
+    """List validated metadata for the versioned scenarios the API can load."""
+
+    entries: list[ScenarioCatalogEntry] = []
+    for scenario_dir in sorted(DATA_SCENARIOS_DIR.iterdir()):
+        if not scenario_dir.is_dir():
+            continue
+
+        metadata_path = scenario_dir / "scenario.json"
+        if not metadata_path.is_file():
+            continue
+        try:
+            metadata = ScenarioMetadata.model_validate_json(metadata_path.read_text())
+        except ValidationError as error:
+            raise ScenarioLoadError(
+                f"Invalid scenario metadata: {scenario_dir.name}/scenario.json"
+            ) from error
+
+        if metadata.scenario_id != scenario_dir.name:
+            raise ScenarioLoadError(
+                f"Scenario folder {scenario_dir.name} does not match metadata ID "
+                f"{metadata.scenario_id}"
+            )
+        entries.append(
+            ScenarioCatalogEntry(
+                metadata=metadata,
+                is_default=metadata.scenario_id == SCENARIO_ID,
+            )
+        )
+
+    if not entries:
+        raise ScenarioLoadError("No scenarios were found")
+    return sorted(
+        entries,
+        key=lambda entry: (
+            not entry.is_default,
+            entry.metadata.name,
+        ),
+    )

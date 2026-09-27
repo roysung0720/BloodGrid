@@ -1,0 +1,48 @@
+{
+  "dataset_id": "echols_valdosta_public_geography_v1",
+  "classification": "HYBRID_PUBLIC_GEOGRAPHY_SYNTHETIC_OPERATIONS",
+  "coordinate_system": "WGS84 decimal degrees",
+  "public_geography": {
+    "county": {
+      "name": "Echols County",
+      "geoid": "13101",
+      "source_id": "census_tigerweb_echols_county",
+      "boundary_bbox": {
+        "min_latitude": 30.5906,
+        "max_latitude": 30.9043,
+        "min_longitude": -83.1366,
+        "max_longitude": -82.5834
+      }
+    },
+    "facilities": [
+      {
+        "facility_id": "110122",
+        "name": "SGMC HEALTH",
+        "cms_source_id": "cms_hospital_directory_page_2",
+        "geocoder_source_id": "census_geocoder_sgmc_health"
+      },
+      {
+        "facility_id": "111326",
+        "name": "SGMC HEALTH LANIER",
+        "cms_source_id": "cms_hospital_directory_page_2",
+        "geocoder_source_id": "census_geocoder_sgmc_health_lanier"
+      }
+    ],
+    "road_centerlines": {
+      "primary_source_id": "census_tigerweb_primary_roads",
+      "secondary_source_id": "census_tigerweb_secondary_roads",
+      "derived_demand_proxy_file": "road_aligned_demand_proxies.csv",
+      "method": "18 primary-road and 12 secondary-road deterministic centerline samples, each with a synthetic 12-54 meter offset."
+    }
+  },
+  "synthetic_operational_records": [
+    "stations.csv",
+    "response_units.csv",
+    "blood_units.csv",
+    "historical_incidents.csv",
+    "rendezvous_points.csv",
+    "live_incidents.csv",
+    "availability_profiles.json"
+  ],
+  "limitations": "This file does not establish live operations, emergency routing, trauma designation, patient destinations, or approved rendezvous locations."
+}

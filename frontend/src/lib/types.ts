@@ -19,6 +19,11 @@ export type ScenarioMetadata = {
   limitations: string;
 };
 
+export type ScenarioCatalogEntry = {
+  metadata: ScenarioMetadata;
+  is_default: boolean;
+};
+
 export type Station = {
   station_id: string;
   name: string;

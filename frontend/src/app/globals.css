@@ -111,6 +111,37 @@ h2 {
   gap: 12px;
 }
 
+.scenario-selector {
+  align-items: end;
+  display: flex;
+  gap: 10px;
+}
+
+.scenario-select {
+  display: grid;
+  gap: 4px;
+}
+
+.scenario-select > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.scenario-select select {
+  appearance: auto;
+  background: #f5f8f9;
+  border: 1px solid var(--line);
+  color: var(--navy);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  height: 32px;
+  max-width: 270px;
+  padding: 0 8px;
+}
+
 .scenario-pill {
   align-items: center;
   background: #ecf6f2;
@@ -120,6 +151,12 @@ h2 {
   font-weight: 700;
   gap: 6px;
   padding: 7px 9px;
+}
+
+.scenario-pill--hybrid {
+  background: #eef4fb;
+  border-color: #c5d7ea;
+  color: #2c628f;
 }
 
 .scenario-name {
@@ -690,6 +727,8 @@ h2 {
 @media (max-width: 620px) {
   .topbar { align-items: flex-start; flex-direction: column; gap: 11px; padding: 14px; }
   .topbar__context { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .scenario-selector { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .scenario-select select { max-width: min(100%, 310px); }
   .map-stage { min-height: 62vh; }
   .layer-controls { left: 10px; top: 57px; width: 176px; }
   .map-title { left: 10px; top: 10px; }

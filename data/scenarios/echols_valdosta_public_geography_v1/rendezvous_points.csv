@@ -1,0 +1,9 @@
+rendezvous_id,name,latitude,longitude,location_type,approved,active
+RV-EV-01,Synthetic west corridor rendezvous,30.718,-83.078,SAFE_STAGING_AREA,true,true
+RV-EV-02,Synthetic central corridor rendezvous,30.742,-83.002,SAFE_STAGING_AREA,true,true
+RV-EV-03,Synthetic east corridor rendezvous,30.758,-82.920,SAFE_STAGING_AREA,true,true
+RV-EV-04,Synthetic southeast corridor rendezvous,30.700,-82.832,SAFE_STAGING_AREA,true,true
+RV-EV-05,Synthetic north corridor rendezvous,30.836,-83.030,SAFE_STAGING_AREA,true,true
+RV-EV-06,Synthetic northeast corridor rendezvous,30.862,-82.890,SAFE_STAGING_AREA,true,true
+RV-EV-07,Synthetic southern corridor rendezvous,30.630,-82.920,SAFE_STAGING_AREA,true,true
+RV-EV-08,Synthetic staging review point,30.690,-83.145,SAFE_STAGING_AREA,false,true

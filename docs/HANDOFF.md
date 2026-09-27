@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-26
 
-**Current phase:** Multi-incident live-response selection complete; data improvement and demo polish continue.
+**Current phase:** In-app scenario selection and public-geography hybrid scenario complete; demo polish remains.
 
 **Audience:** Alex, project teammates, and coding agents joining the work.
 
@@ -75,6 +75,27 @@ Completed foundation work:
 - Four synthetic open blood-request cases now live in `data/scenarios/rural_ga_initial_v1/live_incidents.csv`. Each records its own supplied active hospital; they are controlled demo cases, not patient or CAD records.
 - Dashboard Live incident selector added to `frontend/src/components/IncidentPanel.tsx`. Selecting its demo case or clicking a live-incident map marker refreshes that request's live rendezvous result and map highlight without recalculating regional coverage or strategic staging.
 - Rendezvous tests now confirm that evaluating different incident IDs preserves each incident's own supplied hospital rather than reusing or selecting a destination.
+- Added `echols_valdosta_public_geography_v1`, a separate runnable hybrid scenario. It retains the original synthetic scenario unchanged and defaults remain unchanged.
+- The hybrid scenario uses a saved Census TIGERweb Echols County boundary, public CMS facility directory rows for SGMC HEALTH and SGMC HEALTH LANIER, and saved Census Geocoder responses for their address coordinates.
+- All operational inputs in the hybrid scenario remain synthetic: staging sites, resource and blood status, demand proxies, live incidents, patient-unit labels, availability profiles, and rendezvous points. No actual EMS agency, staffing position, CAD record, patient record, blood inventory, or approved rendezvous site is asserted.
+- Added `data/schemas/v1/SOURCE_MANIFEST_CONTRACT.md`, a scenario-level `sources.json`, and processed public facility reference rows. Source hashes, direct URLs, transformations, and limitations are all retained with the scenario.
+- Added loader coverage for the hybrid scenario. The backend test suite now has 21 passing tests.
+- Added `GET /scenarios` plus optional `scenario_id` support to scenario-aware
+  API endpoints. The configured `BLOODGRID_SCENARIO` remains the startup default.
+- Added the dashboard header's **Demo data set** selector. It lists the
+  versioned data worlds, displays the selected classification, resets the
+  scenario-specific availability profile to baseline, and reloads map and
+  calculation state together. The header no longer incorrectly calls the
+  hybrid data set wholly synthetic.
+- Replaced the hybrid scenario's hand-drawn diagonal demand grid with 30
+  `SYNTHETIC_ROAD_ALIGNED_DEMAND_PROXY` records: 18 deterministic samples from
+  public Census primary-road centerlines and 12 from secondary-road centerlines,
+  each offset 12-54 meters to resemble ordinary map geocoding. The generated
+  reference table records the source road for every proxy.
+- Added the repeatable generator `scripts/build_echols_valdosta_demand_proxies.mjs`
+  plus raw road snapshots, source hashes, and loader checks for road-class
+  balance and source-road variety. This is public road geometry only, not crash,
+  traffic, CAD, or patient data.
 
 The scenario uses synthetic modeled rural-Georgia geography and operational data. It must not be presented as live or facility-accurate information.
 
@@ -84,11 +105,12 @@ The scenario uses synthetic modeled rural-Georgia geography and operational data
 | --- | --- | --- |
 | `frontend/` | Runnable Next.js dashboard with baseline, strategic, multi-incident live-rendezvous, and availability views | Data-story and demo polish |
 | `backend/` | FastAPI scenario API, routing adapter, availability overlays, coverage, deployment, and per-incident rendezvous evaluation | Data refinement and demo support |
-| `data/raw/` | Empty | Untouched public source datasets |
-| `data/processed/` | Empty | Cleaned geographic and demand-proxy data |
+| `data/raw/` | Saved Census TIGERweb, CMS directory, and Census Geocoder source responses | Additional untouched public source snapshots |
+| `data/processed/` | Echols-Valdosta public geography summary and facility reference rows | Cleaned geographic and demand-proxy data |
 | `data/synthetic/` | Empty | Demo inventory, staffing, availability, and simulated incidents |
 | `data/schemas/v1/` | CSV data contract | Future schema versions when needed |
 | `data/scenarios/rural_ga_initial_v1/` | Complete initial demo world | Subsequent data scenarios |
+| `data/scenarios/echols_valdosta_public_geography_v1/` | Public-geography / synthetic-operations demo world with source manifest | Dashboard validation and presentation polish |
 | `scripts/` | Empty | Repeatable data-preparation and scenario-generation utilities |
 | `tests/` | Empty | Deterministic tests for core calculations and API behavior |
 
@@ -191,6 +213,9 @@ This section is the practical integration contract for Alex, Claude, Codex, and 
 - `GET /deployment/strategic` returns the OR-Tools result for the same scenario. Its core code is `backend/app/deployment/service.py`; tests must use a fake `RoutingProvider`, not live Mapbox requests.
 - `GET /live-incidents/{incident_id}/rendezvous` returns the deterministic live comparison. Its core code is `backend/app/rendezvous/service.py`; tests must use a fake `RoutingProvider`, not live Mapbox requests.
 - The selected live-incident ID is maintained in `frontend/src/app/page.tsx`. `IncidentPanel.tsx` is the selector UI; it passes that ID to the existing rendezvous API client. Do not rerun coverage or strategic deployment on incident change.
+- The default scenario remains `rural_ga_initial_v1`. Use the dashboard header's **Demo data set** selector to evaluate the hybrid scenario without restarting. `BLOODGRID_SCENARIO` changes only the scenario selected when the backend starts.
+- Public facility records are static source snapshots. `active=true` in the hybrid scenario only enables a known record for the demo; it does not represent real-time hospital availability, trauma verification, or destination selection.
+- Hybrid source provenance is metadata only. Do not make routing, eligibility, deployment, or rendezvous logic depend on a particular public source or Mapbox feature.
 - `GET /scenario?availability_profile=<profile_id>` returns the selected copied scenario. The same optional query parameter is accepted by `/coverage/baseline`, `/deployment/strategic`, and `/live-incidents/{incident_id}/rendezvous`; `/availability-profiles` lists all profile definitions.
 - The current routing profile is `mapbox/driving`, and `MapboxMatrixProvider` batches the initial three eligible units and 30 demand points into two Matrix API requests.
 - The coverage result is a logistics estimate only. It does not provide a dispatch order, clinical recommendation, hospital selection, or real-world response guarantee.
@@ -224,22 +249,20 @@ For dashboard changes, also start the backend and frontend locally and inspect `
 
 ## Next Recommended Work
 
-Build data improvement and demo polish:
+Validate and polish the data-improvement demo:
 
-1. Decide whether to replace any fictional geography with clearly sourced public geography while preserving privacy and provenance.
+1. Review map framing and marker density for both scenarios at laptop and projector sizes, especially the road-aligned Echols-Valdosta demand distribution.
 2. Improve the dashboard's demo flow so a presenter can move from baseline coverage to strategic staging, then choose a live incident and availability case without explaining implementation details.
-3. Review marker density, map labels, and panel hierarchy for quick audience comprehension at common laptop and projector sizes.
-4. Keep the two selectors conceptually separate: availability profiles vary the operational resource state; the live-incident selector varies the response situation. Do not mutate source scenario files when either is selected.
-5. Keep all synthetic operational values visibly labeled and do not add clinical destination or treatment recommendations.
-6. Update the demo script, provenance notes, and screenshots only after the tested MVP behavior remains intact.
+3. Keep the three selectors conceptually separate: the data-set selector changes the complete demo world; availability profiles vary one world's operational resource state; the live-incident selector varies the response situation. Do not mutate source scenario files when any is selected.
+4. Keep all synthetic operational values visibly labeled and do not add clinical destination or treatment recommendations.
+5. Update the demo script, provenance notes, and screenshots only after the tested MVP behavior remains intact.
 
 ## Important Decisions Still Open
 
-- Exact Georgia demo region.
+- Whether the Echols-Valdosta corridor should become the final live-demo scenario after a dashboard walkthrough.
 - Coverage target, currently 20 minutes in `rural_ga_initial_v1`; whether it should differ for the final demo.
 - Whether the default 10-minute maximum hospital delay and 0.5 hospital-delay weight should change for the final demo.
-- Which, if any, real public geography sources should replace the modeled rural-Georgia locations before the final presentation.
-- How much real public geography to incorporate in the first demo dataset.
+- Whether to add a scenario selector in the dashboard or keep scenario switching as a presenter-only local configuration step.
 - Whether the final demo includes optional OpenAI-generated wording.
 
 These values should be centralized as configuration rather than hard-coded.

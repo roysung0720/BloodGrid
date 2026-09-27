@@ -1,0 +1,4 @@
+unit_id,unit_type,home_station_id,current_latitude,current_longitude,vehicle_status,crew_status,crew_level,blood_credentialed,mobilization_minutes,blood_units_onboard,shift_start,shift_end
+BR-EV-01,SUPERVISOR,S-EV-01,30.806,-83.250,AVAILABLE,AVAILABLE,PARAMEDIC,true,0,2,07:00,19:00
+BR-EV-02,SUPERVISOR,S-EV-03,30.735,-82.722,AVAILABLE,AVAILABLE,PARAMEDIC,true,0,2,07:00,19:00
+BR-EV-03,SUPERVISOR,S-EV-04,30.920,-83.020,AVAILABLE,ON_CALL,PARAMEDIC,true,8,2,07:00,19:00

@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, Database, Layers3, MapPinned } from "lucide-react";
+import { Activity, Layers3, MapPinned } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { FeatureDetails } from "../components/FeatureDetails";
@@ -13,10 +13,12 @@ import { OperationsMap } from "../components/OperationsMap";
 import { ResourcePanel } from "../components/ResourcePanel";
 import { RendezvousPanel } from "../components/RendezvousPanel";
 import { ScenarioLegend } from "../components/ScenarioLegend";
+import { ScenarioSelector } from "../components/ScenarioSelector";
 import {
   getBaselineCoverage,
   getLiveRendezvous,
   getScenario,
+  getScenarioCatalog,
   getStrategicDeployment,
 } from "../lib/api";
 import type {
@@ -25,6 +27,7 @@ import type {
   FeatureSelection,
   LayerVisibility,
   LiveRendezvousResult,
+  ScenarioCatalogEntry,
   ScenarioData,
   StrategicDeploymentResult,
 } from "../lib/types";
@@ -40,6 +43,8 @@ const DEFAULT_LAYERS: LayerVisibility = {
 
 export default function HomePage() {
   const [scenario, setScenario] = useState<ScenarioData | null>(null);
+  const [scenarioCatalog, setScenarioCatalog] = useState<ScenarioCatalogEntry[]>([]);
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string | null>(null);
   const [coverage, setCoverage] = useState<BaselineCoverageResult | null>(null);
   const [deployment, setDeployment] = useState<StrategicDeploymentResult | null>(null);
   const [rendezvous, setRendezvous] = useState<LiveRendezvousResult | null>(null);
@@ -58,13 +63,47 @@ export default function HomePage() {
 
   useEffect(() => {
     let cancelled = false;
+
+    getScenarioCatalog()
+      .then((catalog) => {
+        if (cancelled) {
+          return;
+        }
+        setScenarioCatalog(catalog);
+        setSelectedScenarioId(
+          catalog.find((entry) => entry.is_default)?.metadata.scenario_id ??
+            catalog[0]?.metadata.scenario_id ??
+            null,
+        );
+      })
+      .catch((requestError: Error) => {
+        if (!cancelled) {
+          setError(requestError.message);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedScenarioId) {
+      return;
+    }
+
+    let cancelled = false;
+    setScenario(null);
     setCoverage(null);
     setDeployment(null);
+    setRendezvous(null);
+    setError(null);
     setCoverageError(null);
     setDeploymentError(null);
+    setRendezvousError(null);
     setSelectedFeature(null);
 
-    getScenario(availabilityProfileId)
+    getScenario(selectedScenarioId, availabilityProfileId)
       .then((loadedScenario) => {
         if (!cancelled) {
           setScenario(loadedScenario);
@@ -82,7 +121,7 @@ export default function HomePage() {
           setError(requestError.message);
         }
       });
-    getBaselineCoverage(availabilityProfileId)
+    getBaselineCoverage(selectedScenarioId, availabilityProfileId)
       .then((result) => {
         if (!cancelled) {
           setCoverage(result);
@@ -93,7 +132,7 @@ export default function HomePage() {
           setCoverageError(requestError.message);
         }
       });
-    getStrategicDeployment(availabilityProfileId)
+    getStrategicDeployment(selectedScenarioId, availabilityProfileId)
       .then((result) => {
         if (!cancelled) {
           setDeployment(result);
@@ -108,7 +147,7 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [availabilityProfileId]);
+  }, [availabilityProfileId, selectedScenarioId]);
 
   const selectedIncident = scenario?.live_incidents.find(
     (incident) => incident.incident_id === selectedIncidentId,
@@ -117,7 +156,7 @@ export default function HomePage() {
   );
 
   useEffect(() => {
-    if (!selectedIncident) {
+    if (!selectedIncident || !selectedScenarioId) {
       return;
     }
 
@@ -125,7 +164,11 @@ export default function HomePage() {
     setRendezvous(null);
     setRendezvousError(null);
 
-    getLiveRendezvous(selectedIncident.incident_id, availabilityProfileId)
+    getLiveRendezvous(
+      selectedIncident.incident_id,
+      selectedScenarioId,
+      availabilityProfileId,
+    )
       .then((result) => {
         if (!cancelled) {
           setRendezvous(result);
@@ -140,7 +183,14 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [availabilityProfileId, selectedIncident]);
+  }, [availabilityProfileId, selectedIncident, selectedScenarioId]);
+
+  function selectScenario(scenarioId: string) {
+    setSelectedScenarioId(scenarioId);
+    setAvailabilityProfileId("baseline");
+    setSelectedIncidentId(null);
+    setSelectedFeature(null);
+  }
 
   function selectLiveIncident(incidentId: string) {
     setSelectedIncidentId(incidentId);
@@ -196,11 +246,11 @@ export default function HomePage() {
         </div>
 
         <div className="topbar__context">
-          <span className="scenario-pill">
-            <Database size={14} aria-hidden="true" />
-            Synthetic demo data
-          </span>
-          <span className="scenario-name">{scenario.metadata.name}</span>
+          <ScenarioSelector
+            scenarios={scenarioCatalog}
+            selectedScenarioId={selectedScenarioId}
+            onChange={selectScenario}
+          />
         </div>
       </header>
 

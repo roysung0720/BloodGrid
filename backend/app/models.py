@@ -26,6 +26,13 @@ class ScenarioMetadata(BaseModel):
     limitations: str
 
 
+class ScenarioCatalogEntry(BaseModel):
+    """A selectable, versioned scenario advertised by the read-only API."""
+
+    metadata: ScenarioMetadata
+    is_default: bool
+
+
 class Station(BaseModel):
     station_id: str
     name: str

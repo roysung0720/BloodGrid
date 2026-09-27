@@ -6,7 +6,7 @@ It is decision support for logistics, not a clinical decision-maker. BloodGrid d
 
 ## Project status
 
-The project foundation, first versioned demo dataset, map-first operations dashboard, road-based baseline coverage calculation, strategic deployment recommendation, multi-incident live rendezvous evaluation, and dynamic availability simulation are in place. The next milestone is data improvement and polish.
+The project foundation, two versioned demo datasets, map-first operations dashboard, road-based baseline coverage calculation, strategic deployment recommendation, multi-incident live rendezvous evaluation, and dynamic availability simulation are in place. The current milestone is data improvement and polish.
 
 ## Planned application
 
@@ -48,6 +48,6 @@ npm run dev
 
 Copy `.env.example` to `.env` and supply a Mapbox access token before testing road routing. `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` draws the browser map; `MAPBOX_ACCESS_TOKEN` is the backend routing token. For this local prototype, the backend can fall back to the browser token, but keeping the routing token separate is recommended. Do not commit `.env` or any real keys.
 
-`BLOODGRID_SCENARIO` identifies the data bundle the backend will load. The initial bundle is `rural_ga_initial_v1`; see `data/scenarios/` for its contents and provenance.
+`BLOODGRID_SCENARIO` identifies the default data bundle when the backend starts. The dashboard's **Demo data set** menu can then switch between all available versioned scenarios without editing `.env` or restarting either local service. The default bundle is `rural_ga_initial_v1`, an all-synthetic demo. `echols_valdosta_public_geography_v1` is an optional second demo that combines public Census/CMS geography and facility references with explicitly synthetic operations. See `data/scenarios/` for each bundle's provenance.
 
 The map dashboard uses `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`. The backend uses the Mapbox Matrix API for baseline coverage, strategic staging, and live incident evaluation. The dashboard compares the current synthetic arrangement with an OR-Tools recommendation, then evaluates approved rendezvous points against direct transport to the selected incident's supplied hospital without selecting a destination. The Synthetic operating state selector applies named synthetic availability cases to all three calculations without changing the source scenario files; the Live incident selector changes only the request being evaluated.

@@ -16,6 +16,29 @@ The detailed field contract is in `PRODUCT_SPEC.md` and will become Pydantic mod
 
 The runnable CSV contract is maintained in `data/schemas/v1/DATA_CONTRACT.md`. Each complete data bundle belongs in `data/scenarios/<scenario_id>/` and declares its schema version in `scenario.json`.
 
+## Source provenance for hybrid scenarios
+
+Runtime CSV fields can be public-source-derived, synthetic, or both. When a
+scenario is not wholly synthetic, it must include `sources.json` using
+`data/schemas/v1/SOURCE_MANIFEST_CONTRACT.md` and should retain the untouched
+public source response under `data/raw/`. A derived, human-readable reference
+table belongs under `data/processed/<scenario_id>/`.
+
+`echols_valdosta_public_geography_v1` demonstrates this pattern: public county
+context and hospital directory/address coordinates are retained separately;
+all operational records remain synthetic. A public facility's `active=true`
+field means only that it is an enabled static record in the demo snapshot. It
+does not claim real-time availability or destination suitability.
+
+## Scenario selection
+
+`BLOODGRID_SCENARIO` configures the startup default only. The read-only API
+catalogs valid bundles and accepts a `scenario_id` on scenario-aware endpoints;
+the dashboard uses that catalog for its **Demo data set** selector. A selection
+does not edit CSV files or change the configured default. It resets the
+selected scenario's synthetic availability profile to `baseline` because those
+profile IDs are local to each scenario.
+
 ## Eligibility invariant
 
 A unit is eligible for a blood response only when all of the following are true:

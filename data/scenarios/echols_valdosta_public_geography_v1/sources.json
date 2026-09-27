@@ -1,0 +1,123 @@
+{
+  "manifest_version": "v1",
+  "scenario_id": "echols_valdosta_public_geography_v1",
+  "sources": [
+    {
+      "source_id": "census_tigerweb_echols_county",
+      "classification": "REAL",
+      "publisher": "U.S. Census Bureau",
+      "title": "TIGERweb State and County boundary: Echols County, Georgia (GEOID 13101)",
+      "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query?where=GEOID%3D%2713101%27&outFields=GEOID%2CNAME%2CSTATE%2CCOUNTY%2CCENTLAT%2CCENTLON&returnGeometry=true&f=geojson",
+      "accessed_at": "2026-09-26T00:00:00Z",
+      "raw_path": "data/raw/census_tiger_2025/echols_county_2026_tigerweb.geojson",
+      "sha256": "ca908c084797db061c91e5c77ca5f1c48105dbc1c18b6b4c8675f99aef4556c8",
+      "used_fields": ["GEOID", "NAME", "geometry"],
+      "transformations": "Copied unchanged to data/raw. Derived only the documented county bounding box and public-geography context in data/processed/echols_valdosta_public_geography_v1/public_geography_summary.json.",
+      "limitations": "A county boundary does not identify roads, EMS coverage, ambulance locations, dispatch practices, patient incidents, or operational access."
+    },
+    {
+      "source_id": "cms_hospital_directory_page_2",
+      "classification": "REAL",
+      "publisher": "Centers for Medicare & Medicaid Services",
+      "title": "Hospital General Information public directory, retrieved page containing Georgia facilities",
+      "url": "https://data.cms.gov/provider-data/api/1/datastore/query/xubh-q36u/0?limit=1000&offset=1000",
+      "accessed_at": "2026-09-26T00:00:00Z",
+      "raw_path": "data/raw/cms_hospital_general_information_2026-09-26/hospital_general_information_page_2.json",
+      "sha256": "cd5f87c33b6bd2e9f06ea28b609207d65d6d33353b59d1fc1038f21833b0d6a7",
+      "used_fields": ["facility_id", "facility_name", "address", "citytown", "state", "zip_code", "countyparish", "emergency_services"],
+      "transformations": "Selected facility IDs 110122 and 111326. Preserved their public identity and address values in public_hospital_references.csv. CMS does not provide coordinates in this endpoint.",
+      "limitations": "This directory is a source snapshot, not a live service-status feed, trauma-center directory, destination protocol, or statement that a facility is appropriate for any patient."
+    },
+    {
+      "source_id": "census_tigerweb_primary_roads",
+      "classification": "REAL",
+      "publisher": "U.S. Census Bureau",
+      "title": "TIGERweb primary-road centerlines for the Echols-Valdosta demo envelope",
+      "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Transportation_LargeScale/MapServer/0/query?where=1%3D1&geometry=-83.42%2C30.50%2C-82.52%2C31.12&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=BASENAME%2CNAME%2CMTFCC%2CRTTYP%2COID&returnGeometry=true&outSR=4326&f=geojson",
+      "accessed_at": "2026-09-26T00:00:00Z",
+      "raw_path": "data/raw/census_tiger_2026_roads/echols_valdosta_primary_roads.geojson",
+      "sha256": "7956e4058a6a2a1f99f3fc9ef0f0de7540ee549026334098ae14207e6fd7f62e",
+      "used_fields": ["NAME", "OID", "geometry"],
+      "transformations": "scripts/build_echols_valdosta_demand_proxies.mjs deterministically samples 18 points from these centerlines inside the scenario envelope and applies a documented synthetic 12-54 meter offset.",
+      "limitations": "A road centerline establishes only public map geometry. It does not establish traffic volume, crash frequency, EMS demand, access, road conditions, or the location of a real incident."
+    },
+    {
+      "source_id": "census_tigerweb_secondary_roads",
+      "classification": "REAL",
+      "publisher": "U.S. Census Bureau",
+      "title": "TIGERweb secondary-road centerlines for the Echols-Valdosta demo envelope",
+      "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Transportation_LargeScale/MapServer/1/query?where=1%3D1&geometry=-83.42%2C30.50%2C-82.52%2C31.12&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=BASENAME%2CNAME%2CMTFCC%2CRTTYP%2COID&returnGeometry=true&outSR=4326&f=geojson",
+      "accessed_at": "2026-09-26T00:00:00Z",
+      "raw_path": "data/raw/census_tiger_2026_roads/echols_valdosta_secondary_roads.geojson",
+      "sha256": "d416ed17a98f87134e58ac9aaba7c88b22693a77faf7fa1367f8adeef72cc4ca",
+      "used_fields": ["NAME", "OID", "geometry"],
+      "transformations": "scripts/build_echols_valdosta_demand_proxies.mjs deterministically samples 12 points from these centerlines inside the scenario envelope and applies a documented synthetic 12-54 meter offset.",
+      "limitations": "A road centerline establishes only public map geometry. It does not establish traffic volume, crash frequency, EMS demand, access, road conditions, or the location of a real incident."
+    },
+    {
+      "source_id": "census_geocoder_sgmc_health",
+      "classification": "REAL",
+      "publisher": "U.S. Census Bureau",
+      "title": "Census Geocoder response for SGMC HEALTH CMS address",
+      "url": "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=2501%20North%20Patterson%20Street%2C%20Valdosta%2C%20GA%2031602&benchmark=Public_AR_Current&format=json",
+      "accessed_at": "2026-09-26T00:00:00Z",
+      "raw_path": "data/raw/census_geocoder_2026-09-26/sgmc_health.json",
+      "sha256": "876c87b76564a6c6452731293b1bb6bf8b21c88bbeb7c0c12581eb8fb5900525",
+      "used_fields": ["result.addressMatches[0].coordinates"],
+      "transformations": "Used the first returned match to derive the H-EV-01 display and routing coordinate.",
+      "limitations": "A geocoded address is an approximate map coordinate; it is not a service entrance, ambulance bay, trauma designation, or destination recommendation."
+    },
+    {
+      "source_id": "census_geocoder_sgmc_health_lanier",
+      "classification": "REAL",
+      "publisher": "U.S. Census Bureau",
+      "title": "Census Geocoder response for SGMC HEALTH LANIER CMS address",
+      "url": "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=116%20West%20Thigpen%20Avenue%2C%20Lakeland%2C%20GA%2031635&benchmark=Public_AR_Current&format=json",
+      "accessed_at": "2026-09-26T00:00:00Z",
+      "raw_path": "data/raw/census_geocoder_2026-09-26/sgmc_health_lanier.json",
+      "sha256": "8fdd38f82f2b44dbd5dbf8744b74f2a8d218d581f144832e7e104700f0188d99",
+      "used_fields": ["result.addressMatches[0].coordinates"],
+      "transformations": "Used the first returned match to derive the H-EV-02 display and routing coordinate.",
+      "limitations": "A geocoded address is an approximate map coordinate; it is not a service entrance, ambulance bay, trauma designation, or destination recommendation."
+    },
+    {
+      "source_id": "great_health_hrsa_designated_counties",
+      "classification": "REFERENCE_ONLY",
+      "publisher": "Georgia Rural Health Innovation Center / Georgia Department of Community Health",
+      "title": "HRSA-designated rural counties supporting material",
+      "url": "https://greathealth.georgia.gov/about-program/georgias-application/attachment-d-hrsa-designated-counties",
+      "accessed_at": "2026-09-26T00:00:00Z",
+      "raw_path": null,
+      "sha256": null,
+      "used_fields": ["Echols County rural designation context"],
+      "transformations": "Contextual research only; no runtime field is derived from this document.",
+      "limitations": "Rural designation does not measure current EMS staffing, response time, blood program readiness, or operational need."
+    },
+    {
+      "source_id": "georgia_trauma_quality_collaborative",
+      "classification": "REFERENCE_ONLY",
+      "publisher": "Georgia Department of Public Health",
+      "title": "Georgia Trauma Quality Collaborative facility list",
+      "url": "https://trauma.georgia.gov/gqip/georgia-trauma-quality-collaborative",
+      "accessed_at": "2026-09-26T00:00:00Z",
+      "raw_path": null,
+      "sha256": null,
+      "used_fields": ["Static LEVEL_III demo display context for H-EV-01"],
+      "transformations": "Reviewed as static public context and recorded as the H-EV-01 demo display attribute. No routing, destination, or live-capability decision is derived from it.",
+      "limitations": "This reference is not a real-time availability feed and must be re-verified through official operational channels before any real-world use."
+    },
+    {
+      "source_id": "sgmc_2024_access_to_care_report",
+      "classification": "REFERENCE_ONLY",
+      "publisher": "South Georgia Medical Center",
+      "title": "2024 annual report: Unequaled Access to Care",
+      "url": "https://health.sgmc.org/annual-report/2024/unequaled-access-to-care",
+      "accessed_at": "2026-09-26T00:00:00Z",
+      "raw_path": null,
+      "sha256": null,
+      "used_fields": ["Regional service-area context"],
+      "transformations": "Contextual research only; no runtime field is derived from this page.",
+      "limitations": "This is provider-published context, not an authoritative live EMS staffing, dispatch, or hospital-capability feed."
+    }
+  ]
+}

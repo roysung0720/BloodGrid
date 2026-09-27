@@ -1,6 +1,7 @@
 import type {
   BaselineCoverageResult,
   LiveRendezvousResult,
+  ScenarioCatalogEntry,
   ScenarioData,
   StrategicDeploymentResult,
 } from "./types";
@@ -8,15 +9,28 @@ import type {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_BACKEND_BASE_URL ?? "http://localhost:8000";
 
-function profileQuery(availabilityProfile: string) {
-  return `?availability_profile=${encodeURIComponent(availabilityProfile)}`;
+function scenarioQuery(scenarioId: string, availabilityProfile: string) {
+  const query = new URLSearchParams({
+    scenario_id: scenarioId,
+    availability_profile: availabilityProfile,
+  });
+  return `?${query.toString()}`;
+}
+
+export async function getScenarioCatalog(): Promise<ScenarioCatalogEntry[]> {
+  const response = await fetch(`${API_BASE_URL}/scenarios`);
+  if (!response.ok) {
+    throw new Error(`The data service returned ${response.status}.`);
+  }
+  return response.json() as Promise<ScenarioCatalogEntry[]>;
 }
 
 export async function getScenario(
+  scenarioId: string,
   availabilityProfile = "baseline",
 ): Promise<ScenarioData> {
   const response = await fetch(
-    `${API_BASE_URL}/scenario${profileQuery(availabilityProfile)}`,
+    `${API_BASE_URL}/scenario${scenarioQuery(scenarioId, availabilityProfile)}`,
   );
   if (!response.ok) {
     throw new Error(`The data service returned ${response.status}.`);
@@ -25,10 +39,11 @@ export async function getScenario(
 }
 
 export async function getBaselineCoverage(
+  scenarioId: string,
   availabilityProfile = "baseline",
 ): Promise<BaselineCoverageResult> {
   const response = await fetch(
-    `${API_BASE_URL}/coverage/baseline${profileQuery(availabilityProfile)}`,
+    `${API_BASE_URL}/coverage/baseline${scenarioQuery(scenarioId, availabilityProfile)}`,
   );
   if (!response.ok) {
     const errorBody = (await response.json().catch(() => null)) as {
@@ -40,10 +55,11 @@ export async function getBaselineCoverage(
 }
 
 export async function getStrategicDeployment(
+  scenarioId: string,
   availabilityProfile = "baseline",
 ): Promise<StrategicDeploymentResult> {
   const response = await fetch(
-    `${API_BASE_URL}/deployment/strategic${profileQuery(availabilityProfile)}`,
+    `${API_BASE_URL}/deployment/strategic${scenarioQuery(scenarioId, availabilityProfile)}`,
   );
   if (!response.ok) {
     const errorBody = (await response.json().catch(() => null)) as {
@@ -56,10 +72,11 @@ export async function getStrategicDeployment(
 
 export async function getLiveRendezvous(
   incidentId: string,
+  scenarioId: string,
   availabilityProfile = "baseline",
 ): Promise<LiveRendezvousResult> {
   const response = await fetch(
-    `${API_BASE_URL}/live-incidents/${encodeURIComponent(incidentId)}/rendezvous${profileQuery(availabilityProfile)}`,
+    `${API_BASE_URL}/live-incidents/${encodeURIComponent(incidentId)}/rendezvous${scenarioQuery(scenarioId, availabilityProfile)}`,
   );
   if (!response.ok) {
     const errorBody = (await response.json().catch(() => null)) as {

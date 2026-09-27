@@ -1,0 +1,3 @@
+hospital_id,facility_id,name,address,city,state,zip_code,county,latitude,longitude,facility_source_id,coordinate_source_id,coordinate_method
+H-EV-01,110122,SGMC HEALTH,"2501 NORTH PATTERSON STREET, PO BOX 1727",VALDOSTA,GA,31602,LOWNDES,30.861667377917,-83.288814098006,cms_hospital_directory_page_2,census_geocoder_sgmc_health,Census geocoder match on the CMS address
+H-EV-02,111326,SGMC HEALTH LANIER,116 WEST THIGPEN AVENUE,LAKELAND,GA,31635,LANIER,31.041774647037,-83.088026981526,cms_hospital_directory_page_2,census_geocoder_sgmc_health_lanier,Census geocoder match on the CMS address

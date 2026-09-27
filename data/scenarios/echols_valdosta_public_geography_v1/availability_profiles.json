@@ -1,0 +1,42 @@
+{
+  "profiles": [
+    {
+      "profile_id": "baseline",
+      "name": "Baseline",
+      "description": "Synthetic baseline operating state for the Echols-Valdosta public-geography demo.",
+      "resource_overrides": []
+    },
+    {
+      "profile_id": "br_ev_02_unavailable",
+      "name": "BR-EV-02 unavailable",
+      "description": "Synthetic vehicle outage; BR-EV-02 cannot respond.",
+      "resource_overrides": [
+        {"unit_id": "BR-EV-02", "vehicle_status": "OUT_OF_SERVICE"}
+      ]
+    },
+    {
+      "profile_id": "br_ev_03_staffed_now",
+      "name": "BR-EV-03 staffed now",
+      "description": "Synthetic staffing change; BR-EV-03 has no on-call mobilization delay.",
+      "resource_overrides": [
+        {"unit_id": "BR-EV-03", "crew_status": "AVAILABLE", "mobilization_minutes": 0}
+      ]
+    },
+    {
+      "profile_id": "br_ev_01_blood_unavailable",
+      "name": "BR-EV-01 blood unavailable",
+      "description": "Synthetic inventory exception; BR-EV-01 has no usable onboard blood.",
+      "resource_overrides": [
+        {"unit_id": "BR-EV-01", "blood_units_onboard": 0, "blood_availability_status": "UNAVAILABLE"}
+      ]
+    },
+    {
+      "profile_id": "br_ev_03_unqualified",
+      "name": "BR-EV-03 unqualified",
+      "description": "Synthetic credentialing exception; BR-EV-03 cannot provide a blood response.",
+      "resource_overrides": [
+        {"unit_id": "BR-EV-03", "blood_credentialed": false}
+      ]
+    }
+  ]
+}
