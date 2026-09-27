@@ -10,11 +10,10 @@ import { CoveragePanel } from "../components/CoveragePanel";
 import { AvailabilityProfilePanel } from "../components/AvailabilityProfilePanel";
 import { DeploymentPanel } from "../components/DeploymentPanel";
 import { IncidentPanel } from "../components/IncidentPanel";
-import { LayerControls } from "../components/LayerControls";
+import { MapSymbols } from "../components/MapSymbols";
 import { OperationsMap } from "../components/OperationsMap";
 import { ResourcePanel } from "../components/ResourcePanel";
 import { RendezvousPanel } from "../components/RendezvousPanel";
-import { ScenarioLegend } from "../components/ScenarioLegend";
 import { ScenarioSelector } from "../components/ScenarioSelector";
 import {
   getBaselineCoverage,
@@ -283,13 +282,9 @@ export default function HomePage() {
             <MapPinned size={17} aria-hidden="true" />
             <span>{scenario.metadata.geographic_area}</span>
           </div>
-          <LayerControls
+          <MapSymbols
             visibleLayers={visibleLayers}
             onChange={setVisibleLayers}
-          />
-          <ScenarioLegend
-            coverageView={coverageView}
-            recommendedRendezvousId={rendezvous?.recommended_rendezvous_id ?? null}
           />
         </section>
 

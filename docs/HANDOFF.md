@@ -98,6 +98,8 @@ Completed foundation work:
   traffic, CAD, or patient data.
 - Crew-facing **Ambulance UI** added at `/ambulance`, with an **Ambulance view** / **System view** button at the top of each UI. See the **Ambulance UI** section below and `docs/AMBULANCE_UI_SPEC.md` section 14.
 - A blank `BLOODGRID_COVERAGE_TARGET_MINUTES=` line (as in `.env.example`) now means "use the scenario default" instead of crashing coverage; covered by `backend/tests/test_config.py`.
+- Replaced the duplicate **Map layers** control and **Scenario markers** legend with `MapSymbols.tsx`: one panel where every symbol category is its own show/hide control. Response units name their Available, On call, and Unavailable states; demand proxies name their Covered and Outside target states.
+- The System UI marker grammar is static and distinct: blue station squares, teal/amber/slate response-unit circles, red hospital diamonds, blue/orange demand hexagons, filled violet rendezvous triangles, and magenta blood-request octagons. This is presentation only; operational data and calculations are unchanged.
 
 The scenario uses synthetic modeled rural-Georgia geography and operational data. It must not be presented as live or facility-accurate information.
 
@@ -204,7 +206,7 @@ This section is the practical integration contract for Alex, Claude, Codex, and 
 | Live rendezvous evaluation | `backend/app/rendezvous/service.py` | Use the existing routing and eligibility interfaces. Only approved, active points may be evaluated; preserve the incident's supplied destination. |
 | HTTP API | `backend/app/main.py` | Keep endpoint functions thin: receive a request, call a service, return typed data. Put business logic in focused modules. |
 | Dashboard API client and types | `frontend/src/lib/api.ts` and `frontend/src/lib/types.ts` | Add backend response shapes here before displaying them. Do not calculate coverage or optimization results in the browser. |
-| Map rendering | `frontend/src/components/OperationsMap.tsx` | Use it to visualize API results. Keep marker semantics, colors, labels, and legend entries synchronized. |
+| Map rendering | `frontend/src/components/OperationsMap.tsx` and `frontend/src/components/MapSymbols.tsx` | Use them to visualize API results. Keep marker semantics, colors, shapes, and show/hide entries synchronized. Never add a `transform` or transform transition to `.map-marker`. |
 | Scenario data contract | `data/schemas/v1/` and `data/scenarios/` | Create a new scenario or schema version when data meaning changes; retain synthetic labels and provenance. |
 
 ### Current Technical Facts
@@ -215,6 +217,7 @@ This section is the practical integration contract for Alex, Claude, Codex, and 
 - `GET /deployment/strategic` returns the OR-Tools result for the same scenario. Its core code is `backend/app/deployment/service.py`; tests must use a fake `RoutingProvider`, not live Mapbox requests.
 - `GET /live-incidents/{incident_id}/rendezvous` returns the deterministic live comparison. Its core code is `backend/app/rendezvous/service.py`; tests must use a fake `RoutingProvider`, not live Mapbox requests.
 - The selected live-incident ID is maintained in `frontend/src/app/page.tsx`. `IncidentPanel.tsx` is the selector UI; it passes that ID to the existing rendezvous API client. Do not rerun coverage or strategic deployment on incident change.
+- `MapSymbols.tsx` is the sole System UI map legend and visibility control. It owns only browser visibility state through `LayerVisibility`; it must not calculate logistics or alter scenario data.
 - The default scenario remains `rural_ga_initial_v1`. Use the dashboard header's **Demo data set** selector to evaluate the hybrid scenario without restarting. `BLOODGRID_SCENARIO` changes only the scenario selected when the backend starts.
 - Public facility records are static source snapshots. `active=true` in the hybrid scenario only enables a known record for the demo; it does not represent real-time hospital availability, trauma verification, or destination selection.
 - Hybrid source provenance is metadata only. Do not make routing, eligibility, deployment, or rendezvous logic depend on a particular public source or Mapbox feature.
@@ -247,7 +250,7 @@ npm run lint
 npm run build
 ```
 
-For dashboard changes, also start the backend and frontend locally and inspect `http://localhost:3000`. Confirm that the synthetic-data label remains visible, map layers still toggle, and the changed result is understandable from the displayed facts.
+For dashboard changes, also start the backend and frontend locally and inspect `http://localhost:3000`. Confirm that the synthetic-data label remains visible, Map symbols still toggle, and the changed result is understandable from the displayed facts.
 
 ## Next Recommended Work
 
@@ -310,7 +313,7 @@ These are in code outside the Ambulance UI and were left for their owner to conf
 
 **Fixed 2026-09-27: System UI markers drifting while panning.** `.map-marker` had `transition: transform 140ms`. Mapbox positions markers by rewriting their inline `transform` on every frame, so each marker eased toward its position and trailed the map by about 35 px during a drag. The transition is removed, and the hover effect now uses an outline. Measured lag while dragging went from 34 px to 0–1 px.
 
-The unused `transform: rotate(45deg)` and hover-scale rules were removed too. Mapbox's inline transform always overrode them, so hospital markers were already rendering as squares; the legend's diamond symbol is unchanged. Do not add `transform` or a transform transition to any Mapbox marker element.
+Marker identity must use static CSS such as color, `clip-path`, borders, and text symbols. Do not add `transform` or a transform transition to any Mapbox marker element.
 
 ## Important Decisions Still Open
 
