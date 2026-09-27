@@ -23,7 +23,7 @@ CSV / JSON data files
 
 ## Current Routing, Coverage, Deployment, Rendezvous, and Availability Slice
 
-The initial map dashboard, baseline coverage calculation, strategic deployment recommendation, live incident rendezvous evaluation, and dynamic availability simulation are complete.
+The initial map dashboard, baseline coverage calculation, strategic deployment recommendation, multi-incident live rendezvous evaluation, and dynamic availability simulation are complete.
 
 - `backend/app/scenario_loader.py` reads the scenario selected by `BLOODGRID_SCENARIO`, validates its record relationships, and returns typed data.
 - `backend/app/routing/` defines the provider-neutral travel-time interface and confines Mapbox Matrix API requests to `mapbox_provider.py`.
@@ -36,7 +36,8 @@ The initial map dashboard, baseline coverage calculation, strategic deployment r
 - `frontend/src/components/OperationsMap.tsx` renders the Mapbox basemap and colors demand markers by baseline coverage status.
 - `frontend/src/components/CoveragePanel.tsx` summarizes the current coverage result; `FeatureDetails.tsx` explains an individual demand point's result.
 - `frontend/src/components/DeploymentPanel.tsx` compares current and optimized coverage, lists the recommended staging assignments, and controls the map's current/recommended view.
-- `frontend/src/components/RendezvousPanel.tsx` shows the live logistics recommendation, direct-transport reference, and every approved-point result; the selected point is marked on the map.
+- `frontend/src/components/IncidentPanel.tsx` selects one synthetic blood request and displays its supplied hospital context. Changing it refreshes only the live rendezvous evaluation and map emphasis.
+- `frontend/src/components/RendezvousPanel.tsx` shows that selected request's live logistics recommendation, direct-transport reference, and every approved-point result; the selected point is marked on the map.
 - `frontend/src/components/AvailabilityProfilePanel.tsx` selects an explicit synthetic demo case and refreshes all calculated dashboard views together.
 - The frontend reads all map data from the backend. It does not duplicate scenario CSV files.
 

@@ -16,7 +16,7 @@ Every record in this scenario is **SYNTHETIC**. It is modeled around a rural-Geo
 - 3 hospitals
 - 30 incident-demand proxy points
 - 8 approved active rendezvous points
-- 1 simulated open blood-request incident
+- 4 simulated open blood-request incidents
 - 5 named synthetic availability profiles, including a resettable baseline
 
 ## Provenance
@@ -29,7 +29,7 @@ Every record in this scenario is **SYNTHETIC**. It is modeled around a rural-Geo
 | `hospitals.csv` | SYNTHETIC | Hand-authored destination locations | Not a trauma-center directory or destination guidance |
 | `historical_incidents.csv` | SYNTHETIC | Hand-authored demand-proxy distribution | Not crash, EMS, or patient data |
 | `rendezvous_points.csv` | SYNTHETIC | Hand-authored approved-place examples | Not agency-approved real locations |
-| `live_incidents.csv` | SYNTHETIC | Controlled major-collision simulation | Not a live incident feed |
+| `live_incidents.csv` | SYNTHETIC | Four controlled blood-request simulations with supplied demo destinations | Not a live incident feed or patient record |
 | `availability_profiles.json` | SYNTHETIC | Hand-authored demo operating states | Not a live CAD, staffing, or inventory feed |
 
 **Created:** 2026-09-25  
@@ -46,4 +46,5 @@ Set `BLOODGRID_SCENARIO=rural_ga_initial_v1`. The backend loads the CSV and JSON
 - The three hospitals are supplied demo destinations. BloodGrid must not use them to make clinical destination decisions.
 - Unit status, credentialing, blood inventory, and mobilization timing are controlled inputs for a demo, not operational facts.
 - Availability profiles apply only to an in-memory scenario copy. They are intended for repeatable demonstrations, not live dispatch control.
+- The four live incidents are contrasting demo cases for selector and rendezvous review. Their destinations are supplied scenario inputs, never destinations selected by BloodGrid.
 - When replacing any part of this scenario with public or real-derived data, create a new scenario version and update its provenance rather than silently relabeling these records.

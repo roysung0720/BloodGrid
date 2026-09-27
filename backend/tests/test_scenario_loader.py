@@ -16,7 +16,15 @@ class ScenarioLoaderTests(unittest.TestCase):
         self.assertEqual(len(scenario.hospitals), 3)
         self.assertEqual(len(scenario.historical_incidents), 30)
         self.assertEqual(len(scenario.rendezvous_points), 8)
-        self.assertEqual(len(scenario.live_incidents), 1)
+        self.assertEqual(len(scenario.live_incidents), 4)
+        self.assertEqual(
+            [incident.incident_id for incident in scenario.live_incidents],
+            ["LIVE-001", "LIVE-002", "LIVE-003", "LIVE-004"],
+        )
+        self.assertEqual(
+            [incident.destination_hospital_id for incident in scenario.live_incidents],
+            ["H-01", "H-01", "H-03", "H-02"],
+        )
         self.assertEqual(len(scenario.availability_profiles), 5)
         self.assertEqual(scenario.availability_profiles[0].profile_id, "baseline")
 

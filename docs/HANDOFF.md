@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-26
 
-**Current phase:** Dynamic availability simulation complete; data improvement and demo polish are next.
+**Current phase:** Multi-incident live-response selection complete; data improvement and demo polish continue.
 
 **Audience:** Alex, project teammates, and coding agents joining the work.
 
@@ -72,6 +72,9 @@ Completed foundation work:
 - `backend/app/availability/service.py` applies a selected profile to an in-memory scenario copy, preserving the source scenario and resettable `baseline` state.
 - Dashboard Synthetic operating state selector added. It refreshes baseline coverage, strategic deployment, live rendezvous, map markers, and resource eligibility together.
 - Availability tests cover immutable baseline data, unknown-profile rejection, and consistent exclusion of an unavailable unit from coverage, deployment, and rendezvous results.
+- Four synthetic open blood-request cases now live in `data/scenarios/rural_ga_initial_v1/live_incidents.csv`. Each records its own supplied active hospital; they are controlled demo cases, not patient or CAD records.
+- Dashboard Live incident selector added to `frontend/src/components/IncidentPanel.tsx`. Selecting its demo case or clicking a live-incident map marker refreshes that request's live rendezvous result and map highlight without recalculating regional coverage or strategic staging.
+- Rendezvous tests now confirm that evaluating different incident IDs preserves each incident's own supplied hospital rather than reusing or selecting a destination.
 
 The scenario uses synthetic modeled rural-Georgia geography and operational data. It must not be presented as live or facility-accurate information.
 
@@ -79,8 +82,8 @@ The scenario uses synthetic modeled rural-Georgia geography and operational data
 
 | Location | Purpose now | What will go there next |
 | --- | --- | --- |
-| `frontend/` | Runnable Next.js dashboard with baseline, strategic, live-rendezvous, and availability views | Data-story and demo polish |
-| `backend/` | FastAPI scenario API, routing adapter, availability overlays, coverage, deployment, and rendezvous evaluation | Data refinement and demo support |
+| `frontend/` | Runnable Next.js dashboard with baseline, strategic, multi-incident live-rendezvous, and availability views | Data-story and demo polish |
+| `backend/` | FastAPI scenario API, routing adapter, availability overlays, coverage, deployment, and per-incident rendezvous evaluation | Data refinement and demo support |
 | `data/raw/` | Empty | Untouched public source datasets |
 | `data/processed/` | Empty | Cleaned geographic and demand-proxy data |
 | `data/synthetic/` | Empty | Demo inventory, staffing, availability, and simulated incidents |
@@ -97,6 +100,7 @@ The scenario uses synthetic modeled rural-Georgia geography and operational data
 - **Baseline coverage:** Fastest eligible unit by estimated `mapbox/driving` duration plus configured on-call mobilization. The initial scenario has a 20-minute target. Local `BLOODGRID_COVERAGE_TARGET_MINUTES` may override that target for demonstration only.
 - **Strategic optimizer:** Google OR-Tools CP-SAT in `backend/app/deployment/`. It assigns every eligible unit to one active station, respects station capacity, and maximizes the number of demand points covered within the target. Routing and eligibility remain outside the optimizer.
 - **Live rendezvous:** deterministic candidate evaluation in `backend/app/rendezvous/`, not OR-Tools. It requires an existing authorized request, uses only approved active points, includes direct transport as the feasibility reference, and preserves the supplied destination hospital.
+- **Live-incident selection:** the scenario contains four synthetic open requests. The selected ID is browser state; `GET /live-incidents/{incident_id}/rendezvous` evaluates only that request. Selection updates the approved-point review and highlighted map marker, while coverage and strategic deployment remain scenario-wide views.
 - **Rendezvous assumptions:** `BLOODGRID_RENDEZVOUS_MAX_ADDED_HOSPITAL_DELAY_MINUTES` defaults to `10`; `BLOODGRID_RENDEZVOUS_HOSPITAL_DELAY_WEIGHT` defaults to `0.5`. Both are local configuration values and must not be hard-coded elsewhere.
 - **Availability profiles:** `availability_profiles.json` provides named, synthetic demo overlays. `baseline` is required. The overlay service is the sole owner of profile application; it returns a copied scenario, and no source CSV/JSON data are changed during a demo.
 - **Persistence:** CSV and JSON for the MVP; no database required.
@@ -126,7 +130,7 @@ This is a strategic planning comparison, not a real deployment command. It uses 
 
 ## Current Live Incident Result
 
-With the same synthetic scenario, live Mapbox verification for `LIVE-001` produced:
+The dashboard defaults to `LIVE-001` and can select `LIVE-002`, `LIVE-003`, or `LIVE-004`. Each case has a supplied active destination and receives an independent approved-point review. With the baseline state, prior live Mapbox verification for `LIVE-001` produced:
 
 - Supplied destination: North Valley Trauma Center (`H-01`, recorded `LEVEL_II`). BloodGrid validated that it is an active record but did not choose it.
 - Direct transport estimate: 28.7 minutes.
@@ -136,6 +140,8 @@ With the same synthetic scenario, live Mapbox verification for `LIVE-001` produc
 - Other points were rejected transparently as too late or as exceeding the configured 10-minute added-delay limit.
 
 This is synthetic logistics output, not a clinical transfusion, transport, or destination recommendation.
+
+Browser verification on 2026-09-26 also selected `LIVE-003`: the dashboard switched to `MEDIC-34`, preserved its supplied `H-03` East Ridge Community Hospital context, recalculated every approved-point result, and highlighted only that request on the map. Its synthetic logistics result was direct transport because no approved point met the configured limits.
 
 ## Current Dynamic Availability Result
 
@@ -184,6 +190,7 @@ This section is the practical integration contract for Alex, Claude, Codex, and 
 - `GET /coverage/baseline` returns typed results for all 30 synthetic demand points. It uses the scenario's `target_coverage_minutes` unless `BLOODGRID_COVERAGE_TARGET_MINUTES` is set locally.
 - `GET /deployment/strategic` returns the OR-Tools result for the same scenario. Its core code is `backend/app/deployment/service.py`; tests must use a fake `RoutingProvider`, not live Mapbox requests.
 - `GET /live-incidents/{incident_id}/rendezvous` returns the deterministic live comparison. Its core code is `backend/app/rendezvous/service.py`; tests must use a fake `RoutingProvider`, not live Mapbox requests.
+- The selected live-incident ID is maintained in `frontend/src/app/page.tsx`. `IncidentPanel.tsx` is the selector UI; it passes that ID to the existing rendezvous API client. Do not rerun coverage or strategic deployment on incident change.
 - `GET /scenario?availability_profile=<profile_id>` returns the selected copied scenario. The same optional query parameter is accepted by `/coverage/baseline`, `/deployment/strategic`, and `/live-incidents/{incident_id}/rendezvous`; `/availability-profiles` lists all profile definitions.
 - The current routing profile is `mapbox/driving`, and `MapboxMatrixProvider` batches the initial three eligible units and 30 demand points into two Matrix API requests.
 - The coverage result is a logistics estimate only. It does not provide a dispatch order, clinical recommendation, hospital selection, or real-world response guarantee.
@@ -219,15 +226,12 @@ For dashboard changes, also start the backend and frontend locally and inspect `
 
 Build data improvement and demo polish:
 
-1. Expand `live_incidents.csv` with a small set of clearly synthetic, contrasting blood-request cases. Each must retain its own supplied active hospital and source/provenance label.
-2. Add a dashboard **Live incident** selector beside the synthetic operating-state selector. A change must refresh the direct-transport comparison, approved-point review, eligible-resource options, and map context for that selected incident.
-3. Keep the two selectors conceptually separate: availability profiles vary the operational resource state; the live-incident selector varies the response situation. Do not mutate source scenario files when either is selected.
-4. Add deterministic tests that each selected incident is evaluated independently and that its supplied hospital is preserved rather than chosen or replaced by BloodGrid.
-5. Then decide whether to replace any fictional geography with clearly sourced public geography while preserving privacy and provenance.
-6. Improve the dashboard's demo flow so a presenter can move from baseline coverage to strategic staging, then choose a live incident and availability case without explaining implementation details.
-7. Review marker density, map labels, and panel hierarchy for quick audience comprehension at common laptop and projector sizes.
-8. Keep all synthetic operational values visibly labeled and do not add clinical destination or treatment recommendations.
-9. Update the demo script, provenance notes, and screenshots only after the tested MVP behavior remains intact.
+1. Decide whether to replace any fictional geography with clearly sourced public geography while preserving privacy and provenance.
+2. Improve the dashboard's demo flow so a presenter can move from baseline coverage to strategic staging, then choose a live incident and availability case without explaining implementation details.
+3. Review marker density, map labels, and panel hierarchy for quick audience comprehension at common laptop and projector sizes.
+4. Keep the two selectors conceptually separate: availability profiles vary the operational resource state; the live-incident selector varies the response situation. Do not mutate source scenario files when either is selected.
+5. Keep all synthetic operational values visibly labeled and do not add clinical destination or treatment recommendations.
+6. Update the demo script, provenance notes, and screenshots only after the tested MVP behavior remains intact.
 
 ## Important Decisions Still Open
 

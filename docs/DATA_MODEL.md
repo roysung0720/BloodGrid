@@ -10,7 +10,7 @@ The MVP uses the following data files and corresponding backend models:
 - `hospitals.csv`: active destination hospitals and trauma levels.
 - `historical_incidents.csv`: demand-proxy locations, timestamps, severity, and source.
 - `rendezvous_points.csv`: approved, active intercept locations.
-- `live_incidents.csv` or memory: active simulated blood-request incidents.
+- `live_incidents.csv` or memory: active simulated blood-request incidents, each with its own supplied destination.
 
 The detailed field contract is in `PRODUCT_SPEC.md` and will become Pydantic models in the backend.
 
@@ -45,7 +45,7 @@ The first objective is intentionally narrow and inspectable: maximize the number
 
 ## Live rendezvous result
 
-`GET /live-incidents/{incident_id}/rendezvous` returns a calculated comparison for an already-authorized synthetic blood request. It preserves the incident's supplied destination hospital, verifies that the record exists and is active, and reports its name and trauma level as context only.
+`GET /live-incidents/{incident_id}/rendezvous` returns a calculated comparison for one selected, already-authorized synthetic blood request. It preserves that incident's supplied destination hospital, verifies that the record exists and is active, and reports its name and trauma level as context only. Changing the selected live incident does not change the scenario-wide coverage or strategic-deployment results.
 
 The result includes direct transport time, the configured maximum added hospital delay and score weight, and one record for every rendezvous point. Each point explains whether it was unavailable, unroutable, too late to beat direct arrival, an excessive detour, an eligible alternative, or the selected recommendation. For viable points, it exposes patient and resource travel, on-call mobilization, wait times, time-to-blood, modeled hospital arrival, and the added delay against direct transport.
 

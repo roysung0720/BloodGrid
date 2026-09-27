@@ -155,6 +155,43 @@ class LiveRendezvousTests(unittest.TestCase):
         self.assertEqual(result.recommendation, "DIRECT_TRANSPORT")
         self.assertEqual(result.candidates[0].status, "INELIGIBLE_POINT")
 
+    def test_each_incident_preserves_its_own_supplied_destination(self) -> None:
+        alternate_incident = next(
+            incident
+            for incident in self.source.live_incidents
+            if incident.incident_id == "LIVE-003"
+        )
+        first_point, second_point = self.source.rendezvous_points[:2]
+        scenario = self._scenario(
+            units=self.source.response_units[:1], points=[first_point, second_point]
+        )
+        provider = self._provider(
+            {
+                (self.incident.incident_id, "destination"): 16,
+                (self.incident.incident_id, first_point.rendezvous_id): 3,
+                (first_point.rendezvous_id, "destination"): 12,
+                ("BR-01", first_point.rendezvous_id): 5,
+                (alternate_incident.incident_id, "destination"): 18,
+                (alternate_incident.incident_id, second_point.rendezvous_id): 4,
+                (second_point.rendezvous_id, "destination"): 10,
+                ("BR-01", second_point.rendezvous_id): 6,
+            }
+        )
+
+        first_result = calculate_live_rendezvous(
+            scenario, self.incident.incident_id, provider
+        )
+        alternate_result = calculate_live_rendezvous(
+            scenario, alternate_incident.incident_id, provider
+        )
+
+        self.assertEqual(first_result.incident_id, "LIVE-001")
+        self.assertEqual(first_result.destination_hospital_id, "H-01")
+        self.assertEqual(alternate_result.incident_id, "LIVE-003")
+        self.assertEqual(alternate_result.destination_hospital_id, "H-03")
+        self.assertEqual(alternate_result.destination_hospital_name, "East Ridge Community Hospital")
+        self.assertTrue(alternate_result.destination_valid)
+
     def _provider(
         self, minutes_by_pair: dict[tuple[str, str], float | None]
     ) -> FakeRoutingProvider:

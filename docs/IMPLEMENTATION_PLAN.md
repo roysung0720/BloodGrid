@@ -30,4 +30,4 @@ Named synthetic availability profiles are stored beside the scenario and applied
 
 ## 8. Data improvement and polish
 
-Refine the demo while retaining the tested MVP. First, expand the synthetic live-incident dataset beyond `LIVE-001` and add a dashboard live-incident selector. Selecting an incident must refresh its direct-transport comparison, approved-point review, eligible-resource options, and map context while preserving that incident's supplied hospital. Then replace feasible placeholder geography with public real data, document provenance, and consider stretch features only after core tests pass.
+Refine the demo while retaining the tested MVP. The synthetic live-incident dataset now contains four cases and the dashboard selector refreshes the selected incident's direct-transport comparison, approved-point review, eligible-resource options, and map context while preserving its supplied hospital. Next, replace feasible placeholder geography with public real data, document provenance, and consider stretch features only after core tests pass.

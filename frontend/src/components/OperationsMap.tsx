@@ -19,6 +19,7 @@ type OperationsMapProps = {
   coverage: BaselineCoverageResult | null;
   deployment: StrategicDeploymentResult | null;
   rendezvous: LiveRendezvousResult | null;
+  selectedLiveIncidentId: string | null;
   coverageView: CoverageView;
   visibleLayers: LayerVisibility;
   onFeatureSelect: (selection: FeatureSelection) => void;
@@ -54,6 +55,7 @@ export function OperationsMap({
   coverage,
   deployment,
   rendezvous,
+  selectedLiveIncidentId,
   coverageView,
   visibleLayers,
   onFeatureSelect,
@@ -192,9 +194,15 @@ export function OperationsMap({
         layer: "liveIncident" as const,
         longitude: incident.longitude,
         latitude: incident.latitude,
-        title: `${incident.patient_unit_id} blood request`,
+        title:
+          incident.incident_id === selectedLiveIncidentId
+            ? `${incident.patient_unit_id} selected blood request`
+            : `${incident.patient_unit_id} blood request`,
         type: "liveIncident" as const,
-        variant: "live-incident",
+        variant:
+          incident.incident_id === selectedLiveIncidentId
+            ? "live-incident-selected"
+            : "live-incident",
       })),
     ];
 
@@ -213,7 +221,15 @@ export function OperationsMap({
       markers.forEach((marker) => marker.remove());
       map.remove();
     };
-  }, [coverage, coverageView, deployment, rendezvous, scenario, visibleLayers]);
+  }, [
+    coverage,
+    coverageView,
+    deployment,
+    rendezvous,
+    scenario,
+    selectedLiveIncidentId,
+    visibleLayers,
+  ]);
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) {
     return (

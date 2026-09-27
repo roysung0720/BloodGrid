@@ -44,6 +44,7 @@ export default function HomePage() {
   const [deployment, setDeployment] = useState<StrategicDeploymentResult | null>(null);
   const [rendezvous, setRendezvous] = useState<LiveRendezvousResult | null>(null);
   const [availabilityProfileId, setAvailabilityProfileId] = useState("baseline");
+  const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [coverageView, setCoverageView] = useState<CoverageView>("baseline");
   const [selectedFeature, setSelectedFeature] = useState<FeatureSelection | null>(
     null,
@@ -59,30 +60,21 @@ export default function HomePage() {
     let cancelled = false;
     setCoverage(null);
     setDeployment(null);
-    setRendezvous(null);
     setCoverageError(null);
     setDeploymentError(null);
-    setRendezvousError(null);
     setSelectedFeature(null);
 
     getScenario(availabilityProfileId)
       .then((loadedScenario) => {
         if (!cancelled) {
           setScenario(loadedScenario);
-          getLiveRendezvous(
-            loadedScenario.metadata.default_live_incident_id,
-            availabilityProfileId,
-          )
-            .then((result) => {
-              if (!cancelled) {
-                setRendezvous(result);
-              }
-            })
-            .catch((requestError: Error) => {
-              if (!cancelled) {
-                setRendezvousError(requestError.message);
-              }
-            });
+          setSelectedIncidentId((currentIncidentId) =>
+            loadedScenario.live_incidents.some(
+              (incident) => incident.incident_id === currentIncidentId,
+            )
+              ? currentIncidentId
+              : loadedScenario.metadata.default_live_incident_id,
+          );
         }
       })
       .catch((requestError: Error) => {
@@ -117,6 +109,50 @@ export default function HomePage() {
       cancelled = true;
     };
   }, [availabilityProfileId]);
+
+  const selectedIncident = scenario?.live_incidents.find(
+    (incident) => incident.incident_id === selectedIncidentId,
+  ) ?? scenario?.live_incidents.find(
+    (incident) => incident.incident_id === scenario.metadata.default_live_incident_id,
+  );
+
+  useEffect(() => {
+    if (!selectedIncident) {
+      return;
+    }
+
+    let cancelled = false;
+    setRendezvous(null);
+    setRendezvousError(null);
+
+    getLiveRendezvous(selectedIncident.incident_id, availabilityProfileId)
+      .then((result) => {
+        if (!cancelled) {
+          setRendezvous(result);
+        }
+      })
+      .catch((requestError: Error) => {
+        if (!cancelled) {
+          setRendezvousError(requestError.message);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [availabilityProfileId, selectedIncident]);
+
+  function selectLiveIncident(incidentId: string) {
+    setSelectedIncidentId(incidentId);
+    setSelectedFeature({ type: "liveIncident", id: incidentId });
+  }
+
+  function selectMapFeature(selection: FeatureSelection) {
+    setSelectedFeature(selection);
+    if (selection.type === "liveIncident") {
+      setSelectedIncidentId(selection.id);
+    }
+  }
 
   const activeUnitCount = coverage ? coverage.eligible_resource_count : "-";
 
@@ -175,9 +211,10 @@ export default function HomePage() {
             coverage={coverage}
             deployment={deployment}
             rendezvous={rendezvous}
+            selectedLiveIncidentId={selectedIncident?.incident_id ?? null}
             coverageView={coverageView}
             visibleLayers={visibleLayers}
-            onFeatureSelect={setSelectedFeature}
+            onFeatureSelect={selectMapFeature}
           />
           <div className="map-title">
             <MapPinned size={17} aria-hidden="true" />
@@ -233,7 +270,12 @@ export default function HomePage() {
             coverage={coverage}
             onSelect={setSelectedFeature}
           />
-          <IncidentPanel scenario={scenario} onSelect={setSelectedFeature} />
+          <IncidentPanel
+            scenario={scenario}
+            selectedIncidentId={selectedIncident?.incident_id ?? null}
+            onChange={selectLiveIncident}
+            onSelect={setSelectedFeature}
+          />
           <RendezvousPanel
             result={rendezvous}
             error={rendezvousError}
