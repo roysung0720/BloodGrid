@@ -12,9 +12,14 @@ GitHub Pages deploys through `.github/workflows/deploy-pages.yml` after pushes
 to `main`; run `36310861645` for commit `9388703` completed successfully. The
 repository has a `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` Actions secret for the
 browser map. The frontend/browser token and the Render routing token are
-separate credentials; do not place a browser token in a backend secret. The
-centralized API CORS defaults include `https://roysung0720.github.io`. See
-`docs/DEPLOYMENT.md` for setup, rotation, and presentation checks.
+separate credentials. On 2026-09-27, Render was restored with the account's
+existing Mapbox default token because it has Matrix-routing access; this is a
+working HackGT fallback, not the preferred long-term credential design.
+Replace it with a dedicated server-side routing token after the demo. The
+centralized API CORS defaults include `https://roysung0720.github.io`. Live
+`/coverage/baseline` and `/deployment/strategic` checks returned HTTP 200 after
+the replacement. See `docs/DEPLOYMENT.md` for setup, rotation, and presentation
+checks.
 
 **Audience:** Alex, project teammates, and coding agents joining the work.
 
