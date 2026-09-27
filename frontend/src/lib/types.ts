@@ -234,6 +234,17 @@ export type MeetingSpotCategory =
   | "SCHOOL"
   | "ROADSIDE";
 
+/** A place from the meeting-spot catalog (OpenStreetMap) that the meeting rule may choose. */
+export type MeetingSpot = {
+  spot_id: string;
+  name: string;
+  category: MeetingSpotCategory;
+  latitude: number;
+  longitude: number;
+  area_m2: number | null;
+  source: "SCENARIO" | "OPENSTREETMAP" | "ROUTE";
+};
+
 export type RendezvousCandidate = {
   rendezvous_id: string;
   rendezvous_name: string;

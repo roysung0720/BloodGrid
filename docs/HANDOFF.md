@@ -308,6 +308,13 @@ All settings are in `config.py` -> `meeting_rule_settings()`. The old `BLOODGRID
 
 Before this change, every Echols-Valdosta incident was direct transport.
 
+**Every spot on the System UI map (2026-09-27).**
+- `GET /meeting-spots?scenario_id=` returns every place the rule chooses from: the scenario's active known sites plus the catalog around its area, 6,827 in total for `rural_ga_initial_v1`.
+- The System UI draws them as purple dots, under the **Meeting spots** toggle in Map symbols. They form one Mapbox circle layer (`system-meeting-spots`) rather than DOM markers, so thousands of places stay fast and don't drift while panning.
+- Clicking a dot shows the place's name and type. Known sites are not drawn differently, and the overview counts all spots. Only the recommended spot gets an extra highlighted marker. The rule's tie-break still prefers a known site when times are equal.
+- The System UI route legs refresh their color and dash pattern whenever the plan changes, so the meeting-spot-to-hospital leg is always purple, matching the key.
+- Dots are "possible meeting spots": public map data, not agency-approved sites.
+
 **Merge with the map-symbol work (2026-09-27).**
 - The System UI route overlay (`OperationsMap.tsx`) now draws to the recommended option's own coordinates, since a meeting spot is usually not in `rendezvous_points.csv`.
 - Route drawing waits until the rebuilt map's own style has loaded. This fixes a "Style is not done loading" crash when the incident changed.

@@ -33,7 +33,7 @@ The initial map dashboard, baseline coverage calculation, strategic deployment r
 - `backend/app/coverage/service.py` checks eligibility, obtains road travel estimates, adds any on-call mobilization delay, and classifies each synthetic demand point against the configured target.
 - `backend/app/deployment/service.py` uses OR-Tools CP-SAT to assign eligible units to active station capacity while maximizing demand points reachable within the target.
 - `backend/app/rendezvous/service.py` chooses where a blood unit meets the ambulance: among meeting spots near the ambulance's route or a unit's road toward it, the soonest blood that keeps heading toward the hospital, compared with direct transport. It uses the shared eligibility and routing interfaces and never changes the supplied destination.
-- `backend/app/meeting_spots.py` loads the shared meeting-spot catalog (`data/meeting_spots/*.csv`, built from OpenStreetMap by `scripts/build_meeting_spots.mjs`) by map area, plus each scenario's known sites.
+- `backend/app/meeting_spots.py` loads the shared meeting-spot catalog (`data/meeting_spots/*.csv`, built from OpenStreetMap by `scripts/build_meeting_spots.mjs`) by map area, plus each scenario's known sites. `GET /meeting-spots` serves that same catalog for the System UI's meeting-spot dot layer.
 - `backend/app/availability/service.py` applies a named synthetic operating state to an in-memory scenario copy. It is the only place profile overrides may change response-unit or blood availability fields.
 - `backend/app/main.py` exposes read-only scenario endpoints plus `GET /coverage/baseline`, `GET /deployment/strategic`, and `GET /live-incidents/{incident_id}/rendezvous`.
 - `frontend/src/app/page.tsx` presents one interactive operations dashboard.

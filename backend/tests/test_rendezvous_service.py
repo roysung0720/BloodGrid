@@ -242,6 +242,15 @@ class MeetingSpotCatalogTests(unittest.TestCase):
         self.assertTrue(all(30.3 <= spot.latitude <= 31.3 for spot in echols))
         self.assertTrue({spot.category for spot in rural} >= {"PARKING", "FUEL_STATION"})
 
+    def test_map_endpoint_returns_the_same_catalog_the_rule_uses(self) -> None:
+        from app.main import meeting_spots
+
+        scenario = load_scenario("echols_valdosta_public_geography_v1")
+        served = meeting_spots("echols_valdosta_public_geography_v1")
+        used = known_site_spots(scenario.rendezvous_points) + catalog_spots(scenario.metadata.bounding_box)
+
+        self.assertEqual([spot.spot_id for spot in served], [spot.spot_id for spot in used])
+
     def test_known_sites_are_kept_only_when_active(self) -> None:
         points = load_scenario().rendezvous_points
         closed = points[0].model_copy(update={"active": False})

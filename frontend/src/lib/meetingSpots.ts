@@ -3,7 +3,7 @@
 import type { MeetingSpotCategory, RendezvousCandidate } from "./types";
 
 export const CATEGORY_LABELS: Record<MeetingSpotCategory, string> = {
-  KNOWN_SITE: "Known site",
+  KNOWN_SITE: "Meeting spot",
   PARKING: "Parking lot",
   FUEL_STATION: "Gas station",
   FIRE_STATION: "Fire station",

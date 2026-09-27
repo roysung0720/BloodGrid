@@ -1,6 +1,7 @@
 import type {
   BaselineCoverageResult,
   LiveRendezvousResult,
+  MeetingSpot,
   RouteResult,
   ScenarioCatalogEntry,
   ScenarioData,
@@ -24,6 +25,16 @@ export async function getScenarioCatalog(): Promise<ScenarioCatalogEntry[]> {
     throw new Error(`The data service returned ${response.status}.`);
   }
   return response.json() as Promise<ScenarioCatalogEntry[]>;
+}
+
+export async function getMeetingSpots(scenarioId: string): Promise<MeetingSpot[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/meeting-spots?${new URLSearchParams({ scenario_id: scenarioId }).toString()}`,
+  );
+  if (!response.ok) {
+    throw new Error(`The meeting-spot catalog returned ${response.status}.`);
+  }
+  return response.json() as Promise<MeetingSpot[]>;
 }
 
 export async function getScenario(

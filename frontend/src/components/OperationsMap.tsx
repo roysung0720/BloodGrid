@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { getRoute } from "../lib/api";
 import { applyBrandMap, BRAND_MAP_STYLE } from "../lib/brandMap";
+import { CATEGORY_LABELS } from "../lib/meetingSpots";
 
 import type {
   BaselineCoverageResult,
@@ -13,6 +14,7 @@ import type {
   LayerKey,
   LayerVisibility,
   LiveRendezvousResult,
+  MeetingSpot,
   ScenarioData,
   StrategicDeploymentResult,
   RouteResult,
@@ -23,6 +25,7 @@ type OperationsMapProps = {
   coverage: BaselineCoverageResult | null;
   deployment: StrategicDeploymentResult | null;
   rendezvous: LiveRendezvousResult | null;
+  meetingSpots: MeetingSpot[];
   selectedLiveIncidentId: string | null;
   coverageView: CoverageView;
   visibleLayers: LayerVisibility;
@@ -67,6 +70,23 @@ const ROUTE_SOURCE_IDS = {
   resourceToRendezvous: "system-resource-to-rendezvous",
 } as const;
 
+const MEETING_SPOT_LAYER = "system-meeting-spots";
+
+function escapeHtml(text: string) {
+  return text.replace(/[&<>"']/g, (character) => `&#${character.charCodeAt(0)};`);
+}
+
+function meetingSpotCollection(spots: MeetingSpot[]) {
+  return {
+    type: "FeatureCollection" as const,
+    features: spots.map((spot) => ({
+      type: "Feature" as const,
+      properties: { name: spot.name, category: spot.category },
+      geometry: { type: "Point" as const, coordinates: [spot.longitude, spot.latitude] },
+    })),
+  };
+}
+
 function lineFeature(coordinates: RouteResult["geometry"] | null) {
   return {
     type: "Feature" as const,
@@ -95,6 +115,7 @@ export function OperationsMap({
   coverage,
   deployment,
   rendezvous,
+  meetingSpots,
   selectedLiveIncidentId,
   coverageView,
   visibleLayers,
@@ -287,7 +308,6 @@ export function OperationsMap({
     const stationById = new Map(
       scenario.stations.map((station) => [station.station_id, station]),
     );
-    const recommendedRendezvousId = rendezvous?.recommended_rendezvous_id;
     const recommendedSpot = rendezvous?.candidates.find(
       (candidate) => candidate.status === "RECOMMENDED",
     );
@@ -366,28 +386,9 @@ export function OperationsMap({
             ? "incident-uncovered"
             : "incident",
       })),
-      ...scenario.rendezvous_points.map((point) => ({
-        id: point.rendezvous_id,
-        layer: "rendezvous" as const,
-        longitude: point.longitude,
-        latitude: point.latitude,
-        title:
-          point.rendezvous_id === recommendedRendezvousId
-            ? `${point.name} recommended meeting spot`
-            : `${point.name} known meeting site`,
-        type: "rendezvous" as const,
-        variant:
-          point.rendezvous_id === recommendedRendezvousId &&
-              coverageView === "strategic" &&
-              showRoutePreview
-            ? "rendezvous-active"
-            : point.rendezvous_id === recommendedRendezvousId
-              ? "rendezvous-recommended"
-            : "rendezvous",
-      })),
-      // The rule may pick any public place (e.g. a parking lot), not only a known site.
-      ...(recommendedSpot &&
-      !scenario.rendezvous_points.some((point) => point.rendezvous_id === recommendedSpot.rendezvous_id)
+      // Every meeting spot is a purple dot (see the meeting-spot layer); only the
+      // recommended one also gets a highlighted marker.
+      ...(recommendedSpot
         ? [
             {
               id: recommendedSpot.rendezvous_id,
@@ -463,6 +464,58 @@ export function OperationsMap({
     visibleLayers,
   ]);
 
+  // Every catalog meeting spot as a purple dot. A map layer, not DOM markers, so thousands
+  // of places stay fast and never drift while panning.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styleReady || loadedMapRef.current !== map) {
+      return;
+    }
+    const data = meetingSpotCollection(visibleLayers.rendezvous ? meetingSpots : []);
+    const source = map.getSource(MEETING_SPOT_LAYER) as mapboxgl.GeoJSONSource | undefined;
+    if (source) {
+      source.setData(data);
+      return;
+    }
+    map.addSource(MEETING_SPOT_LAYER, { type: "geojson", data });
+    map.addLayer(
+      {
+        id: MEETING_SPOT_LAYER,
+        type: "circle",
+        source: MEETING_SPOT_LAYER,
+        paint: {
+          "circle-color": "#9d80d8",
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 1.6, 11, 2.6, 14, 4.5, 17, 7],
+          "circle-opacity": 0.85,
+          "circle-stroke-color": "#1a1024",
+          "circle-stroke-width": 0.6,
+        },
+      },
+      // Keep the dots under any route lines already drawn.
+      Object.values(ROUTE_SOURCE_IDS).find((id) => map.getLayer(id)),
+    );
+    map.on("mouseenter", MEETING_SPOT_LAYER, () => {
+      map.getCanvas().style.cursor = "pointer";
+    });
+    map.on("mouseleave", MEETING_SPOT_LAYER, () => {
+      map.getCanvas().style.cursor = "";
+    });
+    map.on("click", MEETING_SPOT_LAYER, (event) => {
+      const feature = event.features?.[0] as unknown as
+        | { geometry: { coordinates: [number, number] }; properties: { name?: string; category?: MeetingSpot["category"] } }
+        | undefined;
+      if (!feature) return;
+      const category = (feature.properties.category && CATEGORY_LABELS[feature.properties.category]) || "Meeting spot";
+      const name = feature.properties.name || category;
+      new mapboxgl.Popup({ className: "meeting-spot-popup", closeButton: false, offset: 8 })
+        .setLngLat(feature.geometry.coordinates)
+        .setHTML(
+          `<strong>${escapeHtml(name)}</strong><span>${escapeHtml(category)} · possible meeting spot</span>`,
+        )
+        .addTo(map);
+    });
+  }, [meetingSpots, styleReady, visibleLayers.rendezvous]);
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !styleReady || loadedMapRef.current !== map) {
@@ -497,6 +550,10 @@ export function OperationsMap({
       const source = map.getSource(entry.sourceId) as mapboxgl.GeoJSONSource | undefined;
       if (source) {
         source.setData(data);
+        // A leg's look depends on the plan (e.g. purple after a meeting spot), so refresh it.
+        map.setPaintProperty(entry.sourceId, "line-color", entry.color);
+        map.setPaintProperty(entry.sourceId, "line-width", entry.width);
+        map.setPaintProperty(entry.sourceId, "line-dasharray", entry.dasharray ?? undefined);
       } else {
         map.addSource(entry.sourceId, { type: "geojson", data });
         map.addLayer({
@@ -556,19 +613,22 @@ export function OperationsMap({
           {hasRendezvousRoute ? (
             <>
               <strong className="map-route-key__mode">Recommended staging simulation</strong>
-              <span>
+              <span className="map-route-key__row">
                 <i className="map-route-key__line map-route-key__line--ambulance" />
-                Ambulance to meeting spot: {ambulanceToMeetingMinutes} min
+                <span>Ambulance to meeting spot</span>
+                <b>{ambulanceToMeetingMinutes} min</b>
               </span>
-              <span>
+              <span className="map-route-key__row">
                 <i className="map-route-key__line map-route-key__line--hospital" />
-                Meeting spot to hospital: {meetingToHospitalMinutes} min
+                <span>Meeting spot to hospital</span>
+                <b>{meetingToHospitalMinutes} min</b>
               </span>
             </>
           ) : (
-            <span>
+            <span className="map-route-key__row">
               <i className="map-route-key__line map-route-key__line--ambulance" />
-              Ambulance to hospital: {directRoute?.duration_minutes} min
+              <span>Ambulance to hospital</span>
+              <b>{directRoute?.duration_minutes} min</b>
             </span>
           )}
         </div>

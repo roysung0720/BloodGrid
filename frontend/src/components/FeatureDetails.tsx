@@ -190,7 +190,7 @@ function findDetails(
         title: point.name,
         subtitle: point.rendezvous_id,
         entries: [
-          ["Type", `Known site · ${point.location_type.replaceAll("_", " ").toLowerCase()}`],
+          ["Type", `Meeting spot · ${point.location_type.replaceAll("_", " ").toLowerCase()}`],
           ["Status", point.active ? "Active" : "Inactive"],
           ...evaluationEntries,
         ],

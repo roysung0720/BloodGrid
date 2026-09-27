@@ -22,6 +22,7 @@ from .deployment.service import (
     apply_strategic_staging,
     calculate_strategic_deployment,
 )
+from .meeting_spots import MeetingSpot, MeetingSpotCatalogError, catalog_spots, known_site_spots
 from .rendezvous.models import LiveRendezvousResult
 from .rendezvous.service import RendezvousError, calculate_live_rendezvous
 from .models import (
@@ -157,6 +158,18 @@ def historical_incidents(scenario_id: str = SCENARIO_ID) -> list[HistoricalIncid
 @app.get("/rendezvous-points", response_model=list[RendezvousPoint])
 def rendezvous_points(scenario_id: str = SCENARIO_ID) -> list[RendezvousPoint]:
     return get_active_scenario(scenario_id).rendezvous_points
+
+
+@app.get("/meeting-spots", response_model=list[MeetingSpot])
+def meeting_spots(scenario_id: str = SCENARIO_ID) -> list[MeetingSpot]:
+    """Every place the meeting rule may choose from: known sites plus the catalog around the area."""
+    scenario = get_active_scenario(scenario_id)
+    try:
+        return known_site_spots(scenario.rendezvous_points) + catalog_spots(
+            scenario.metadata.bounding_box
+        )
+    except MeetingSpotCatalogError as error:
+        raise HTTPException(status_code=500, detail=str(error)) from error
 
 
 @app.get("/live-incidents", response_model=list[LiveIncident])

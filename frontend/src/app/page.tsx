@@ -19,6 +19,7 @@ import { ScenarioSelector } from "../components/ScenarioSelector";
 import {
   getBaselineCoverage,
   getLiveRendezvous,
+  getMeetingSpots,
   getScenario,
   getScenarioCatalog,
   getStrategicDeployment,
@@ -29,6 +30,7 @@ import type {
   FeatureSelection,
   LayerVisibility,
   LiveRendezvousResult,
+  MeetingSpot,
   ScenarioCatalogEntry,
   ScenarioData,
   StrategicDeploymentResult,
@@ -50,6 +52,7 @@ export default function HomePage() {
   const [coverage, setCoverage] = useState<BaselineCoverageResult | null>(null);
   const [deployment, setDeployment] = useState<StrategicDeploymentResult | null>(null);
   const [rendezvous, setRendezvous] = useState<LiveRendezvousResult | null>(null);
+  const [meetingSpots, setMeetingSpots] = useState<MeetingSpot[]>([]);
   const [availabilityProfileId, setAvailabilityProfileId] = useState("baseline");
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [coverageView, setCoverageView] = useState<CoverageView>("baseline");
@@ -104,6 +107,16 @@ export default function HomePage() {
     setDeploymentError(null);
     setRendezvousError(null);
     setSelectedFeature(null);
+
+    // Every catalog place the meeting rule can choose from, drawn as purple dots.
+    setMeetingSpots([]);
+    getMeetingSpots(selectedScenarioId)
+      .then((spots) => {
+        if (!cancelled) {
+          setMeetingSpots(spots);
+        }
+      })
+      .catch(() => undefined);
 
     getScenario(selectedScenarioId, availabilityProfileId)
       .then((loadedScenario) => {
@@ -279,6 +292,7 @@ export default function HomePage() {
             coverage={coverage}
             deployment={deployment}
             rendezvous={rendezvous}
+            meetingSpots={meetingSpots}
             selectedLiveIncidentId={selectedIncident?.incident_id ?? null}
             coverageView={coverageView}
             visibleLayers={visibleLayers}
@@ -315,8 +329,8 @@ export default function HomePage() {
                 <strong>{scenario.historical_incidents.length}</strong>
               </div>
               <div>
-                <span>Known meeting sites</span>
-                <strong>{scenario.rendezvous_points.length}</strong>
+                <span>Meeting spots</span>
+                <strong>{meetingSpots.length ? meetingSpots.length.toLocaleString() : "…"}</strong>
               </div>
             </div>
           </section>
