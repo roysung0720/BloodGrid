@@ -219,6 +219,37 @@ h2 {
   width: 190px;
 }
 
+.map-route-key {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(203, 215, 221, 0.94);
+  box-shadow: 0 3px 12px rgba(35, 63, 76, 0.12);
+  display: grid;
+  font-size: 11px;
+  font-weight: 700;
+  gap: 7px;
+  padding: 10px 11px;
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  z-index: 2;
+}
+
+.map-route-key span {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+}
+
+.map-route-key__line {
+  border-radius: 999px;
+  display: inline-block;
+  height: 4px;
+  width: 22px;
+}
+
+.map-route-key__line--ambulance { background: #2f86eb; }
+.map-route-key__line--resource { background: #087f76; }
+
 .map-overlay__heading {
   border-bottom: 1px solid var(--line);
   font-size: 12px;
@@ -788,6 +819,7 @@ h2 {
   .scenario-select select { max-width: min(100%, 310px); }
   .map-stage { min-height: 62vh; }
   .map-symbols { left: 10px; top: 57px; width: 188px; }
+  .map-route-key { right: 10px; top: 10px; }
   .map-title { left: 10px; top: 10px; }
   .operations-rail { border-left: 0; }
 }

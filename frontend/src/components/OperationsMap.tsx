@@ -1,8 +1,9 @@
 "use client";
 
 import mapboxgl from "mapbox-gl";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { getRoute } from "../lib/api";
 import type {
   BaselineCoverageResult,
   CoverageView,
@@ -12,6 +13,7 @@ import type {
   LiveRendezvousResult,
   ScenarioData,
   StrategicDeploymentResult,
+  RouteResult,
 } from "../lib/types";
 
 type OperationsMapProps = {
@@ -22,6 +24,7 @@ type OperationsMapProps = {
   selectedLiveIncidentId: string | null;
   coverageView: CoverageView;
   visibleLayers: LayerVisibility;
+  showRoutePreview: boolean;
   onFeatureSelect: (selection: FeatureSelection) => void;
 };
 
@@ -50,6 +53,26 @@ function coordinateKey(definition: MarkerDefinition) {
   return `${definition.longitude},${definition.latitude}`;
 }
 
+type RoutePreview = {
+  ambulanceToRendezvous: RouteResult | null;
+  ambulanceToHospital: RouteResult | null;
+  resourceToRendezvous: RouteResult | null;
+};
+
+const ROUTE_SOURCE_IDS = {
+  ambulanceToRendezvous: "system-ambulance-to-rendezvous",
+  ambulanceToHospital: "system-ambulance-to-hospital",
+  resourceToRendezvous: "system-resource-to-rendezvous",
+} as const;
+
+function lineFeature(coordinates: RouteResult["geometry"] | null) {
+  return {
+    type: "Feature" as const,
+    properties: {},
+    geometry: { type: "LineString" as const, coordinates: coordinates ?? [] },
+  };
+}
+
 function createMarkerElement(
   definition: MarkerDefinition,
   onFeatureSelect: (selection: FeatureSelection) => void,
@@ -73,14 +96,120 @@ export function OperationsMap({
   selectedLiveIncidentId,
   coverageView,
   visibleLayers,
+  showRoutePreview,
   onFeatureSelect,
 }: OperationsMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
   const onFeatureSelectRef = useRef(onFeatureSelect);
+  const [styleReady, setStyleReady] = useState(false);
+  const [routePreview, setRoutePreview] = useState<RoutePreview | null>(null);
 
   useEffect(() => {
     onFeatureSelectRef.current = onFeatureSelect;
   }, [onFeatureSelect]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setRoutePreview(null);
+    const selectedRendezvous = rendezvous;
+
+    const incident = scenario.live_incidents.find(
+      (item) => item.incident_id === selectedLiveIncidentId,
+    );
+    const hospital = incident
+      ? scenario.hospitals.find(
+          (item) => item.hospital_id === incident.destination_hospital_id,
+        )
+      : null;
+
+    if (!showRoutePreview || !incident || !hospital || !selectedRendezvous) {
+      return () => {
+        cancelled = true;
+      };
+    }
+    const routeRendezvous: LiveRendezvousResult = selectedRendezvous;
+
+    const incidentLocation = {
+      latitude: incident.latitude,
+      longitude: incident.longitude,
+    };
+    const hospitalLocation = {
+      latitude: hospital.latitude,
+      longitude: hospital.longitude,
+    };
+
+    async function loadRoutePreview() {
+      if (
+        routeRendezvous.recommendation !== "RENDEZVOUS" ||
+        !routeRendezvous.recommended_rendezvous_id
+      ) {
+        const directRoute = await getRoute(incidentLocation, hospitalLocation);
+        if (!cancelled) {
+          setRoutePreview({
+            ambulanceToRendezvous: null,
+            ambulanceToHospital: directRoute,
+            resourceToRendezvous: null,
+          });
+        }
+        return;
+      }
+
+      const rendezvousPoint = scenario.rendezvous_points.find(
+        (point) => point.rendezvous_id === routeRendezvous.recommended_rendezvous_id,
+      );
+      const recommendedCandidate = routeRendezvous.candidates.find(
+        (candidate) =>
+          candidate.rendezvous_id === routeRendezvous.recommended_rendezvous_id,
+      );
+      const resource = recommendedCandidate?.resource_id
+        ? scenario.response_units.find(
+            (unit) => unit.unit_id === recommendedCandidate.resource_id,
+          )
+        : null;
+
+      if (!rendezvousPoint) {
+        return;
+      }
+
+      const rendezvousLocation = {
+        latitude: rendezvousPoint.latitude,
+        longitude: rendezvousPoint.longitude,
+      };
+      const [ambulanceToRendezvous, ambulanceToHospital, resourceToRendezvous] =
+        await Promise.all([
+          getRoute(incidentLocation, rendezvousLocation),
+          getRoute(rendezvousLocation, hospitalLocation),
+          resource
+            ? getRoute(
+                {
+                  latitude: resource.current_latitude,
+                  longitude: resource.current_longitude,
+                },
+                rendezvousLocation,
+              )
+            : Promise.resolve(null),
+        ]);
+
+      if (!cancelled) {
+        setRoutePreview({
+          ambulanceToRendezvous,
+          ambulanceToHospital,
+          resourceToRendezvous,
+        });
+      }
+    }
+
+    loadRoutePreview().catch(() => {
+      if (!cancelled) {
+        setRoutePreview(null);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [rendezvous, scenario, selectedLiveIncidentId, showRoutePreview]);
 
   useEffect(() => {
     const mapToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
@@ -103,6 +232,8 @@ export function OperationsMap({
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-left");
+    map.on("style.load", () => setStyleReady(true));
+    mapRef.current = map;
 
     const activeCoverage =
       coverageView === "strategic" && deployment
@@ -250,6 +381,8 @@ export function OperationsMap({
     return () => {
       markers.forEach((marker) => marker.remove());
       map.remove();
+      mapRef.current = null;
+      setStyleReady(false);
     };
   }, [
     coverage,
@@ -260,6 +393,71 @@ export function OperationsMap({
     selectedLiveIncidentId,
     visibleLayers,
   ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styleReady) {
+      return;
+    }
+
+    const routeEntries = [
+      {
+        sourceId: ROUTE_SOURCE_IDS.ambulanceToRendezvous,
+        route: routePreview?.ambulanceToRendezvous ?? null,
+        color: "#2f86eb",
+        width: 6,
+      },
+      {
+        sourceId: ROUTE_SOURCE_IDS.ambulanceToHospital,
+        route: routePreview?.ambulanceToHospital ?? null,
+        color: "#2f86eb",
+        width: 5,
+        dasharray: [1.2, 1.2],
+      },
+      {
+        sourceId: ROUTE_SOURCE_IDS.resourceToRendezvous,
+        route: routePreview?.resourceToRendezvous ?? null,
+        color: "#087f76",
+        width: 5,
+        dasharray: [0.8, 1.2],
+      },
+    ];
+
+    for (const entry of routeEntries) {
+      const data = lineFeature(entry.route?.geometry ?? null);
+      const source = map.getSource(entry.sourceId) as mapboxgl.GeoJSONSource | undefined;
+      if (source) {
+        source.setData(data);
+      } else {
+        map.addSource(entry.sourceId, { type: "geojson", data });
+        map.addLayer({
+          id: entry.sourceId,
+          type: "line",
+          source: entry.sourceId,
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: {
+            "line-color": entry.color,
+            "line-width": entry.width,
+            "line-opacity": 0.86,
+            ...(entry.dasharray ? { "line-dasharray": entry.dasharray } : {}),
+          },
+        });
+      }
+    }
+
+    const routeCoordinates = routeEntries.flatMap(
+      (entry) => entry.route?.geometry ?? [],
+    );
+    if (routeCoordinates.length > 1) {
+      const bounds = new mapboxgl.LngLatBounds(routeCoordinates[0], routeCoordinates[0]);
+      routeCoordinates.slice(1).forEach((coordinate) => bounds.extend(coordinate));
+      map.fitBounds(bounds, {
+        padding: { top: 48, right: 44, bottom: 48, left: 224 },
+        maxZoom: 13,
+        duration: 700,
+      });
+    }
+  }, [routePreview, styleReady]);
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) {
     return (

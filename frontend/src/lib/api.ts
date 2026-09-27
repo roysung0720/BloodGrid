@@ -1,6 +1,7 @@
 import type {
   BaselineCoverageResult,
   LiveRendezvousResult,
+  RouteResult,
   ScenarioCatalogEntry,
   ScenarioData,
   StrategicDeploymentResult,
@@ -85,4 +86,24 @@ export async function getLiveRendezvous(
     throw new Error(errorBody?.detail ?? `Rendezvous service returned ${response.status}.`);
   }
   return response.json() as Promise<LiveRendezvousResult>;
+}
+
+export async function getRoute(
+  from: { latitude: number; longitude: number },
+  to: { latitude: number; longitude: number },
+): Promise<RouteResult> {
+  const query = new URLSearchParams({
+    from_lat: String(from.latitude),
+    from_lon: String(from.longitude),
+    to_lat: String(to.latitude),
+    to_lon: String(to.longitude),
+  });
+  const response = await fetch(`${API_BASE_URL}/route?${query.toString()}`);
+  if (!response.ok) {
+    const errorBody = (await response.json().catch(() => null)) as {
+      detail?: string;
+    } | null;
+    throw new Error(errorBody?.detail ?? `Route service returned ${response.status}.`);
+  }
+  return response.json() as Promise<RouteResult>;
 }
