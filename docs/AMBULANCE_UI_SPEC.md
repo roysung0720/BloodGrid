@@ -113,7 +113,7 @@ A bottom sheet slides up over the map, which stays visible above it.
 
 **Blood product dropdown**
 
-- The options are the distinct `product_type` values of blood units that are ONBOARD and VALID on currently eligible units, under the active availability profile. The demo scenario only has `O_NEG`, shown as "O negative".
+- The dropdown lists the standard O, A, B, and AB positive/negative products plus low-titer O whole blood. Every catalog option is selectable for the demo. The selected value is recorded with the request only; it does not change inventory, resource eligibility, routing, or the evaluator. The scenario inventory itself still models only `O_NEG` on its eligible units.
 - There is no preselected value; the crew must choose.
 - The product is **recorded with the request and shown back to the crew**. The existing evaluator does not match products, and with a single product type in the data it does not need to. Matching by product would mean extending the shared eligibility rule, which needs team approval (open decision D1).
 
@@ -308,7 +308,7 @@ The frontend must not calculate hospital order, eligibility, or rendezvous choic
 These are deterministic backend tests using a fake `RoutingProvider`, following `AGENTS.md` rule 9. The existing `test_rendezvous_service.py` and `test_availability_profiles.py` already cover the evaluator and profiles and are not changed.
 
 - **Hospital options:** sorted by drive time, ties broken alphabetically, unroutable hospitals last, inactive hospitals excluded.
-- **Blood products:** only products on eligible units are offered, and a profile that makes a unit ineligible removes its blood.
+- **Blood products:** every standard catalog choice can be recorded for the demo. Availability profiles continue to affect eligible response resources, but do not disable product choices because product matching is not part of this prototype.
 - **Request evaluation:**
   - a runtime request gives the same result as an equivalent CSV incident;
   - the crew's hospital is preserved;

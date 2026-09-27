@@ -144,15 +144,23 @@ class AmbulanceOptionTests(unittest.TestCase):
         self.assertFalse(options[-1].routable)
         self.assertIsNone(options[-1].drive_minutes)
 
-    def test_blood_products_only_count_eligible_carriers(self) -> None:
+    def test_blood_products_show_the_standard_catalog_and_count_eligible_carriers(self) -> None:
         baseline = blood_product_options(self.scenario)
         no_blood = blood_product_options(
             apply_availability_profile(self.scenario, "br_01_no_valid_blood")
         )
+        baseline_by_type = {item.product_type: item for item in baseline}
+        no_blood_by_type = {item.product_type: item for item in no_blood}
 
-        self.assertEqual([(item.product_type, item.eligible_unit_count) for item in baseline], [("O_NEG", 3)])
-        self.assertEqual(baseline[0].label, "O negative")
-        self.assertEqual(no_blood[0].eligible_unit_count, 2)
+        self.assertEqual(
+            [item.product_type for item in baseline],
+            ["O_NEG", "O_POS", "A_NEG", "A_POS", "B_NEG", "B_POS", "AB_NEG", "AB_POS", "LTOWB"],
+        )
+        self.assertEqual(baseline_by_type["O_NEG"].label, "O negative")
+        self.assertTrue(baseline_by_type["O_NEG"].available)
+        self.assertEqual(baseline_by_type["O_NEG"].eligible_unit_count, 3)
+        self.assertFalse(baseline_by_type["AB_POS"].available)
+        self.assertEqual(no_blood_by_type["O_NEG"].eligible_unit_count, 2)
 
     def test_resource_options_include_mobilization_and_skip_ineligible_times(self) -> None:
         scenario = apply_availability_profile(self.scenario, "br_02_out_of_service")
@@ -221,6 +229,14 @@ class BloodRequestStoreTests(unittest.TestCase):
 
         self.assertEqual(request.rendezvous.eligible_resource_count, 2)
         self.assertEqual(request.availability_profile, "br_02_out_of_service")
+
+    def test_demo_catalog_product_is_recorded_without_changing_response_eligibility(self) -> None:
+        request = self.store.create(
+            self.scenario, self._submit(blood_product="AB_POS"), DistanceRoutingProvider()
+        )
+
+        self.assertEqual(request.blood_product, "AB_POS")
+        self.assertEqual(request.rendezvous.eligible_resource_count, 3)
 
     def test_rendezvous_lifecycle_through_arrival(self) -> None:
         request = self.store.create(self.scenario, self._submit(), PrefixRoutingProvider(60))
@@ -296,7 +312,7 @@ class BloodRequestStoreTests(unittest.TestCase):
         provider = PrefixRoutingProvider(60)
         for overrides in (
             {"unit_id": "MEDIC-99"},
-            {"blood_product": "AB_POS"},
+            {"blood_product": "PLASMA"},
             {"destination_hospital_id": "H-99"},
         ):
             with self.subTest(overrides=overrides), self.assertRaises(BloodRequestError):

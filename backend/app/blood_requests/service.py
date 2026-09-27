@@ -50,8 +50,15 @@ from .models import (
 PRODUCT_LABELS = {
     "O_NEG": "O negative",
     "O_POS": "O positive",
+    "A_NEG": "A negative",
+    "A_POS": "A positive",
+    "B_NEG": "B negative",
+    "B_POS": "B positive",
+    "AB_NEG": "AB negative",
+    "AB_POS": "AB positive",
     "LTOWB": "Low-titer O whole blood",
 }
+STANDARD_BLOOD_PRODUCT_TYPES = tuple(PRODUCT_LABELS)
 ENDED_STATUSES: set[BloodRequestStatus] = {"ARRIVED", "CANCELLED"}
 VIA_REQUEST_WORKERS = 6
 EARTH_RADIUS_METERS = 6_371_000
@@ -126,10 +133,12 @@ def hospital_options(
 
 
 def blood_product_options(scenario: ScenarioData) -> list[BloodProductOption]:
-    """Product types in field inventory, flagged by whether an eligible unit carries them."""
+    """Standard field-product catalog, flagged by eligible inventory availability."""
 
     eligible_ids = {unit.unit_id for unit in eligible_response_units(scenario)}
-    units_by_product: dict[str, set[str]] = {}
+    units_by_product: dict[str, set[str]] = {
+        product_type: set() for product_type in STANDARD_BLOOD_PRODUCT_TYPES
+    }
     for blood_unit in scenario.blood_units:
         if blood_unit.current_location_type != "RESPONSE_UNIT":
             continue
@@ -141,14 +150,18 @@ def blood_product_options(scenario: ScenarioData) -> list[BloodProductOption]:
         ):
             carriers.add(blood_unit.current_location_id)
 
+    ordered_product_types = [
+        *STANDARD_BLOOD_PRODUCT_TYPES,
+        *sorted(set(units_by_product) - set(STANDARD_BLOOD_PRODUCT_TYPES)),
+    ]
     return [
         BloodProductOption(
             product_type=product_type,
             label=PRODUCT_LABELS.get(product_type, product_type.replace("_", " ")),
-            available=bool(carriers),
-            eligible_unit_count=len(carriers),
+            available=bool(units_by_product[product_type]),
+            eligible_unit_count=len(units_by_product[product_type]),
         )
-        for product_type, carriers in sorted(units_by_product.items())
+        for product_type in ordered_product_types
     ]
 
 
@@ -315,7 +328,7 @@ class BloodRequestStore:
         known_products = {option.product_type for option in blood_product_options(scenario)}
         if submission.blood_product not in known_products:
             raise BloodRequestError(
-                f"Blood product {submission.blood_product} is not in field inventory."
+                f"Blood product {submission.blood_product} is not part of the demo catalog."
             )
         destination = _active_hospital(scenario, submission.destination_hospital_id)
 

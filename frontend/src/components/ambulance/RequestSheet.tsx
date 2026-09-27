@@ -62,9 +62,8 @@ export function RequestSheet({
         >
           <option value="">{products ? "Select product" : "Loading..."}</option>
           {products?.map((option) => (
-            <option disabled={!option.available} key={option.product_type} value={option.product_type}>
+            <option key={option.product_type} value={option.product_type}>
               {option.label}
-              {option.available ? "" : " (none available)"}
             </option>
           ))}
         </select>
