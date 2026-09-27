@@ -99,7 +99,8 @@ Completed foundation work:
 - Crew-facing **Ambulance UI** added at `/ambulance`, with an **Ambulance view** / **System view** button at the top of each UI. See the **Ambulance UI** section below and `docs/AMBULANCE_UI_SPEC.md` section 14.
 - A blank `BLOODGRID_COVERAGE_TARGET_MINUTES=` line (as in `.env.example`) now means "use the scenario default" instead of crashing coverage; covered by `backend/tests/test_config.py`.
 - Replaced the duplicate **Map layers** control and **Scenario markers** legend with `MapSymbols.tsx`: one panel where every symbol category is its own show/hide control. Response units name their Available, On call, and Unavailable states; demand proxies name their Covered and Outside target states.
-- The System UI marker grammar is static and distinct: blue station squares, teal/amber/slate response-unit circles, red hospital diamonds, blue/orange demand hexagons, filled violet rendezvous triangles, and magenta blood-request octagons. This is presentation only; operational data and calculations are unchanged.
+- The System UI marker grammar is static and distinct: red station squares, teal/amber/slate response-unit circles, dark-red hospital diamonds, blue/orange demand hexagons, filled violet rendezvous triangles, and magenta blood-request octagons. This is presentation only; operational data and calculations are unchanged.
+- When multiple System UI marker types share an exact coordinate, `OperationsMap.tsx` applies a small fixed Mapbox marker offset to separate them. Keep this in the Mapbox `Marker` options, not CSS transforms, so the icons remain stable while panning and zooming.
 
 The scenario uses synthetic modeled rural-Georgia geography and operational data. It must not be presented as live or facility-accurate information.
 

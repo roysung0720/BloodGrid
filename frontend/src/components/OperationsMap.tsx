@@ -35,6 +35,21 @@ type MarkerDefinition = {
   variant: string;
 };
 
+const COLLOCATED_MARKER_OFFSETS: Array<[number, number]> = [
+  [-10, 0],
+  [10, 0],
+  [0, -10],
+  [0, 10],
+  [-8, -8],
+  [8, -8],
+  [-8, 8],
+  [8, 8],
+];
+
+function coordinateKey(definition: MarkerDefinition) {
+  return `${definition.longitude},${definition.latitude}`;
+}
+
 function createMarkerElement(
   definition: MarkerDefinition,
   onFeatureSelect: (selection: FeatureSelection) => void,
@@ -206,13 +221,28 @@ export function OperationsMap({
       })),
     ];
 
+    const markerGroups = new Map<string, MarkerDefinition[]>();
+    markerDefinitions.forEach((definition) => {
+      const key = coordinateKey(definition);
+      markerGroups.set(key, [...(markerGroups.get(key) ?? []), definition]);
+    });
+
     const markers = markerDefinitions
       .filter((definition) => visibleLayers[definition.layer])
       .map((definition) => {
         const element = createMarkerElement(definition, (selection) =>
           onFeatureSelectRef.current(selection),
         );
-        return new mapboxgl.Marker({ element, anchor: "center" })
+        const colocatedMarkers = markerGroups.get(coordinateKey(definition)) ?? [];
+        const colocatedIndex = colocatedMarkers.indexOf(definition);
+        const offset: [number, number] =
+          colocatedMarkers.length > 1
+            ? (COLLOCATED_MARKER_OFFSETS[
+                colocatedIndex % COLLOCATED_MARKER_OFFSETS.length
+              ] ?? [0, 0])
+            : [0, 0];
+
+        return new mapboxgl.Marker({ element, anchor: "center", offset })
           .setLngLat([definition.longitude, definition.latitude])
           .addTo(map);
       });
