@@ -424,7 +424,7 @@ export function AmbulanceMap({
     }
   }, [hospitals, destinationHospitalId]);
 
-  // The approved rendezvous point for this request, when there is one.
+  // The meeting spot chosen for this request, when there is one.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) {

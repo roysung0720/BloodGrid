@@ -219,15 +219,29 @@ export type CoverageView = "baseline" | "strategic";
 export type RendezvousCandidateStatus =
   | "RECOMMENDED"
   | "NOT_SELECTED"
-  | "INELIGIBLE_POINT"
-  | "NO_ELIGIBLE_RESOURCE"
-  | "NO_ROUTE"
   | "TOO_LATE"
-  | "EXCESSIVE_DETOUR";
+  | "WRONG_DIRECTION"
+  | "EXCESSIVE_DETOUR"
+  | "NO_ROUTE"
+  | "NO_ELIGIBLE_RESOURCE";
+
+export type MeetingSpotCategory =
+  | "KNOWN_SITE"
+  | "PARKING"
+  | "FUEL_STATION"
+  | "FIRE_STATION"
+  | "PLACE_OF_WORSHIP"
+  | "SCHOOL"
+  | "ROADSIDE";
 
 export type RendezvousCandidate = {
   rendezvous_id: string;
   rendezvous_name: string;
+  category: MeetingSpotCategory;
+  source: "SCENARIO" | "OPENSTREETMAP" | "ROUTE";
+  latitude: number;
+  longitude: number;
+  area_m2: number | null;
   status: RendezvousCandidateStatus;
   reason: string;
   resource_id: string | null;
@@ -258,11 +272,17 @@ export type LiveRendezvousResult = {
   direct_transport_minutes: number;
   direct_route_distance_miles: number;
   max_added_hospital_delay_minutes: number;
-  hospital_delay_weight: number;
+  direction_tolerance_minutes: number;
+  min_blood_gain_minutes: number;
   recommendation: "RENDEZVOUS" | "DIRECT_TRANSPORT";
   recommendation_reason: string;
   recommended_rendezvous_id: string | null;
+  /** Recommended option first, then the best alternatives, then each unit's best option. */
   candidates: RendezvousCandidate[];
+  spots_available: number;
+  spots_considered: number;
+  rejected_summary: Record<string, number>;
+  meeting_spot_source: string;
 };
 
 // ----- Ambulance UI --------------------------------------------------------------

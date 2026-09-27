@@ -33,25 +33,38 @@ def coverage_target_minutes(scenario_target_minutes: int) -> int:
     return target_minutes
 
 
-def rendezvous_max_added_hospital_delay_minutes() -> float:
-    """Return the largest modeled hospital-arrival delay allowed for an intercept."""
-
-    return _nonnegative_float(
-        "BLOODGRID_RENDEZVOUS_MAX_ADDED_HOSPITAL_DELAY_MINUTES", "10"
-    )
+MEETING_SPOTS_DIR = PROJECT_ROOT / "data" / "meeting_spots"
 
 
-def rendezvous_hospital_delay_weight() -> float:
-    """Return the configured score penalty for modeled hospital-arrival delay."""
+def meeting_rule_settings() -> dict[str, float]:
+    """Settings for choosing where a blood unit meets the ambulance.
 
-    return _nonnegative_float("BLOODGRID_RENDEZVOUS_HOSPITAL_DELAY_WEIGHT", "0.5")
+    The rule: among meeting spots that keep the ambulance heading in the general
+    direction of the hospital, pick the one where blood arrives soonest.
+    A blank value in .env means "use the default".
+    """
 
-
-def _nonnegative_float(variable_name: str, default: str) -> float:
-    value = float(os.getenv(variable_name, default))
-    if value < 0:
-        raise ValueError(f"{variable_name} must be zero or greater")
-    return value
+    return {
+        # A spot may be at most this many minutes farther from the hospital than the start.
+        "direction_tolerance_minutes": _positive_setting(
+            "BLOODGRID_MEETING_DIRECTION_TOLERANCE_MINUTES", 3
+        ),
+        # Allowed added hospital delay: this share of the direct trip, but at least the floor.
+        "max_delay_fraction": _positive_setting("BLOODGRID_MEETING_MAX_DELAY_FRACTION", 0.25),
+        "min_delay_cap_minutes": _positive_setting("BLOODGRID_MEETING_MIN_DELAY_CAP_MINUTES", 5),
+        # Blood must arrive at least this much sooner than simply reaching the hospital.
+        "min_blood_gain_minutes": _positive_setting(
+            "BLOODGRID_MEETING_MIN_BLOOD_GAIN_MINUTES", 3
+        ),
+        # Spots are considered within this distance of the ambulance's or a unit's route.
+        "corridor_meters": _positive_setting("BLOODGRID_MEETING_CORRIDOR_METERS", 1200),
+        # At most this many spots are timed with the routing provider per request.
+        "max_candidates": _positive_setting("BLOODGRID_MEETING_MAX_CANDIDATES", 40),
+        # Below this many mapped spots in the corridor, roadside points are added.
+        "min_corridor_spots": _positive_setting("BLOODGRID_MEETING_MIN_CORRIDOR_SPOTS", 6),
+        # Rough driving speed used only to shortlist spots before real routing.
+        "estimate_speed_kmh": _positive_setting("BLOODGRID_MEETING_ESTIMATE_SPEED_KMH", 55),
+    }
 
 
 def ambulance_settings() -> dict[str, float]:

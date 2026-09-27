@@ -10,7 +10,7 @@ const BASE_LEGEND_ITEMS: LegendItem[] = [
   ["hospital", "Hospital"],
   ["incident-covered", "Covered demand"],
   ["incident-uncovered", "Uncovered demand"],
-  ["rendezvous", "Approved rendezvous"],
+  ["rendezvous", "Known meeting site"],
   ["live-incident", "Blood requested"],
 ];
 
@@ -28,7 +28,7 @@ export function ScenarioLegend({
       ? [["station-recommended", "Recommended staging"]]
       : [];
   const rendezvousLegendItems: LegendItem[] = recommendedRendezvousId
-    ? [["rendezvous-recommended", "Recommended rendezvous"]]
+    ? [["rendezvous-recommended", "Recommended meeting spot"]]
     : [];
   const legendItems: LegendItem[] = [
     ...BASE_LEGEND_ITEMS.slice(0, 1),

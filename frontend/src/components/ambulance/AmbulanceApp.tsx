@@ -20,7 +20,6 @@ import {
   getBloodProducts,
   getBloodRequest,
   getHospitalOptions,
-  getRendezvousPoints,
   getResourceOptions,
   getRoute,
   getRouteOptions,
@@ -44,11 +43,11 @@ import type {
   BloodProductOption,
   BloodRequest,
   HospitalOption,
-  RendezvousPoint,
   ResourceOption,
   RouteResult,
 } from "../../lib/types";
 import type { CameraMode, MovingResource } from "./AmbulanceMap";
+import { spotLabel } from "../../lib/meetingSpots";
 import { BrandLogo } from "../BrandLogo";
 import { AmbulanceMap } from "./AmbulanceMap";
 import type { RouteChoice } from "./NavigationPanels";
@@ -163,7 +162,6 @@ export function AmbulanceApp({
 }: AmbulanceAppProps) {
   const [settings, setSettings] = useState<AmbulanceSettings | null>(null);
   const [ambulances, setAmbulances] = useState<AmbulanceOption[] | null>(null);
-  const [rendezvousPoints, setRendezvousPoints] = useState<RendezvousPoint[]>([]);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const [resources, setResources] = useState<ResourceOption[]>([]);
@@ -237,19 +235,30 @@ export function AmbulanceApp({
   const candidate =
     request?.rendezvous.candidates.find((item) => item.status === "RECOMMENDED") ?? null;
   const isIntercept = request?.rendezvous.recommendation === "RENDEZVOUS" && candidate !== null;
-  const rendezvousPoint = request
-    ? rendezvousPoints.find(
-        (item) => item.rendezvous_id === request.rendezvous.recommended_rendezvous_id,
-      ) ?? null
+  // The meeting spot comes straight from the backend rule's recommended option.
+  const spotRoad =
+    routeToPoint?.route.steps
+      .slice()
+      .reverse()
+      .find((step) => step.road_name)?.road_name ?? null;
+  const displayCandidate = candidate
+    ? { ...candidate, rendezvous_name: spotLabel(candidate, spotRoad) }
     : null;
+  const rendezvousPoint =
+    request && isIntercept && displayCandidate
+      ? {
+          latitude: displayCandidate.latitude,
+          longitude: displayCandidate.longitude,
+          name: displayCandidate.rendezvous_name,
+        }
+      : null;
 
   // ----- Initial data -------------------------------------------------------------
   useEffect(() => {
-    Promise.all([getAmbulanceSettings(), getAmbulances(scenarioId), getRendezvousPoints(scenarioId)])
-      .then(([loadedSettings, loadedAmbulances, loadedPoints]) => {
+    Promise.all([getAmbulanceSettings(), getAmbulances(scenarioId)])
+      .then(([loadedSettings, loadedAmbulances]) => {
         setSettings(loadedSettings);
         setAmbulances(loadedAmbulances);
-        setRendezvousPoints(loadedPoints);
       })
       .catch((error: Error) => setConnectionError(error.message));
   }, [scenarioId]);
@@ -387,9 +396,9 @@ export function AmbulanceApp({
     const plannedCandidate = created.rendezvous.candidates.find(
       (item) => item.status === "RECOMMENDED",
     );
-    const point = rendezvousPoints.find(
-      (item) => item.rendezvous_id === created.rendezvous.recommended_rendezvous_id,
-    );
+    const point = plannedCandidate
+      ? { latitude: plannedCandidate.latitude, longitude: plannedCandidate.longitude }
+      : null;
     try {
       if (created.status === "ACTIVE_RENDEZVOUS" && point && plannedCandidate) {
         const unit = resources.find((item) => item.unit_id === plannedCandidate.resource_id);
@@ -905,7 +914,7 @@ export function AmbulanceApp({
           {phase === "preview" && request ? (
             <RouteOverviewCard
               busy={busy}
-              candidate={candidate}
+              candidate={displayCandidate}
               endArmed={endArmed}
               onCancel={endRequest}
               onStart={startNavigation}
@@ -918,7 +927,7 @@ export function AmbulanceApp({
             <NavBar
               bloodPointMinutes={bloodPointMinutes}
               busy={busy}
-              candidate={candidate}
+              candidate={displayCandidate}
               hospitalMinutes={hospitalMinutes}
               onBloodReceived={confirmBloodReceived}
               endArmed={endArmed}

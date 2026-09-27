@@ -23,7 +23,7 @@ Read these files in order:
 BloodGrid is a rural EMS logistics prototype. It helps operations teams answer two questions:
 
 1. Where should scarce, eligible Blood Response Units stage to improve modeled access to prehospital blood?
-2. After blood has already been requested, which eligible unit should respond and at which approved rendezvous point can it meet the transporting ambulance with minimal delay to definitive care?
+2. After blood has already been requested, which eligible unit should respond and at which meeting spot on the way can it meet the transporting ambulance with minimal delay to definitive care?
 
 The project is map-first and intended for a clear HackGT demo. It is not a clinical decision-maker.
 
@@ -32,7 +32,7 @@ The project is map-first and intended for a clear HackGT demo. It is not a clini
 - Do not decide whether a patient needs blood, which product to use, dosage, diagnosis, treatment, or hospital destination.
 - Treat a resource as eligible only when it has usable blood, an eligible vehicle, a qualified clinician, and valid operational/storage status.
 - Include `ON_CALL` mobilization delay in travel calculations.
-- Use only approved rendezvous points, never arbitrary midpoint coordinates.
+- Meeting spots come from mapped public places (OpenStreetMap parking lots, gas stations, and similar), the scenario's known sites, or a roadside point on the route; never an unexplained midpoint. (2026-09-27 team decision; the old approved-points-only rule is retired.) Present spots as suggestions; the crew decides.
 - Always compare an intercept against direct transport to the supplied hospital. Direct transport may win.
 - Keep core recommendations deterministic and explainable from the calculated data. Do not use an LLM for optimization or clinical logic.
 - Clearly label operational demo data as synthetic. Never imply it is live EMS or patient data.
@@ -65,9 +65,9 @@ Completed foundation work:
 - Dashboard strategic deployment panel added with a current/recommended view toggle, before/after coverage counts, and unit-to-station assignments.
 - Deployment tests cover maximum coverage, station capacity, exclusion of an ineligible unit, and the effect of on-call mobilization delay.
 - Deterministic live incident evaluator added under `backend/app/rendezvous/` with `GET /live-incidents/{incident_id}/rendezvous`.
-- Live evaluation validates the supplied active destination without selecting or changing it; it compares direct transport with every approved active rendezvous point, then returns the best feasible logistics option or direct transport.
-- Dashboard live incident panel added with direct transport, supplied hospital context, every candidate's status, and a map marker for the recommended approved point.
-- Rendezvous tests cover an explainable recommendation, direct transport when an intercept is too late, on-call mobilization, unapproved points, and ineligible resources. The Mapbox adapter now also handles a single origin/destination comparison internally.
+- Live evaluation validates the supplied active destination without selecting or changing it; it compares direct transport with nearby meeting spots and returns the soonest-blood spot that keeps heading toward the hospital, or direct transport (see **Meeting Spots**).
+- Dashboard live incident panel added with direct transport, supplied hospital context, every candidate's status, and a map marker for the recommended meeting spot.
+- Rendezvous tests cover each meeting-rule branch, on-call mobilization, ineligible resources, the roadside fallback, and catalog loading. The Mapbox adapter now also handles a single origin/destination comparison internally.
 - Versioned synthetic availability profiles added in `data/scenarios/rural_ga_initial_v1/availability_profiles.json`.
 - `backend/app/availability/service.py` applies a selected profile to an in-memory scenario copy, preserving the source scenario and resettable `baseline` state.
 - Dashboard Synthetic operating state selector added. It refreshes baseline coverage, strategic deployment, live rendezvous, map markers, and resource eligibility together.
@@ -123,9 +123,9 @@ The scenario uses synthetic modeled rural-Georgia geography and operational data
 - **Routing:** Mapbox Matrix API for MVP road travel, hidden behind a provider-neutral routing interface. The provider batches the current three units and 30 demand points into two requests because Mapbox permits 25 coordinates per matrix request.
 - **Baseline coverage:** Fastest eligible unit by estimated `mapbox/driving` duration plus configured on-call mobilization. The initial scenario has a 20-minute target. Local `BLOODGRID_COVERAGE_TARGET_MINUTES` may override that target for demonstration only.
 - **Strategic optimizer:** Google OR-Tools CP-SAT in `backend/app/deployment/`. It assigns every eligible unit to one active station, respects station capacity, and maximizes the number of demand points covered within the target. Routing and eligibility remain outside the optimizer.
-- **Live rendezvous:** deterministic candidate evaluation in `backend/app/rendezvous/`, not OR-Tools. It requires an existing authorized request, uses only approved active points, includes direct transport as the feasibility reference, and preserves the supplied destination hospital.
-- **Live-incident selection:** the scenario contains four synthetic open requests. The selected ID is browser state; `GET /live-incidents/{incident_id}/rendezvous` evaluates only that request. Selection updates the approved-point review and highlighted map marker, while coverage and strategic deployment remain scenario-wide views.
-- **Rendezvous assumptions:** `BLOODGRID_RENDEZVOUS_MAX_ADDED_HOSPITAL_DELAY_MINUTES` defaults to `10`; `BLOODGRID_RENDEZVOUS_HOSPITAL_DELAY_WEIGHT` defaults to `0.5`. Both are local configuration values and must not be hard-coded elsewhere.
+- **Live rendezvous:** deterministic candidate evaluation in `backend/app/rendezvous/`, not OR-Tools. It requires an existing authorized request, chooses the soonest-blood meeting spot among those that keep heading toward the hospital, includes direct transport as the feasibility reference, and preserves the supplied destination hospital. See **Meeting spots** below.
+- **Live-incident selection:** the scenario contains four synthetic open requests. The selected ID is browser state; `GET /live-incidents/{incident_id}/rendezvous` evaluates only that request. Selection updates the meeting-spot review and highlighted map marker, while coverage and strategic deployment remain scenario-wide views.
+- **Meeting-rule assumptions:** the `BLOODGRID_MEETING_*` settings are in `config.py` -> `meeting_rule_settings()` (see **Meeting Spots**). They are local configuration values and must not be hard-coded elsewhere.
 - **Availability profiles:** `availability_profiles.json` provides named, synthetic demo overlays. `baseline` is required. The overlay service is the sole owner of profile application; it returns a copied scenario, and no source CSV/JSON data are changed during a demo.
 - **Persistence:** CSV and JSON for the MVP; no database required.
 - **Optional AI:** only a later explanation layer, never core decision logic.
@@ -154,7 +154,7 @@ This is a strategic planning comparison, not a real deployment command. It uses 
 
 ## Current Live Incident Result
 
-The dashboard defaults to `LIVE-001` and can select `LIVE-002`, `LIVE-003`, or `LIVE-004`. Each case has a supplied active destination and receives an independent approved-point review. With the baseline state, prior live Mapbox verification for `LIVE-001` produced:
+The dashboard defaults to `LIVE-001` and can select `LIVE-002`, `LIVE-003`, or `LIVE-004`. Each case has a supplied active destination and receives an independent meeting-spot review. The results below come from the retired approved-points evaluator; see **Meeting Spots** for current results. Prior live Mapbox verification for `LIVE-001` produced:
 
 - Supplied destination: North Valley Trauma Center (`H-01`, recorded `LEVEL_II`). BloodGrid validated that it is an active record but did not choose it.
 - Direct transport estimate: 28.7 minutes.
@@ -165,7 +165,7 @@ The dashboard defaults to `LIVE-001` and can select `LIVE-002`, `LIVE-003`, or `
 
 This is synthetic logistics output, not a clinical transfusion, transport, or destination recommendation.
 
-Browser verification on 2026-09-26 also selected `LIVE-003`: the dashboard switched to `MEDIC-34`, preserved its supplied `H-03` East Ridge Community Hospital context, recalculated every approved-point result, and highlighted only that request on the map. Its synthetic logistics result was direct transport because no approved point met the configured limits.
+Browser verification on 2026-09-26 also selected `LIVE-003`: the dashboard switched to `MEDIC-34`, preserved its supplied `H-03` East Ridge Community Hospital context, recalculated every approved-point result, and highlighted only that request on the map. Under the retired evaluator its result was direct transport; the meeting-spot rule now recommends BR-02 at a parking lot.
 
 ## Current Dynamic Availability Result
 
@@ -201,7 +201,7 @@ This section is the practical integration contract for Alex, Claude, Codex, and 
 | Road routing | `backend/app/routing/provider.py` | New coverage, deployment, or rendezvous code must use `RoutingProvider`; only `backend/app/routing/mapbox_provider.py` may contain Mapbox request details. |
 | Eligibility and baseline coverage | `backend/app/coverage/service.py` | Reuse or extend the explicit eligibility rule. Do not create a second, slightly different eligibility check elsewhere. |
 | Availability profiles | `backend/app/availability/service.py` | Apply named profile overlays only here. Never mutate source scenario data or duplicate its override behavior in frontend code. |
-| Live rendezvous evaluation | `backend/app/rendezvous/service.py` | Use the existing routing and eligibility interfaces. Only approved, active points may be evaluated; preserve the incident's supplied destination. |
+| Live rendezvous evaluation | `backend/app/rendezvous/service.py` | Use the existing routing and eligibility interfaces. Candidate spots come from `app/meeting_spots.py`; preserve the incident's supplied destination. |
 | HTTP API | `backend/app/main.py` | Keep endpoint functions thin: receive a request, call a service, return typed data. Put business logic in focused modules. |
 | Dashboard API client and types | `frontend/src/lib/api.ts` and `frontend/src/lib/types.ts` | Add backend response shapes here before displaying them. Do not calculate coverage or optimization results in the browser. |
 | Map rendering | `frontend/src/components/OperationsMap.tsx` | Use it to visualize API results. Keep marker semantics, colors, labels, and legend entries synchronized. |
@@ -259,6 +259,57 @@ Validate and polish the data-improvement demo:
 4. Keep all synthetic operational values visibly labeled and do not add clinical destination or treatment recommendations.
 5. Update the demo script, provenance notes, and screenshots only after the tested MVP behavior remains intact.
 
+## Meeting Spots (2026-09-27, branch `feature/meeting-spots`)
+
+The approved-rendezvous-points rule is retired by team decision. It often left no usable point, or picked a far unit when a closer one could meet the ambulance at an ordinary parking lot. The evaluator in `backend/app/rendezvous/service.py` was rewritten, replacing the previous evaluator and its hospital-delay weighting.
+
+**Where spots come from.**
+- The shared catalog is `data/meeting_spots/<region>.csv`, built by `node scripts/build_meeting_spots.mjs` from an OpenStreetMap Overpass download. Raw snapshots are in `data/raw/openstreetmap_meeting_spots_2026-09-27/`, and provenance is in `data/meeting_spots/sources.json`.
+  - Categories: parking lots, gas stations, fire stations, places of worship, and schools. Private, underground, and tiny places are dropped.
+  - Size: 6,827 spots around `rural_ga_initial_v1` and 1,633 around the Echols-Valdosta scenario.
+  - Contract: `data/schemas/v1/MEETING_SPOT_CATALOG_CONTRACT.md`. The data is ODbL, and the UI credits "OpenStreetMap contributors".
+- The scenario's active `rendezvous_points.csv` rows become known sites. The `approved` flag is no longer read, and scenario files are unchanged.
+- Where mapped places are scarce, labeled roadside points on the ambulance's route or a unit's route are added.
+- `backend/app/meeting_spots.py` loads all three.
+
+**The rule.**
+1. **Shortlist:** keep spots within `BLOODGRID_MEETING_CORRIDOR_METERS` (1200) of the ambulance-to-hospital route or of a unit's route toward the ambulance. Rank them with a crude straight-line estimate and keep the top `MAX_CANDIDATES` (40), plus the best 8 per unit.
+2. **Time it:** a few chunked Matrix calls give real road times (about 1 s per incident).
+3. **Choose:** for every (spot, eligible unit) pair, blood arrives at `max(ambulance drive, unit mobilization + drive)`. A pair is rejected when:
+   - **Wrong direction:** the spot is more than `DIRECTION_TOLERANCE_MINUTES` (3) farther from the hospital than the ambulance's start.
+   - **Too late:** blood arrives less than `MIN_BLOOD_GAIN_MINUTES` (3) sooner than direct hospital arrival.
+   - **Too much delay:** added hospital delay exceeds `max(MIN_DELAY_CAP_MINUTES 5, MAX_DELAY_FRACTION 0.25 x direct)`.
+4. **Recommend:** the soonest blood wins. Ties are broken by added delay, then category (known site first), then size, then ID. If nothing passes, the result is direct transport.
+
+All settings are in `config.py` -> `meeting_rule_settings()`. The old `BLOODGRID_RENDEZVOUS_*` settings are removed. The supplied hospital is never changed, and spots are suggestions: the crew decides where to stop.
+
+**Results (live Mapbox, baseline profile).**
+
+| Incident | Result |
+| --- | --- |
+| LIVE-001 | BR-02 at Apple Valley Baptist Church, blood 13.4 min, +5.4 min |
+| LIVE-002 | BR-01 at Chevron, blood 18.5 min, +1.7 min (was BR-02 at Route 17, blood 32.9, +9.9) |
+| LIVE-003 | BR-02 at a parking lot, blood 17.4 min, +4.7 min |
+| LIVE-004 | Direct transport |
+| EV-001 | BR-EV-01 at JP Food, blood 14.9 min, +0 |
+| EV-002 | Gas station, blood 26.1 min, +0 |
+| EV-003 | Gas station, blood 71.9 min, +9.6 min |
+| EV-004 | JP Food, blood 16.4 min, +0 |
+
+Before this change, every Echols-Valdosta incident was direct transport.
+
+**UI.**
+- The System UI panel shows "Meet on the way" or "Continue direct", the options reviewed, what was ruled out, and the OSM credit. The recommended spot gets its own map marker.
+- The Ambulance UI labels generic spots by road, e.g. "Parking lot on GA 211".
+
+**Limits.**
+- A mapped place is not verified as open, safe, or large enough.
+- OSM coverage is uneven in rural areas.
+- EV-003's gain versus delay is borderline; tune it with the settings if needed.
+- The catalog is a dated snapshot. To refresh it, run `node scripts/build_meeting_spots.mjs --refresh`.
+
+**Tests.** `backend/tests/test_rendezvous_service.py` covers each rule branch, the swing toward a unit, on-call mobilization, ineligible units, the known-site tie-break, the roadside fallback, and catalog loading.
+
 ## Ambulance UI (working model, 2026-09-26)
 
 Open `http://localhost:3000` and press **Ambulance view**, or go straight to `http://localhost:3000/ambulance?unit=MEDIC-12`.
@@ -269,7 +320,7 @@ Open `http://localhost:3000` and press **Ambulance view**, or go straight to `ht
 2. The crew presses **MAKE REQUEST** and chooses a blood product and a destination hospital. Hospitals are listed by drive time only and never labelled "recommended".
 3. The crew presses **GO**. The request is evaluated by the **unchanged** `calculate_live_rendezvous`.
 4. A route overview shows the whole plan: the ambulance's route, the blood unit's route, the rendezvous point, and the hospital. Nothing moves until the crew presses **Start navigation**.
-5. Heading-up, turn-by-turn navigation leads to the approved rendezvous point. **Watch BR-02** frames both vehicles live so the blood unit can be seen moving. A compact bar shows the ETA to the blood point and the ETA to the hospital, both taken from the evaluator's numbers. The crew taps **Blood received**.
+5. Heading-up, turn-by-turn navigation leads to the meeting spot. **Watch BR-02** frames both vehicles live so the blood unit can be seen moving. A compact bar shows the ETA to the blood point and the ETA to the hospital, both taken from the evaluator's numbers. The crew taps **Blood received**.
 6. Navigation continues to the hospital, where the request closes as ARRIVED. At any point while driving, **Reroute** opens a dropdown of up to three distinct roads to the same point or hospital, with their times, using `GET /route/options`.
 7. When the evaluator returns direct transport, the overview says so and navigation goes straight to the hospital.
 
@@ -296,16 +347,16 @@ The System UI's **Ambulance requests** panel lists every request and lets operat
 - The blood product is recorded but does not filter units (only `O_NEG` exists).
 - The System UI shows requests in a panel only, not yet as map markers.
 
-## Known Issues Found 2026-09-26 (not yet changed)
+## Known Issues Found 2026-09-26
 
 These are in code outside the Ambulance UI and were left for their owner to confirm.
 
-1. **Rendezvous results depend on evaluation order.**
+1. **Fixed 2026-09-27 (meeting spots): Rendezvous results depended on evaluation order.** The rewritten evaluator keys the hospital by `hospital_id` and routes through `CoordinateKeyedProvider`.
    - **Cause:** `backend/app/rendezvous/service.py` gives every supplied hospital the location ID `"destination"`. `MapboxMatrixProvider` caches by location ID, so after one incident is evaluated, a later incident going to a *different* hospital reuses the first hospital's point-to-hospital times.
    - **Reproduced:** evaluated alone, `LIVE-003` gives `DIRECT_TRANSPORT`. Evaluated after `LIVE-001`, which the dashboard loads first, it gives `RENDEZVOUS` at `RV-03`. This explains why this handoff's `LIVE-003` result was not reproducible.
    - **Suggested fix:** use `hospital.hospital_id` as the location ID in `_hospital_location()`, and replace the hard-coded `"destination"` key in `_evaluate_candidate()` with that ID.
    - Crew requests already avoid this through `CoordinateKeyedProvider`.
-2. **Blank rendezvous settings crash the calculation.** Blank `BLOODGRID_RENDEZVOUS_MAX_ADDED_HOSPITAL_DELAY_MINUTES=` and `BLOODGRID_RENDEZVOUS_HOSPITAL_DELAY_WEIGHT=` lines, as in `.env.example`, raise "could not convert string to float" in `_nonnegative_float()`, so anyone who copies the template gets a failing live-incident panel. Treating blank as the default (as `coverage_target_minutes()` now does) would fix it.
+2. **Fixed 2026-09-27 (meeting spots): Blank rendezvous settings crashed the calculation.** Those settings are removed, and the new `BLOODGRID_MEETING_*` settings treat blank as the default. Blank `BLOODGRID_RENDEZVOUS_MAX_ADDED_HOSPITAL_DELAY_MINUTES=` and `BLOODGRID_RENDEZVOUS_HOSPITAL_DELAY_WEIGHT=` lines, as in `.env.example`, raise "could not convert string to float" in `_nonnegative_float()`, so anyone who copies the template gets a failing live-incident panel. Treating blank as the default (as `coverage_target_minutes()` now does) would fix it.
 3. **The System UI map can open off-center.** The map area stretches to the full height of the right-hand panel column, so its center can fall below the visible area and the map opens looking north of the demo region.
 
 **Fixed 2026-09-27: System UI markers drifting while panning.** `.map-marker` had `transition: transform 140ms`. Mapbox positions markers by rewriting their inline `transform` on every frame, so each marker eased toward its position and trailed the map by about 35 px during a drag. The transition is removed, and the hover effect now uses an outline. Measured lag while dragging went from 34 px to 0–1 px.

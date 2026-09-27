@@ -10,7 +10,7 @@ It must not decide whether blood is medically indicated, select a product or dos
 
 - A destination hospital is supplied to the live-incident workflow.
 - Patient transport should continue generally toward definitive care.
-- Rendezvous points must come from the approved dataset, not arbitrary map coordinates.
+- Meeting spots come from mapped public places (parking lots, gas stations, fire stations, churches, and school lots from OpenStreetMap), the scenario's known sites, or, where mapped places are scarce, a roadside point on the route. The earlier "approved dataset only" rule was retired by 2026-09-27 team decision. A spot is a suggestion; the crew decides where it is safe to stop.
 - Direct hospital transport is always considered and may be the recommended option.
 - Availability, credentialing, valid blood, storage status, and on-call mobilization time materially affect recommendations.
 - Results are prototype decision support and remain subject to local EMS protocols and medical direction in real deployment.
@@ -34,7 +34,8 @@ It must not decide whether blood is medically indicated, select a product or dos
 
 - A live evaluation starts only after the synthetic incident already records an authorized blood request.
 - The incident's hospital is supplied input. BloodGrid validates that it is an active known record, displays its recorded trauma level as context, and never selects, replaces, or clinically evaluates a destination.
-- Only rendezvous points explicitly marked both approved and active are considered. BloodGrid never invents a midpoint or public meeting location.
+- Candidate spots are those near the ambulance's route to the supplied hospital or near an eligible unit's road toward the ambulance. The rule picks the unit and spot where blood arrives soonest among spots that keep the ambulance heading in the general direction of the hospital: no more than a few minutes farther from the hospital than the start, a bounded added hospital delay (a share of the direct trip), and blood arriving meaningfully sooner than simply reaching the hospital. Otherwise the result is direct transport.
+- A mapped place is not verified as open, safe, large enough, or accessible at any given moment, and it is not an agency-approved site. OpenStreetMap coverage is incomplete in rural areas.
 - A point must deliver an eligible resource before the modeled direct-hospital arrival and remain within the configured maximum added hospital-delay limit. Otherwise, the transparent result is direct transport.
 - The score is a logistics comparison: `time_to_blood + hospital_delay_weight * added_hospital_delay`. It does not determine treatment, transfusion, or clinical benefit.
 

@@ -109,6 +109,9 @@ export function OperationsMap({
       }, new Map<string, string[]>()) ?? new Map<string, string[]>(),
     );
     const recommendedRendezvousId = rendezvous?.recommended_rendezvous_id;
+    const recommendedSpot = rendezvous?.candidates.find(
+      (candidate) => candidate.status === "RECOMMENDED",
+    );
     const eligibilityByUnit = new Map(
       coverage?.resource_eligibility.map((assessment) => [
         assessment.unit_id,
@@ -185,14 +188,29 @@ export function OperationsMap({
         latitude: point.latitude,
         title:
           point.rendezvous_id === recommendedRendezvousId
-            ? `${point.name} recommended approved rendezvous point`
-            : `${point.name} rendezvous point`,
+            ? `${point.name} recommended meeting spot`
+            : `${point.name} known meeting site`,
         type: "rendezvous" as const,
         variant:
           point.rendezvous_id === recommendedRendezvousId
             ? "rendezvous-recommended"
             : "rendezvous",
       })),
+      // The rule may pick any public place (e.g. a parking lot), not only a known site.
+      ...(recommendedSpot &&
+      !scenario.rendezvous_points.some((point) => point.rendezvous_id === recommendedSpot.rendezvous_id)
+        ? [
+            {
+              id: recommendedSpot.rendezvous_id,
+              layer: "rendezvous" as const,
+              longitude: recommendedSpot.longitude,
+              latitude: recommendedSpot.latitude,
+              title: `${recommendedSpot.rendezvous_name} recommended meeting spot`,
+              type: "rendezvous" as const,
+              variant: "rendezvous-recommended",
+            },
+          ]
+        : []),
       ...scenario.live_incidents.map((incident) => ({
         id: incident.incident_id,
         layer: "liveIncident" as const,

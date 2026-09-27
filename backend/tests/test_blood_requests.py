@@ -62,7 +62,7 @@ class DistanceRoutingProvider:
 
 
 class PrefixRoutingProvider:
-    """Every leg takes 5 minutes, except request-to-hospital, which takes direct_minutes."""
+    """Every leg takes 5 minutes, except request-to-hospital (H-..), which takes direct_minutes."""
 
     provider_name = "test-routing"
     profile = "test-driving"
@@ -77,7 +77,7 @@ class PrefixRoutingProvider:
                 destination,
                 self.direct_minutes
                 if origin.location_id.startswith("REQ")
-                and destination.location_id.startswith("destination")
+                and destination.location_id.startswith("H-")
                 else 5,
             )
             for origin in origins

@@ -11,13 +11,13 @@ BloodGrid will have two user interfaces:
 | UI | Who uses it | Purpose | Route |
 | --- | --- | --- | --- |
 | **System UI** | EMS operations, dispatch, planners | The current dashboard, unchanged: regional map, baseline coverage, strategic deployment, synthetic operating state, live-incident selector, and live rendezvous evaluation. It also lists requests sent from ambulances. | `/` |
-| **Ambulance UI** | The crew of a transporting ambulance | A simple, glanceable screen: see where you are and nearby blood resources, send a blood request, then follow navigation to the approved rendezvous point and on to the hospital. | `/ambulance?unit=<ambulance id>` |
+| **Ambulance UI** | The crew of a transporting ambulance | A simple, glanceable screen: see where you are and nearby blood resources, send a blood request, then follow navigation to the meeting spot and on to the hospital. | `/ambulance?unit=<ambulance id>` |
 
 Each UI has a button at the top of the page that switches to the other: **Ambulance view** in the System UI's top bar and **System view** in the Ambulance UI's top bar. `/ambulance` without a unit shows an ambulance chooser.
 
 The Ambulance UI is a **new front end for logic that already exists**. The decision itself is made by the existing deterministic evaluator, `calculate_live_rendezvous` in `backend/app/rendezvous/service.py`, which already:
 
-- compares direct transport with every approved, active rendezvous point;
+- compares direct transport with nearby meeting spots (see section 14, revision 7);
 - applies the shared eligibility rule and on-call mobilization;
 - rejects points that are too late or exceed the added-delay limit;
 - scores the rest.
@@ -173,7 +173,7 @@ Example, using `LIVE-001` / `MEDIC-12` with baseline availability, as currently 
 ### S4b: Navigate to hospital
 
 - Same layout as S4a, with the supplied destination hospital as the target.
-- When the evaluator returned `DIRECT_TRANSPORT`, a banner shows its `recommendation_reason`, e.g. "Continue to the supplied destination: no approved rendezvous can deliver the requested resource before direct arrival..." It also shows `direct_transport_minutes`.
+- When the evaluator returned `DIRECT_TRANSPORT`, a banner shows its `recommendation_reason`, e.g. "Continue to the supplied destination: no meeting spot gets blood at least 3 min sooner..." It also shows `direct_transport_minutes`.
   - Example: `LIVE-004` / `MEDIC-08`, where direct transport is 13.9 min and every point is too late.
 - When the ambulance comes within `BLOODGRID_AMBULANCE_ARRIVAL_RADIUS_METERS` of the hospital, the screen shows an **Arrived** state with an **End request** button. This screen is informational only.
 
@@ -412,6 +412,10 @@ This section records where the working model differs from, or adds to, sections 
   - After **Blood received** the unit stays parked at the meeting point instead of jumping back to its station.
 - **No confirmation pop-ups (revision 6).** Ending or cancelling a request takes two taps instead of a browser dialog. The first tap turns the button red ("Tap again to end" / "Tap again to cancel"), and it disarms after 3 seconds if the second tap does not come. This applies to **End** while driving, the **X** on the route overview, and **Cancel request** in the System UI's Ambulance requests panel.
 - **Click-blocking fix (revision 6).** Map markers with a z-index (the ambulance arrow and the assigned blood unit) used to draw on top of the bottom panel. When one drove underneath, it silently swallowed clicks on the dropdowns and buttons. The map now has its own stacking context (`isolation: isolate`), and the overlays sit above it. A failed load of hospitals or blood products also shows a **Retry** button, rather than leaving a dropdown disabled.
+- **Meeting spots (revision 7, 2026-09-27).** The rendezvous target can now be any suitable mapped public place (parking lot, gas station, fire station, church, or school lot), a scenario known site, or a roadside point.
+  - The evaluator picks the soonest blood that keeps the ambulance heading toward the hospital; see **Meeting Spots** in `docs/HANDOFF.md`.
+  - Generic spots are labeled by the road they sit on, e.g. "Parking lot on GA 211".
+  - The Ambulance UI no longer loads the scenario's rendezvous-point list; it uses the candidate's own coordinates.
 - **Demo menu (revision 3).** A **Demo** button in the Ambulance UI top bar sets the simulation speed to x1, x2, x5, or x10. The default is `BLOODGRID_AMBULANCE_SIM_SPEED_MULTIPLIER`, now 5.
   - Movement runs on a single simulation clock shared by the ambulance and the blood unit. The clock re-anchors when the speed changes, so neither vehicle jumps.
   - ETAs remain in modeled road minutes.
