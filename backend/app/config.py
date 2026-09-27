@@ -11,6 +11,13 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 DATA_SCENARIOS_DIR = PROJECT_ROOT / "data" / "scenarios"
 SCENARIO_ID = os.getenv("BLOODGRID_SCENARIO", "rural_ga_initial_v1")
+DEFAULT_FRONTEND_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    # The public, repository-owned GitHub Pages demo. An explicit deployment
+    # value still replaces this list through BLOODGRID_FRONTEND_ORIGINS.
+    "https://roysung0720.github.io",
+]
 
 
 def frontend_origins() -> list[str]:
@@ -19,7 +26,7 @@ def frontend_origins() -> list[str]:
     configured = os.getenv("BLOODGRID_FRONTEND_ORIGINS", "").strip()
     if configured:
         return [origin.strip().rstrip("/") for origin in configured.split(",") if origin.strip()]
-    return ["http://localhost:3000", "http://localhost:3001"]
+    return DEFAULT_FRONTEND_ORIGINS.copy()
 
 
 FRONTEND_ORIGINS = frontend_origins()

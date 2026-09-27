@@ -33,11 +33,16 @@ class CoverageTargetConfigTests(unittest.TestCase):
 
 
 class FrontendOriginsConfigTests(unittest.TestCase):
-    def test_unset_origins_use_local_development_defaults(self) -> None:
+    def test_unset_origins_include_local_and_public_demo_defaults(self) -> None:
         with mock.patch.dict(os.environ, {}, clear=False):
             os.environ.pop("BLOODGRID_FRONTEND_ORIGINS", None)
             self.assertEqual(
-                frontend_origins(), ["http://localhost:3000", "http://localhost:3001"]
+                frontend_origins(),
+                [
+                    "http://localhost:3000",
+                    "http://localhost:3001",
+                    "https://roysung0720.github.io",
+                ],
             )
 
     def test_configured_origins_are_trimmed_and_normalized(self) -> None:

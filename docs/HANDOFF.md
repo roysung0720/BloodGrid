@@ -9,10 +9,12 @@
 verified. GitHub Pages deployment is configured through
 `.github/workflows/deploy-pages.yml`; it builds the static dashboard from
 `frontend/` after a push to `main`. The repository now has the
-`NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` Actions secret. Before the first Pages demo,
-enable **GitHub Actions** as the repository Pages source, set Render's
-`BLOODGRID_FRONTEND_ORIGINS` to `https://roysung0720.github.io`, and verify the
-published map. See `docs/DEPLOYMENT.md`.
+`NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` Actions secret, and the repository Pages
+source is set to **GitHub Actions**. The first manually triggered Pages run is
+in progress. The centralized API CORS defaults include
+`https://roysung0720.github.io`; an explicit Render origin setting remains the
+path for a future custom domain. Verify the published map and both views after
+the workflow succeeds. See `docs/DEPLOYMENT.md`.
 
 **Audience:** Alex, project teammates, and coding agents joining the work.
 
@@ -71,6 +73,8 @@ Completed foundation work:
   changing its crew-facing behavior. The browser token and Render routing token
   should remain separate. `next/font/google` was removed so deployment does not
   rely on a Google Fonts build-time request.
+- `.gitignore` now excludes common `.env` editor backup names as well as the
+  root `.env`, preventing local Mapbox token copies from being staged.
 - Provider-neutral Mapbox Matrix routing adapter added under `backend/app/routing/`.
 - Deterministic baseline coverage service added under `backend/app/coverage/`. It requires valid onboard blood, an available vehicle, a qualified clinician, and either `AVAILABLE` or `ON_CALL` crew status. It adds an on-call unit's configured mobilization delay.
 - `GET /coverage/baseline` added. It uses the scenario target by default, returns a result for every synthetic demand point, and keeps Mapbox-specific code outside coverage logic.

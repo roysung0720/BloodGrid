@@ -42,8 +42,10 @@ minute or two before presenting so it can wake up.
 3. The tracked `.github/workflows/deploy-pages.yml` workflow builds the
    `frontend/` app and deploys it after each push to `main`.
 4. The public demo URL is `https://roysung0720.github.io/BloodGrid/`.
-5. Set Render's `BLOODGRID_FRONTEND_ORIGINS` to
-   `https://roysung0720.github.io`, save, and redeploy the API service.
+5. The API's built-in demo defaults already allow
+   `https://roysung0720.github.io`. If you later configure a custom domain,
+   set Render's `BLOODGRID_FRONTEND_ORIGINS` to that exact new origin and
+   redeploy the API service.
 
 The Pages workflow builds `NEXT_PUBLIC_BACKEND_BASE_URL` as
 `https://bloodgrid-api.onrender.com`. It compiles the Mapbox public token into
