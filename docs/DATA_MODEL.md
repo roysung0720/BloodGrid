@@ -9,7 +9,8 @@ The MVP uses the following data files and corresponding backend models:
 - `stations.csv`: candidate EMS or staging locations and capacity.
 - `hospitals.csv`: active destination hospitals and trauma levels.
 - `historical_incidents.csv`: demand-proxy locations, timestamps, severity, and source.
-- `rendezvous_points.csv`: approved, active intercept locations.
+- `rendezvous_points.csv`: the scenario's known meeting sites (used when active).
+- `data/meeting_spots/<region>.csv` (shared catalog, not part of any scenario): public places from OpenStreetMap (`spot_id`, `name`, `category`, `latitude`, `longitude`, `area_m2`, `osm_type`, `osm_id`). See `data/schemas/v1/MEETING_SPOT_CATALOG_CONTRACT.md`.
 - `live_incidents.csv` or memory: active simulated blood-request incidents, each with its own supplied destination.
 
 The detailed field contract is in `PRODUCT_SPEC.md` and will become Pydantic models in the backend.

@@ -4,6 +4,8 @@ import mapboxgl from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 
 import { getRoute } from "../lib/api";
+import { applyBrandMap, BRAND_MAP_STYLE } from "../lib/brandMap";
+
 import type {
   BaselineCoverageResult,
   CoverageView,
@@ -103,6 +105,8 @@ export function OperationsMap({
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const onFeatureSelectRef = useRef(onFeatureSelect);
   const [styleReady, setStyleReady] = useState(false);
+  // The map is rebuilt when its inputs change; routes may only be drawn once *that* map's style loads.
+  const loadedMapRef = useRef<mapboxgl.Map | null>(null);
   const [routePreview, setRoutePreview] = useState<RoutePreview | null>(null);
 
   useEffect(() => {
@@ -155,12 +159,9 @@ export function OperationsMap({
         return;
       }
 
-      const rendezvousPoint = scenario.rendezvous_points.find(
-        (point) => point.rendezvous_id === routeRendezvous.recommended_rendezvous_id,
-      );
+      // Meeting spots can be any mapped place, so use the recommended option's own location.
       const recommendedCandidate = routeRendezvous.candidates.find(
-        (candidate) =>
-          candidate.rendezvous_id === routeRendezvous.recommended_rendezvous_id,
+        (candidate) => candidate.status === "RECOMMENDED",
       );
       const resource = recommendedCandidate?.resource_id
         ? scenario.response_units.find(
@@ -168,13 +169,13 @@ export function OperationsMap({
           )
         : null;
 
-      if (!rendezvousPoint) {
+      if (!recommendedCandidate) {
         return;
       }
 
       const rendezvousLocation = {
-        latitude: rendezvousPoint.latitude,
-        longitude: rendezvousPoint.longitude,
+        latitude: recommendedCandidate.latitude,
+        longitude: recommendedCandidate.longitude,
       };
       const [ambulanceToRendezvous, ambulanceToHospital, resourceToRendezvous] =
         await Promise.all([
@@ -221,18 +222,23 @@ export function OperationsMap({
     const map = new mapboxgl.Map({
       accessToken: mapToken,
       container: containerRef.current,
-      style: "mapbox://styles/mapbox/standard",
-      center: [
-        (bounds.min_longitude + bounds.max_longitude) / 2,
-        (bounds.min_latitude + bounds.max_latitude) / 2,
+      style: BRAND_MAP_STYLE,
+      // Open framed on the scenario's own area, so every data set fills the map.
+      bounds: [
+        [bounds.min_longitude, bounds.min_latitude],
+        [bounds.max_longitude, bounds.max_latitude],
       ],
-      zoom: 8.15,
+      fitBoundsOptions: { padding: { top: 90, bottom: 60, left: 240, right: 60 } },
       attributionControl: false,
     });
 
+    map.on("style.load", () => applyBrandMap(map, "full"));
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-left");
-    map.on("style.load", () => setStyleReady(true));
+    map.on("style.load", () => {
+      loadedMapRef.current = map;
+      setStyleReady(true);
+    });
     mapRef.current = map;
 
     const activeCoverage =
@@ -251,6 +257,9 @@ export function OperationsMap({
       }, new Map<string, string[]>()) ?? new Map<string, string[]>(),
     );
     const recommendedRendezvousId = rendezvous?.recommended_rendezvous_id;
+    const recommendedSpot = rendezvous?.candidates.find(
+      (candidate) => candidate.status === "RECOMMENDED",
+    );
     const eligibilityByUnit = new Map(
       coverage?.resource_eligibility.map((assessment) => [
         assessment.unit_id,
@@ -327,14 +336,29 @@ export function OperationsMap({
         latitude: point.latitude,
         title:
           point.rendezvous_id === recommendedRendezvousId
-            ? `${point.name} recommended approved rendezvous point`
-            : `${point.name} rendezvous point`,
+            ? `${point.name} recommended meeting spot`
+            : `${point.name} known meeting site`,
         type: "rendezvous" as const,
         variant:
           point.rendezvous_id === recommendedRendezvousId
             ? "rendezvous-recommended"
             : "rendezvous",
       })),
+      // The rule may pick any public place (e.g. a parking lot), not only a known site.
+      ...(recommendedSpot &&
+      !scenario.rendezvous_points.some((point) => point.rendezvous_id === recommendedSpot.rendezvous_id)
+        ? [
+            {
+              id: recommendedSpot.rendezvous_id,
+              layer: "rendezvous" as const,
+              longitude: recommendedSpot.longitude,
+              latitude: recommendedSpot.latitude,
+              title: `${recommendedSpot.rendezvous_name} recommended meeting spot`,
+              type: "rendezvous" as const,
+              variant: "rendezvous-recommended",
+            },
+          ]
+        : []),
       ...scenario.live_incidents.map((incident) => ({
         id: incident.incident_id,
         layer: "liveIncident" as const,
@@ -396,7 +420,7 @@ export function OperationsMap({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !styleReady) {
+    if (!map || !styleReady || loadedMapRef.current !== map) {
       return;
     }
 

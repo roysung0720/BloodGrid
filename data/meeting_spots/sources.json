@@ -1,0 +1,114 @@
+{
+  "manifest_version": "v1",
+  "catalog": "meeting_spots",
+  "sources": [
+    {
+      "source_id": "osm_meeting_spots_rural_ga_jackson_barrow_hall",
+      "classification": "REAL",
+      "publisher": "OpenStreetMap contributors (via the Overpass API)",
+      "title": "Parking lots, gas stations, fire stations, places of worship, and schools: rural_ga_jackson_barrow_hall",
+      "url": "https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A180%5D%3B(nwr%5B%22amenity%22~%22%5E(parking%7Cfuel%7Cfire_station%7Cplace_of_worship%7Cschool)%24%22%5D(33.8%2C-84.1%2C34.51%2C-83.23)%3B)%3Bout%20bb%20tags%3B",
+      "accessed_at": "2026-09-27T00:00:00Z",
+      "raw_path": "data/raw/openstreetmap_meeting_spots_2026-09-27/rural_ga_jackson_barrow_hall.json",
+      "sha256": "5f46e4c73273d5b39ac5b6bef811a556b1cf4ca640725d1db64a86e4d13cbc85",
+      "license": "Open Database License (ODbL) 1.0; (c) OpenStreetMap contributors",
+      "region": {
+        "region_id": "rural_ga_jackson_barrow_hall",
+        "scenario_ids": [
+          "rural_ga_initial_v1"
+        ],
+        "bounding_box": {
+          "minLatitude": 33.8,
+          "maxLatitude": 34.51,
+          "minLongitude": -84.1,
+          "maxLongitude": -83.23
+        }
+      },
+      "used_fields": [
+        "type",
+        "id",
+        "lat",
+        "lon",
+        "center",
+        "bounds",
+        "tags.amenity",
+        "tags.name",
+        "tags.brand",
+        "tags.access",
+        "tags.parking",
+        "tags.capacity"
+      ],
+      "transformations": "Kept amenity=parking/fuel/fire_station/place_of_worship/school. Dropped access=private/no, multi-storey/underground/rooftop parking, parking areas under 400 m2 (bounding-box area), and parking nodes with capacity under 15. Location is the node, or the middle of the area's bounding box. Unnamed places get a generic name by category.",
+      "counts": {
+        "kept": 6827,
+        "by_category": {
+          "FUEL_STATION": 493,
+          "SCHOOL": 282,
+          "PLACE_OF_WORSHIP": 938,
+          "FIRE_STATION": 71,
+          "PARKING": 5043
+        },
+        "rejected": {
+          "too_small": 1291,
+          "garage_or_underground": 58,
+          "private_or_no_access": 133
+        }
+      },
+      "limitations": "OpenStreetMap coverage is incomplete in rural areas. A mapped place is not verified as open, safe, large enough, or accessible at any given time, and it is not an agency-approved rendezvous site. Locations are area centers, not verified entrances. Spots are suggestions; the crew decides."
+    },
+    {
+      "source_id": "osm_meeting_spots_south_ga_echols_valdosta",
+      "classification": "REAL",
+      "publisher": "OpenStreetMap contributors (via the Overpass API)",
+      "title": "Parking lots, gas stations, fire stations, places of worship, and schools: south_ga_echols_valdosta",
+      "url": "https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A180%5D%3B(nwr%5B%22amenity%22~%22%5E(parking%7Cfuel%7Cfire_station%7Cplace_of_worship%7Cschool)%24%22%5D(30.35%2C-83.57%2C31.27%2C-82.37)%3B)%3Bout%20bb%20tags%3B",
+      "accessed_at": "2026-09-27T00:00:00Z",
+      "raw_path": "data/raw/openstreetmap_meeting_spots_2026-09-27/south_ga_echols_valdosta.json",
+      "sha256": "ec08d5babcbea42e00ba80fda939d27064f15a6201ef359b8d1d237b1f5fb69c",
+      "license": "Open Database License (ODbL) 1.0; (c) OpenStreetMap contributors",
+      "region": {
+        "region_id": "south_ga_echols_valdosta",
+        "scenario_ids": [
+          "echols_valdosta_public_geography_v1"
+        ],
+        "bounding_box": {
+          "minLatitude": 30.35,
+          "maxLatitude": 31.27,
+          "minLongitude": -83.57,
+          "maxLongitude": -82.37
+        }
+      },
+      "used_fields": [
+        "type",
+        "id",
+        "lat",
+        "lon",
+        "center",
+        "bounds",
+        "tags.amenity",
+        "tags.name",
+        "tags.brand",
+        "tags.access",
+        "tags.parking",
+        "tags.capacity"
+      ],
+      "transformations": "Kept amenity=parking/fuel/fire_station/place_of_worship/school. Dropped access=private/no, multi-storey/underground/rooftop parking, parking areas under 400 m2 (bounding-box area), and parking nodes with capacity under 15. Location is the node, or the middle of the area's bounding box. Unnamed places get a generic name by category.",
+      "counts": {
+        "kept": 1633,
+        "by_category": {
+          "PLACE_OF_WORSHIP": 606,
+          "SCHOOL": 110,
+          "FUEL_STATION": 204,
+          "FIRE_STATION": 32,
+          "PARKING": 681
+        },
+        "rejected": {
+          "garage_or_underground": 3,
+          "too_small": 125,
+          "private_or_no_access": 54
+        }
+      },
+      "limitations": "OpenStreetMap coverage is incomplete in rural areas. A mapped place is not verified as open, safe, large enough, or accessible at any given time, and it is not an agency-approved rendezvous site. Locations are area centers, not verified entrances. Spots are suggestions; the crew decides."
+    }
+  ]
+}

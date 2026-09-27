@@ -7,6 +7,7 @@ This folder holds reproducible BloodGrid data and runnable demo worlds.
 - `synthetic/`: deliberately fabricated operational demo data, such as inventory and unit status.
 - `schemas/`: CSV field descriptions and validation notes.
 - `scenarios/`: complete, versioned data bundles the application can load.
+- `meeting_spots/`: the meeting-spot catalog, public places from OpenStreetMap (REAL, ODbL), shared across scenarios and selected by map area. It is rebuilt by `scripts/build_meeting_spots.mjs`. See `schemas/v1/MEETING_SPOT_CATALOG_CONTRACT.md`.
 
 Every dataset must identify whether it is REAL, REAL PROXY, SYNTHETIC, or a
 clearly described hybrid of those categories, and document its provenance and

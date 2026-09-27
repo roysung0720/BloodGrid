@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { AmbulanceRequestsPanel } from "../components/AmbulanceRequestsPanel";
+import { BrandLogo } from "../components/BrandLogo";
 import { FeatureDetails } from "../components/FeatureDetails";
 import { CoveragePanel } from "../components/CoveragePanel";
 import { AvailabilityProfilePanel } from "../components/AvailabilityProfilePanel";
@@ -237,12 +238,10 @@ export default function HomePage() {
     <main className="dashboard-shell">
       <header className="topbar">
         <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">
-            <Activity size={21} strokeWidth={2.4} />
-          </div>
+          <BrandLogo size={44} />
           <div>
-            <p className="eyebrow">Rural EMS logistics</p>
-            <h1>BloodGrid</h1>
+            <p className="eyebrow">Rural EMS blood logistics</p>
+            <h1 className="brand-wordmark">BloodGrid</h1>
           </div>
         </div>
 
@@ -316,7 +315,7 @@ export default function HomePage() {
                 <strong>{scenario.historical_incidents.length}</strong>
               </div>
               <div>
-                <span>Rendezvous</span>
+                <span>Known meeting sites</span>
                 <strong>{scenario.rendezvous_points.length}</strong>
               </div>
             </div>

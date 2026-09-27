@@ -20,7 +20,6 @@ import {
   getBloodProducts,
   getBloodRequest,
   getHospitalOptions,
-  getRendezvousPoints,
   getResourceOptions,
   getRoute,
   getRouteOptions,
@@ -36,6 +35,7 @@ import {
   prepareRoute,
   progressMeters,
   routeDiffers,
+  splitRoute,
   upcomingManeuver,
 } from "../../lib/navigation";
 import type {
@@ -44,11 +44,12 @@ import type {
   BloodProductOption,
   BloodRequest,
   HospitalOption,
-  RendezvousPoint,
   ResourceOption,
   RouteResult,
 } from "../../lib/types";
 import type { CameraMode, MovingResource } from "./AmbulanceMap";
+import { spotLabel } from "../../lib/meetingSpots";
+import { BrandLogo } from "../BrandLogo";
 import { AmbulanceMap } from "./AmbulanceMap";
 import type { RouteChoice } from "./NavigationPanels";
 import { ArrivedBar, ManeuverBanner, NavBar, RouteOverviewCard } from "./NavigationPanels";
@@ -162,7 +163,6 @@ export function AmbulanceApp({
 }: AmbulanceAppProps) {
   const [settings, setSettings] = useState<AmbulanceSettings | null>(null);
   const [ambulances, setAmbulances] = useState<AmbulanceOption[] | null>(null);
-  const [rendezvousPoints, setRendezvousPoints] = useState<RendezvousPoint[]>([]);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const [resources, setResources] = useState<ResourceOption[]>([]);
@@ -181,6 +181,8 @@ export function AmbulanceApp({
   const [routeToHospital, setRouteToHospital] = useState<PreparedRoute | null>(null);
   const [resourceRoute, setResourceRoute] = useState<PreparedRoute | null>(null);
   const [activeLeg, setActiveLeg] = useState<ActiveLeg | null>(null);
+  // Road already driven on earlier legs (and before a reroute), kept on the map for the demo.
+  const [drivenPaths, setDrivenPaths] = useState<LngLat[][]>([]);
   const [clock, setClock] = useState<SimClock | null>(null);
   const [routeError, setRouteError] = useState<string | null>(null);
   const [routeMenu, setRouteMenu] = useState<{
@@ -236,19 +238,30 @@ export function AmbulanceApp({
   const candidate =
     request?.rendezvous.candidates.find((item) => item.status === "RECOMMENDED") ?? null;
   const isIntercept = request?.rendezvous.recommendation === "RENDEZVOUS" && candidate !== null;
-  const rendezvousPoint = request
-    ? rendezvousPoints.find(
-        (item) => item.rendezvous_id === request.rendezvous.recommended_rendezvous_id,
-      ) ?? null
+  // The meeting spot comes straight from the backend rule's recommended option.
+  const spotRoad =
+    routeToPoint?.route.steps
+      .slice()
+      .reverse()
+      .find((step) => step.road_name)?.road_name ?? null;
+  const displayCandidate = candidate
+    ? { ...candidate, rendezvous_name: spotLabel(candidate, spotRoad) }
     : null;
+  const rendezvousPoint =
+    request && isIntercept && displayCandidate
+      ? {
+          latitude: displayCandidate.latitude,
+          longitude: displayCandidate.longitude,
+          name: displayCandidate.rendezvous_name,
+        }
+      : null;
 
   // ----- Initial data -------------------------------------------------------------
   useEffect(() => {
-    Promise.all([getAmbulanceSettings(), getAmbulances(scenarioId), getRendezvousPoints(scenarioId)])
-      .then(([loadedSettings, loadedAmbulances, loadedPoints]) => {
+    Promise.all([getAmbulanceSettings(), getAmbulances(scenarioId)])
+      .then(([loadedSettings, loadedAmbulances]) => {
         setSettings(loadedSettings);
         setAmbulances(loadedAmbulances);
-        setRendezvousPoints(loadedPoints);
       })
       .catch((error: Error) => setConnectionError(error.message));
   }, [scenarioId]);
@@ -289,6 +302,23 @@ export function AmbulanceApp({
     positionRef.current = position;
   }, [position]);
   const hasPosition = position !== null;
+
+  // How far along a leg the ambulance is: exact in simulation, projected from GPS otherwise.
+  function legProgressMeters(leg: ActiveLeg, at: Position | null, fraction: number | null) {
+    if (simulated && fraction !== null) {
+      return Math.max(0, Math.min(1, fraction)) * leg.route.lengthMeters;
+    }
+    return at ? progressMeters(leg.route, [at.longitude, at.latitude]) : 0;
+  }
+
+  // Keep the part of the current leg already driven before switching to a new route.
+  function keepDrivenPart() {
+    if (!activeLeg) return;
+    const fraction =
+      (simSeconds(clockRef.current, Date.now()) - activeLeg.startSim) / Math.max(1, activeLeg.minutes * 60);
+    const [driven] = splitRoute(activeLeg.route, legProgressMeters(activeLeg, positionRef.current, fraction));
+    setDrivenPaths((paths) => [...paths, driven]);
+  }
 
   // ----- Nearby resources (blips) and hospital markers --------------------------
   useEffect(() => {
@@ -386,9 +416,9 @@ export function AmbulanceApp({
     const plannedCandidate = created.rendezvous.candidates.find(
       (item) => item.status === "RECOMMENDED",
     );
-    const point = rendezvousPoints.find(
-      (item) => item.rendezvous_id === created.rendezvous.recommended_rendezvous_id,
-    );
+    const point = plannedCandidate
+      ? { latitude: plannedCandidate.latitude, longitude: plannedCandidate.longitude }
+      : null;
     try {
       if (created.status === "ACTIVE_RENDEZVOUS" && point && plannedCandidate) {
         const unit = resources.find((item) => item.unit_id === plannedCandidate.resource_id);
@@ -417,6 +447,7 @@ export function AmbulanceApp({
     setRouteMenu(null);
     setWatchResource(false);
     setFollow(true);
+    setDrivenPaths([]);
     if (isIntercept && candidate && routeToPoint) {
       setActiveLeg({
         leg: "rendezvous",
@@ -494,6 +525,7 @@ export function AmbulanceApp({
     const option = routeMenu.options[Number(key)];
     if (!choice || !option) return;
     // The chosen road starts where the options were looked up.
+    keepDrivenPart();
     setAnchor(routeMenu.from);
     setActiveLeg({
       leg: activeLeg.leg,
@@ -512,6 +544,7 @@ export function AmbulanceApp({
     setRouteToHospital(null);
     setResourceRoute(null);
     setActiveLeg(null);
+    setDrivenPaths([]);
     setClock(null);
     setRouteMenu(null);
     setRouteError(null);
@@ -528,6 +561,7 @@ export function AmbulanceApp({
       setRouteMenu(null);
       setRequest(updated);
       setWatchResource(false);
+      keepDrivenPart();
       const current = positionRef.current;
       const hospitalTarget = {
         latitude: updated.destination_latitude,
@@ -616,9 +650,15 @@ export function AmbulanceApp({
 
   // ----- Derived navigation display -------------------------------------------
   const onRendezvousLeg = activeLeg?.leg === "rendezvous";
+  const legProgress = activeLeg ? legProgressMeters(activeLeg, position, legFraction) : 0;
   const maneuver =
     activeLeg && position
       ? upcomingManeuver(activeLeg.route, progressMeters(activeLeg.route, [position.longitude, position.latitude]))
+      : null;
+  // While driving, the road behind the ambulance dims and only the road ahead stays bright.
+  const legSplit =
+    activeLeg && (phase === "navigating" || phase === "arrived")
+      ? splitRoute(activeLeg.route, legProgress)
       : null;
   const legRemainingMinutes =
     activeLeg && maneuver ? activeLeg.minutes * maneuver.remainingFraction : null;
@@ -671,13 +711,17 @@ export function AmbulanceApp({
   const showPlan = phase === "preview" || phase === "navigating" || phase === "arrived";
   const blueRoute = !showPlan
     ? null
-    : activeLeg
-      ? activeLeg.route.route.geometry
+    : legSplit
+      ? legSplit[1]
       : (routeToPoint ?? routeToHospital)?.route.geometry ?? null;
   const dashedRoute =
     showPlan && isIntercept && (phase === "preview" || onRendezvousLeg)
       ? routeToHospital?.route.geometry ?? null
       : null;
+  const drivenRoute =
+    phase === "navigating" || phase === "arrived"
+      ? [...drivenPaths, ...(legSplit ? [legSplit[0]] : [])]
+      : [];
   const purpleRoute =
     showPlan && isIntercept && (phase === "preview" || onRendezvousLeg)
       ? resourceRoute?.route.geometry ?? null
@@ -712,8 +756,11 @@ export function AmbulanceApp({
   const topbar = (
     <header className="amb-topbar">
       <div className="amb-topbar__unit">
-        <Ambulance size={22} aria-hidden="true" />
-        <strong>{unitId ?? "Ambulance"}</strong>
+        <BrandLogo size={34} />
+        <div>
+          <span className="amb-topbar__brand">BloodGrid</span>
+          <strong>{unitId ?? "Ambulance"}</strong>
+        </div>
       </div>
       <div className="amb-topbar__meta">
         <span className="scenario-pill">
@@ -829,6 +876,7 @@ export function AmbulanceApp({
         <AmbulanceMap
           activeRoute={blueRoute}
           camera={camera}
+          drivenRoute={drivenRoute}
           destinationHospitalId={request?.destination_hospital_id ?? null}
           follow={follow}
           hospitals={hospitals ?? []}
@@ -901,7 +949,7 @@ export function AmbulanceApp({
           {phase === "preview" && request ? (
             <RouteOverviewCard
               busy={busy}
-              candidate={candidate}
+              candidate={displayCandidate}
               endArmed={endArmed}
               onCancel={endRequest}
               onStart={startNavigation}
@@ -914,7 +962,7 @@ export function AmbulanceApp({
             <NavBar
               bloodPointMinutes={bloodPointMinutes}
               busy={busy}
-              candidate={candidate}
+              candidate={displayCandidate}
               hospitalMinutes={hospitalMinutes}
               onBloodReceived={confirmBloodReceived}
               endArmed={endArmed}

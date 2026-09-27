@@ -113,6 +113,22 @@ export function progressMeters(prepared: PreparedRoute, position: LngLat) {
   return projectOntoRoute(prepared, position).progress;
 }
 
+/** Split a route at a distance along it into the part already driven and the part ahead. */
+export function splitRoute(prepared: PreparedRoute, progress: number): [LngLat[], LngLat[]] {
+  const { route, cumulativeMeters, lengthMeters } = prepared;
+  const target = Math.max(0, Math.min(lengthMeters, progress));
+  let index = 1;
+  while (index < cumulativeMeters.length - 1 && cumulativeMeters[index] < target) {
+    index += 1;
+  }
+  const here = rawPointAlong(prepared, target / lengthMeters);
+  const cut: LngLat = [here.longitude, here.latitude];
+  return [
+    [...route.geometry.slice(0, index), cut],
+    [cut, ...route.geometry.slice(index)],
+  ];
+}
+
 const DIFFERENT_ROUTE_METERS = 120;
 
 /** True when a candidate route leaves the current route somewhere along its length. */

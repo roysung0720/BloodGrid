@@ -1,21 +1,45 @@
+/*
+ * BloodGrid brand theme: black, blood red (#B3131C, sampled from the logo), and white,
+ * matching the HackGT deck. Semantic map colors are tuned to read on a dark map.
+ */
 :root {
-  --ink: #12212b;
-  --muted: #60717d;
-  --surface: #f5f7f8;
-  --line: #dce4e8;
-  --navy: #173f5f;
-  --station: #c94a45;
-  --unit-available: #087f76;
-  --unit-on-call: #bd7a1d;
-  --unit-unavailable: #5c6b76;
-  --hospital: #bf4050;
-  --incident: #6273b7;
-  --coverage-covered: #6273b7;
-  --coverage-uncovered: #d16a27;
-  --deployment: #0f766e;
-  --rendezvous: #775da8;
-  --live-incident: #b52e4c;
-  --alert-soft: #fff1ed;
+  color-scheme: dark;
+
+  /* Brand */
+  --brand: #b3131c;
+  --brand-bright: #e0303a;
+  --brand-soft: rgba(179, 19, 28, 0.16);
+  --brand-glow: rgba(224, 48, 58, 0.35);
+
+  /* Surfaces, darkest to lightest */
+  --bg: #060608;
+  --panel: #101013;
+  --panel-2: #17171b;
+  --panel-3: #202026;
+  --line: #26262d;
+  --line-strong: #3a3a44;
+  --shadow: rgba(0, 0, 0, 0.55);
+
+  /* Text */
+  --ink: #f4f4f6;
+  --muted: #9a9aa6;
+  /* Strong accent text (kept under its old name so existing rules pick it up). */
+  --navy: #f4f4f6;
+  --surface: var(--panel-2);
+
+  /* Semantic map colors */
+  --station: #4d93d9;
+  --unit-available: #2fb38a;
+  --unit-on-call: #e3a23b;
+  --unit-unavailable: #7c7c88;
+  --hospital: #e2524a;
+  --incident: #e07a45;
+  --coverage-covered: #2fb38a;
+  --coverage-uncovered: #e2524a;
+  --deployment: #22a898;
+  --rendezvous: #9d80d8;
+  --live-incident: #ec3f5f;
+  --alert-soft: var(--brand-soft);
 }
 
 * {
@@ -29,10 +53,15 @@ body {
 }
 
 body {
-  background: var(--surface);
+  background: var(--bg);
   color: var(--ink);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-brand), "Poppins", Arial, Helvetica, sans-serif;
 }
+
+::selection { background: var(--brand); color: #ffffff; }
+
+select,
+input { color-scheme: dark; }
 
 button {
   color: inherit;
@@ -47,8 +76,9 @@ button {
 
 .topbar {
   align-items: center;
-  background: #ffffff;
+  background: linear-gradient(180deg, #0c0c0f 0%, var(--panel) 100%);
   border-bottom: 1px solid var(--line);
+  box-shadow: 0 1px 0 var(--brand-soft);
   display: flex;
   justify-content: space-between;
   min-height: 72px;
@@ -71,22 +101,29 @@ button {
   gap: 11px;
 }
 
-.brand-mark {
-  align-items: center;
-  background: var(--navy);
-  color: #ffffff;
-  display: flex;
-  height: 38px;
-  justify-content: center;
-  width: 38px;
+/* The logo sits on its own white disc, as on the deck. */
+.brand-logo {
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 18px var(--brand-glow);
+  display: block;
+  flex: none;
+  height: 44px;
+  width: 44px;
+}
+
+.brand-wordmark {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1;
 }
 
 .eyebrow {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0;
-  margin: 0 0 3px;
+  color: var(--brand-bright);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  margin: 0 0 4px;
   text-transform: uppercase;
 }
 
@@ -132,7 +169,7 @@ h2 {
 
 .scenario-select select {
   appearance: auto;
-  background: #f5f8f9;
+  background: var(--panel-2);
   border: 1px solid var(--line);
   color: var(--navy);
   font: inherit;
@@ -145,9 +182,9 @@ h2 {
 
 .scenario-pill {
   align-items: center;
-  background: #ecf6f2;
-  border: 1px solid #b9dfd1;
-  color: #176950;
+  background: rgba(47, 179, 138, 0.12);
+  border: 1px solid rgba(47, 179, 138, 0.4);
+  color: #6fdcb8;
   display: inline-flex;
   font-weight: 700;
   gap: 6px;
@@ -155,9 +192,9 @@ h2 {
 }
 
 .scenario-pill--hybrid {
-  background: #eef4fb;
-  border-color: #c5d7ea;
-  color: #2c628f;
+  background: rgba(77, 147, 217, 0.12);
+  border-color: rgba(77, 147, 217, 0.42);
+  color: #9cc8f2;
 }
 
 .scenario-name {
@@ -171,7 +208,7 @@ h2 {
 }
 
 .map-stage {
-  background: #d8e3e7;
+  background: #0b0b0e;
   min-height: calc(100vh - 72px);
   overflow: hidden;
   position: relative;
@@ -186,7 +223,7 @@ h2 {
 
 .map-token-missing {
   align-items: center;
-  background: #e9eef0;
+  background: var(--panel);
   color: var(--muted);
   display: flex;
   font-size: 14px;
@@ -197,8 +234,8 @@ h2 {
 
 .map-title,
 .map-symbols {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(203, 215, 221, 0.94);
+  background: rgba(16, 16, 19, 0.9);
+  border: 1px solid rgba(58, 58, 68, 0.9);
   box-shadow: 0 3px 12px rgba(35, 63, 76, 0.12);
   position: absolute;
   z-index: 2;
@@ -220,9 +257,9 @@ h2 {
 }
 
 .map-route-key {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(203, 215, 221, 0.94);
-  box-shadow: 0 3px 12px rgba(35, 63, 76, 0.12);
+  background: rgba(16, 16, 19, 0.9);
+  border: 1px solid rgba(58, 58, 68, 0.9);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.45);
   display: grid;
   font-size: 11px;
   font-weight: 700;
@@ -277,7 +314,7 @@ h2 {
 }
 
 .map-symbol:hover {
-  background: #edf3f5;
+  background: var(--panel-2);
 }
 
 .map-symbol.is-hidden {
@@ -375,7 +412,7 @@ h2 {
 .map-symbol__shape--live-incident::after { content: "!"; }
 
 .operations-rail {
-  background: #ffffff;
+  background: var(--panel);
   border-left: 1px solid var(--line);
   min-height: calc(100vh - 72px);
   overflow-y: auto;
@@ -391,6 +428,8 @@ h2 {
   gap: 8px;
   margin-bottom: 13px;
 }
+.section-heading svg { color: var(--brand-bright); }
+.section-heading h2 { font-weight: 600; letter-spacing: 0.01em; }
 
 .section-heading--alert {
   color: var(--live-incident);
@@ -476,7 +515,7 @@ h2 {
 .availability-select select,
 .incident-select select {
   appearance: auto;
-  background: #f5f8f9;
+  background: var(--panel-2);
   border: 1px solid var(--line);
   color: var(--navy);
   font: inherit;
@@ -494,7 +533,7 @@ h2 {
 }
 
 .view-toggle__button {
-  background: #f5f8f9;
+  background: var(--panel-2);
   border: 1px solid var(--line);
   cursor: pointer;
   font-size: 12px;
@@ -505,8 +544,8 @@ h2 {
 .view-toggle__button + .view-toggle__button { border-left: 0; }
 
 .view-toggle__button.is-active {
-  background: var(--deployment);
-  border-color: var(--deployment);
+  background: var(--brand);
+  border-color: var(--brand);
   color: #ffffff;
 }
 
@@ -569,7 +608,7 @@ h2 {
   width: 100%;
 }
 
-.resource-row:hover { background: #f5f8f9; }
+.resource-row:hover { background: var(--panel-3); }
 
 .status-dot {
   background: var(--unit-available);
@@ -605,7 +644,7 @@ h2 {
 .incident-summary {
   margin-top: 12px;
   background: var(--alert-soft);
-  border: 1px solid #efc6b9;
+  border: 1px solid rgba(224, 48, 58, 0.45);
   cursor: pointer;
   display: grid;
   gap: 8px;
@@ -614,7 +653,7 @@ h2 {
   width: 100%;
 }
 
-.incident-summary:hover { border-color: #da9077; }
+.incident-summary:hover { border-color: var(--brand-bright); }
 
 .incident-summary__status {
   color: var(--live-incident);
@@ -711,7 +750,7 @@ h2 {
   width: 100%;
 }
 
-.rendezvous-candidate:hover { background: #f5f8f9; }
+.rendezvous-candidate:hover { background: var(--panel-3); }
 .rendezvous-candidate.is-recommended strong { color: var(--rendezvous); }
 .rendezvous-candidate div strong { display: block; font-size: 12px; margin-bottom: 3px; }
 .rendezvous-candidate__time { line-height: 1.35; text-align: right; }
@@ -746,7 +785,7 @@ h2 {
 .map-marker {
   align-items: center;
   border: 2px solid #ffffff;
-  box-shadow: 0 1px 6px rgba(24, 43, 54, 0.35);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
   cursor: pointer;
   display: flex;
   font-size: 11px;
@@ -806,6 +845,19 @@ h2 {
 
 @keyframes pulse { 50% { opacity: 0.42; } }
 
+/*
+ * Desktop: the dashboard fills exactly one screen. The map keeps the viewport's height
+ * (so its center is the demo region's center, not a point below the fold) and the
+ * right-hand panel scrolls on its own. Previously the map stretched to the panel's full
+ * height and opened looking far north of the demo area.
+ */
+@media (min-width: 901px) {
+  .dashboard-shell { height: 100vh; overflow: hidden; }
+  .operations-layout { min-height: 0; }
+  .map-stage { min-height: 0; }
+  .operations-rail { min-height: 0; }
+}
+
 @media (max-width: 900px) {
   .operations-layout { grid-template-columns: 1fr; }
   .map-stage { min-height: 66vh; }
@@ -830,20 +882,28 @@ h2 {
 .view-switch,
 .amb-switch {
   align-items: center;
-  background: #ffffff;
-  border: 1px solid var(--navy);
-  color: var(--navy);
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--ink);
+  cursor: pointer;
   display: inline-flex;
   font-size: 13px;
-  font-weight: 700;
-  gap: 6px;
-  padding: 7px 11px;
+  font-weight: 600;
+  gap: 7px;
+  padding: 8px 14px;
   text-decoration: none;
+  transition: border-color 140ms ease, background-color 140ms ease;
   white-space: nowrap;
 }
+.view-switch svg,
+.amb-switch svg { color: var(--brand-bright); }
 
-.view-switch:hover,
-.amb-switch:hover { background: #eef3f7; }
+/* The cross-UI button is the main call to action in the top bar: solid brand red. */
+.view-switch { background: var(--brand); border-color: var(--brand); }
+.view-switch svg { color: #ffffff; }
+.view-switch:hover { background: var(--brand-bright); border-color: var(--brand-bright); }
+.amb-switch:hover { background: var(--panel-3); border-color: var(--brand-bright); }
 
 /* ----- System UI: ambulance requests panel -------------------------------------- */
 
@@ -860,9 +920,9 @@ h2 {
 .ambulance-request span { color: var(--muted); }
 .ambulance-request.is-ended { border-left-color: var(--line); opacity: 0.7; }
 .ambulance-request .ambulance-request__status { color: var(--navy); font-weight: 700; }
-.ambulance-request__cancel.is-armed { background: #c8102e; border-color: #c8102e; color: #ffffff; }
+.ambulance-request__cancel.is-armed { background: var(--brand); border-color: var(--brand); color: #ffffff; }
 .ambulance-request__cancel {
-  background: #ffffff;
+  background: var(--panel);
   border: 1px solid var(--line);
   color: var(--hospital);
   cursor: pointer;
@@ -885,20 +945,29 @@ h2 {
 
 .amb-topbar {
   align-items: center;
-  background: #ffffff;
+  background: linear-gradient(180deg, #0c0c0f 0%, var(--panel) 100%);
   border-bottom: 1px solid var(--line);
   display: flex;
   gap: 10px;
   min-height: 56px;
   padding: 8px 14px;
 }
-.amb-topbar__unit { align-items: center; color: var(--navy); display: flex; font-size: 18px; gap: 8px; }
+.amb-topbar__unit { align-items: center; color: var(--navy); display: flex; font-size: 17px; gap: 10px; }
+.amb-topbar__unit strong { display: block; font-weight: 600; line-height: 1.1; }
+.amb-topbar__brand {
+  color: var(--brand-bright);
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
 .amb-topbar__meta { display: flex; flex: 1; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 .amb-topbar .scenario-pill { font-size: 11px; padding: 5px 7px; }
 .amb-chip {
   align-items: center;
-  background: #eef3f7;
-  border: 1px solid #c9d7e1;
+  background: var(--panel-3);
+  border: 1px solid var(--line-strong);
   color: var(--navy);
   display: inline-flex;
   font-size: 11px;
@@ -906,7 +975,7 @@ h2 {
   gap: 5px;
   padding: 5px 7px;
 }
-.amb-chip--warn { background: var(--alert-soft); border-color: #efc2b8; color: var(--hospital); }
+.amb-chip--warn { background: var(--alert-soft); border-color: rgba(224, 48, 58, 0.45); color: var(--hospital); }
 
 .amb-stage { flex: 1; min-height: 0; position: relative; }
 /*
@@ -921,12 +990,50 @@ h2 {
 .amb-map .mapboxgl-ctrl-bottom-left,
 .amb-map .mapboxgl-ctrl-bottom-right { bottom: var(--amb-bottom-inset, 0px); }
 
+/* ----- Mapbox controls and pop-ups in dark mode (both maps) ---------------------- */
+
+/* No light flash before tiles load. */
+.mapboxgl-map { background: var(--bg); font-family: inherit; }
+
+.mapboxgl-ctrl-group { background: var(--panel-2); border-radius: 10px; overflow: hidden; }
+.mapboxgl-ctrl-group:not(:empty) { box-shadow: 0 0 0 1px var(--line-strong), 0 6px 18px var(--shadow); }
+.mapboxgl-ctrl-group button + button { border-top: 1px solid var(--line); }
+.mapboxgl-ctrl-group button:not(:disabled):hover { background-color: var(--panel-3); }
+/* Mapbox draws its icons dark; invert them to light grey. */
+.mapboxgl-ctrl-group button .mapboxgl-ctrl-icon { filter: invert(1) brightness(0.85); }
+
+.mapboxgl-ctrl.mapboxgl-ctrl-attrib,
+.mapboxgl-ctrl-attrib.mapboxgl-compact { background-color: rgba(16, 16, 19, 0.85); color: var(--muted); }
+.mapboxgl-ctrl-attrib a { color: var(--muted); }
+.mapboxgl-ctrl-attrib a:hover { color: var(--ink); }
+.mapboxgl-ctrl-attrib-button { filter: invert(1) brightness(0.85); }
+
+.mapboxgl-popup-content {
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px var(--shadow);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 12px;
+}
+.mapboxgl-popup-close-button { color: var(--muted); }
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip { border-top-color: var(--panel-2); }
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip { border-bottom-color: var(--panel-2); }
+.mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: var(--panel-2); }
+.mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: var(--panel-2); }
+
 /* Compact turn banner: one line of instruction under the distance. */
 .amb-maneuver {
   align-items: center;
-  background: #0b3a66;
+  background: linear-gradient(135deg, #b3131c 0%, #6e0b12 100%);
   border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(11, 58, 102, 0.35);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
   color: #ffffff;
   display: flex;
   gap: 12px;
@@ -962,10 +1069,10 @@ h2 {
 .amb-stage--navigating .amb-map-buttons { top: 84px; }
 .amb-map-button {
   align-items: center;
-  background: #ffffff;
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 24px;
-  box-shadow: 0 4px 14px rgba(18, 33, 43, 0.2);
+  box-shadow: 0 4px 14px var(--shadow);
   color: var(--navy);
   cursor: pointer;
   display: flex;
@@ -991,10 +1098,10 @@ h2 {
 
 .amb-primary {
   align-items: center;
-  background: #c8102e;
+  background: var(--brand);
   border: 0;
   border-radius: 14px;
-  box-shadow: 0 8px 22px rgba(200, 16, 46, 0.35);
+  box-shadow: 0 8px 22px var(--brand-glow);
   color: #ffffff;
   cursor: pointer;
   display: flex;
@@ -1011,9 +1118,9 @@ h2 {
 .amb-primary--start { font-size: 18px; letter-spacing: 0.02em; min-height: 54px; }
 
 .amb-sheet {
-  background: #ffffff;
+  background: var(--panel);
   border-radius: 18px;
-  box-shadow: 0 12px 34px rgba(18, 33, 43, 0.28);
+  box-shadow: 0 12px 34px var(--shadow);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -1026,9 +1133,9 @@ h2 {
 
 /* Compact panels for the route overview, navigation, and arrival. */
 .amb-panel {
-  background: #ffffff;
+  background: var(--panel);
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(18, 33, 43, 0.25);
+  box-shadow: 0 8px 24px var(--shadow);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1055,7 +1162,7 @@ h2 {
   gap: 7px;
   padding: 5px 9px;
 }
-.amb-eta--blood svg { color: #c8102e; }
+.amb-eta--blood svg { color: var(--brand); }
 .amb-eta--hospital svg { color: var(--hospital); }
 .amb-eta span { color: var(--muted); display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; }
 .amb-eta strong { display: block; font-size: 17px; line-height: 1.15; }
@@ -1063,8 +1170,8 @@ h2 {
 
 .amb-small-button {
   align-items: center;
-  background: #ffffff;
-  border: 1px solid #b8c6ce;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
   border-radius: 10px;
   color: var(--ink);
   cursor: pointer;
@@ -1077,13 +1184,13 @@ h2 {
 }
 .amb-small-button--go { background: var(--unit-available); border-color: var(--unit-available); color: #ffffff; }
 .amb-small-button:disabled { cursor: not-allowed; opacity: 0.5; }
-.amb-small-button--danger { background: #c8102e; border-color: #c8102e; color: #ffffff; }
+.amb-small-button--danger { background: var(--brand); border-color: var(--brand); color: #ffffff; }
 
 .amb-sheet__error { align-items: center; display: flex; gap: 10px; justify-content: space-between; }
 
 /* Reroute dropdown inside the navigation bar. */
 .amb-small-button__chevron { transition: transform 0.15s ease; }
-.amb-small-button.is-open { border-color: var(--navy); color: var(--navy); }
+.amb-small-button.is-open { border-color: var(--brand-bright); color: var(--ink); }
 .amb-small-button.is-open .amb-small-button__chevron { transform: rotate(180deg); }
 
 .amb-routes {
@@ -1109,11 +1216,11 @@ h2 {
   padding: 6px 10px;
   text-align: left;
 }
-.amb-route-option:hover:not(:disabled) { border-color: var(--navy); }
-.amb-route-option.is-current { background: #eaf2f8; border-color: #9cc0e0; cursor: default; }
+.amb-route-option:hover:not(:disabled) { border-color: var(--brand-bright); }
+.amb-route-option.is-current { background: var(--brand-soft); border-color: var(--brand); cursor: default; }
 .amb-route-option__letter {
   align-items: center;
-  background: #2f86eb;
+  background: var(--brand);
   border-radius: 50%;
   color: #ffffff;
   display: flex;
@@ -1130,10 +1237,10 @@ h2 {
 /* Demo options menu (top bar). */
 .amb-demo { position: relative; }
 .amb-demo__menu {
-  background: #ffffff;
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
-  box-shadow: 0 10px 28px rgba(18, 33, 43, 0.25);
+  box-shadow: 0 10px 28px var(--shadow);
   display: grid;
   gap: 8px;
   padding: 12px;
@@ -1156,11 +1263,11 @@ h2 {
   font-weight: 800;
   min-height: 40px;
 }
-.amb-demo__speeds button.is-active { background: var(--navy); border-color: var(--navy); color: #ffffff; }
+.amb-demo__speeds button.is-active { background: var(--brand); border-color: var(--brand); color: #ffffff; }
 .amb-demo__speeds button:disabled { cursor: not-allowed; opacity: 0.45; }
 
 .amb-why { color: var(--muted); font-size: 12px; line-height: 1.4; }
-.amb-why summary { color: var(--navy); cursor: pointer; font-weight: 700; }
+.amb-why summary { color: var(--brand-bright); cursor: pointer; font-weight: 700; }
 
 .amb-icon-button {
   align-items: center;
@@ -1178,8 +1285,8 @@ h2 {
 .amb-field > span { color: var(--ink); font-size: 15px; font-weight: 700; }
 .amb-field small { color: var(--muted); font-size: 13px; }
 .amb-field select {
-  background: #ffffff;
-  border: 1px solid #b8c6ce;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
   border-radius: 12px;
   color: var(--ink);
   font-size: 16px;
@@ -1192,9 +1299,9 @@ h2 {
 
 .amb-error { color: var(--hospital); font-size: 14px; font-weight: 600; }
 .amb-toast {
-  background: #ffffff;
+  background: var(--panel);
   border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(18, 33, 43, 0.2);
+  box-shadow: 0 6px 18px var(--shadow);
   font-size: 15px;
   font-weight: 600;
   padding: 12px 14px;
@@ -1214,7 +1321,7 @@ h2 {
 .amb-picker > p { color: var(--muted); font-size: 15px; }
 .amb-picker__option {
   align-items: center;
-  background: #ffffff;
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 14px;
   color: var(--ink);
@@ -1225,14 +1332,14 @@ h2 {
   padding: 10px 16px;
   text-decoration: none;
 }
-.amb-picker__option svg { color: #c8102e; grid-row: span 2; }
+.amb-picker__option svg { color: var(--brand); grid-row: span 2; }
 .amb-picker__option strong { font-size: 18px; }
 .amb-picker__option span { color: var(--muted); font-size: 13px; }
-.amb-picker__option:hover { border-color: var(--navy); }
+.amb-picker__option:hover { border-color: var(--brand-bright); }
 
 /* Map markers. Mapbox positions markers with transform, so these never set one. */
-.amb-self { color: #1f6feb; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45)); height: 30px; width: 30px; z-index: 3; }
-.amb-self svg path { fill: currentColor; stroke: #ffffff; stroke-linejoin: round; stroke-width: 1.6; }
+.amb-self { color: #ffffff; filter: drop-shadow(0 0 6px var(--brand-glow)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)); height: 30px; width: 30px; z-index: 3; }
+.amb-self svg path { fill: currentColor; stroke: var(--brand); stroke-linejoin: round; stroke-width: 1.6; }
 
 .amb-blip {
   align-items: center;
@@ -1249,7 +1356,7 @@ h2 {
   padding: 0 8px;
 }
 .amb-blip--eligible { animation: amb-pulse 1.8s ease-out infinite; background: var(--unit-available); }
-.amb-blip--ineligible { background: #8a969e; }
+.amb-blip--ineligible { background: #4a4a55; color: #c4c4cc; }
 .amb-blip--assigned {
   animation: none;
   background: var(--rendezvous);
@@ -1267,7 +1374,7 @@ h2 {
 
 .amb-hospital {
   align-items: center;
-  background: #ffffff;
+  background: var(--panel);
   border: 2px solid var(--hospital);
   border-radius: 6px;
   color: var(--hospital);

@@ -8,6 +8,7 @@ import type {
   ScenarioData,
   StrategicDeploymentResult,
 } from "../lib/types";
+import { CATEGORY_LABELS } from "../lib/meetingSpots";
 
 type FeatureDetailsProps = {
   scenario: ScenarioData;
@@ -184,14 +185,25 @@ function findDetails(
           ],
         ]
       : [];
-    return point
+    if (point) {
+      return {
+        title: point.name,
+        subtitle: point.rendezvous_id,
+        entries: [
+          ["Type", `Known site · ${point.location_type.replaceAll("_", " ").toLowerCase()}`],
+          ["Status", point.active ? "Active" : "Inactive"],
+          ...evaluationEntries,
+        ],
+      };
+    }
+    // A public place chosen by the meeting rule (e.g. a parking lot from OpenStreetMap).
+    return candidate
       ? {
-          title: point.name,
-          subtitle: point.rendezvous_id,
+          title: candidate.rendezvous_name,
+          subtitle: candidate.rendezvous_id,
           entries: [
-            ["Type", point.location_type.replaceAll("_", " ")],
-            ["Approval", point.approved ? "Approved" : "Not approved"],
-            ["Status", point.active ? "Active" : "Inactive"],
+            ["Type", CATEGORY_LABELS[candidate.category]],
+            ["Source", candidate.source === "OPENSTREETMAP" ? "OpenStreetMap contributors" : candidate.source === "ROUTE" ? "Point on the route" : "Scenario"],
             ...evaluationEntries,
           ],
         }
@@ -209,7 +221,7 @@ function findDetails(
         [
           "Logistics result",
           incidentResult.recommendation === "RENDEZVOUS"
-            ? "Approved rendezvous"
+            ? "Meet on the way"
             : "Continue direct",
         ],
       ]

@@ -287,6 +287,8 @@ The live optimizer should consider:
 
 ## 10. Rendezvous Rules
 
+> **Amendment (2026-09-27 team decision):** the "approved candidate locations only" requirement below is retired. Meeting spots now come from mapped public places (OpenStreetMap parking lots, gas stations, fire stations, churches, school lots), the scenario's known sites, or a roadside point on the route. The evaluator chooses the soonest blood among spots that keep the ambulance heading in the general direction of the supplied hospital. Spots are suggestions; the crew decides. See `docs/SAFETY_AND_ASSUMPTIONS.md`.
+
 A rendezvous should **not** be an arbitrary midpoint between vehicles.
 
 ### Candidate points
@@ -1424,7 +1426,7 @@ When Codex or the team must choose between implementations, prefer the option th
 7. **Use real public data where practical and label synthetic data clearly.**
 8. **A blood-capable resource means blood + vehicle + qualified clinician.**
 9. **Patient transport should continue toward definitive care whenever feasible.**
-10. **Rendezvous recommendations must use approved candidate points, not arbitrary road locations.**
+10. **Rendezvous recommendations must use identifiable meeting spots (mapped public places, known sites, or a labeled roadside point on the route), never an unexplained midpoint.** (Amended 2026-09-27 team decision.)
 11. **Availability and mobilization delays matter.**
 12. **Every core recommendation should be explainable using the underlying calculations.**
 

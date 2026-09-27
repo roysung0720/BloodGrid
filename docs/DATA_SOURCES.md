@@ -46,6 +46,28 @@ small synthetic map offset. This improves geographic realism without changing
 the classification: the resulting demand proxies are still synthetic and must
 never be described as crash or EMS data.
 
+## Meeting-Spot Catalog (OpenStreetMap)
+
+- **Classification:** REAL public geography. The places exist on the map, but nothing asserts that they are open, safe, or agency-approved at any moment.
+- **Source:** OpenStreetMap contributors, via the Overpass API, retrieved 2026-09-27.
+  - Features: `amenity` = parking, fuel, fire_station, place_of_worship, or school.
+  - Area: each scenario's bounding box plus 0.15 degrees.
+- **License:** Open Database License (ODbL) 1.0. Credit "(c) OpenStreetMap contributors" wherever spots are shown; the live-incident panel does.
+- **Files:**
+  - Raw snapshots: `data/raw/openstreetmap_meeting_spots_2026-09-27/`
+  - Processed CSVs: `data/meeting_spots/`
+  - Manifest, with hashes and transformations: `data/meeting_spots/sources.json`
+- **Transformations:** `scripts/build_meeting_spots.mjs`.
+  - Drops private or no-access places.
+  - Drops multi-storey, underground, and rooftop parking.
+  - Drops places whose bounding box is under 400 m2.
+  - Drops parking nodes tagged with fewer than 15 spaces.
+  - Uses the node coordinate, or the bounding-box midpoint for ways and relations.
+- **Limitations:**
+  - Rural coverage is incomplete.
+  - Hours, gates, surface, and turning space are unknown.
+  - The catalog is a dated snapshot.
+
 ## Public Data That Is Not Available Here
 
 BloodGrid intentionally does not attempt to reconstruct restricted operational
@@ -58,9 +80,9 @@ data from public web pages:
 - **Vehicle locations, staffing rosters, qualifications, blood inventory,
   temperature records, and shift availability:** normally held by EMS agencies,
   CAD systems, and blood-management systems. These are not public live feeds.
-- **Approved rendezvous sites and destination protocols:** agency and medical
-  direction decisions, not public geography. A map point cannot become
-  approved merely because it is public or close to a route.
+- **Agency-approved rendezvous sites and destination protocols:** agency and
+  medical direction decisions, not public geography. BloodGrid's meeting spots
+  are public mapped places (see below) offered as suggestions, not approvals.
 - **Current trauma capability and hospital availability:** must be verified with
   the appropriate official or operational source in any real deployment. The
   MVP only displays static demo context for a supplied destination.

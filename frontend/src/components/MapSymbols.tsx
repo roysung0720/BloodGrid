@@ -40,7 +40,7 @@ const SYMBOL_GROUPS: SymbolGroup[] = [
       { kind: "incident-uncovered", label: "Outside target" },
     ],
   },
-  { key: "rendezvous", kind: "rendezvous", label: "Rendezvous" },
+  { key: "rendezvous", kind: "rendezvous", label: "Meeting spots" },
   { key: "liveIncident", kind: "live-incident", label: "Blood requests" },
 ];
 
