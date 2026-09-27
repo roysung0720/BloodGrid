@@ -4,17 +4,17 @@
 
 **Current phase:** In-app scenario selection and public-geography hybrid scenario complete; demo polish remains. A working crew-facing Ambulance UI has been added (see **Ambulance UI** below).
 
-**Deployment readiness:** The FastAPI API is deployed on Render at
-`https://bloodgrid-api.onrender.com` and its `/health` endpoint has been
-verified. GitHub Pages deployment is configured through
-`.github/workflows/deploy-pages.yml`; it builds the static dashboard from
-`frontend/` after a push to `main`. The repository now has the
-`NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` Actions secret, and the repository Pages
-source is set to **GitHub Actions**. The first manually triggered Pages run is
-in progress. The centralized API CORS defaults include
-`https://roysung0720.github.io`; an explicit Render origin setting remains the
-path for a future custom domain. Verify the published map and both views after
-the workflow succeeds. See `docs/DEPLOYMENT.md`.
+**Deployment readiness:** The public demo is live at
+`https://roysung0720.github.io/BloodGrid/`. The FastAPI API is deployed on
+Render at `https://bloodgrid-api.onrender.com`; its `/health` endpoint and
+cross-origin access from the GitHub Pages origin were verified on 2026-09-27.
+GitHub Pages deploys through `.github/workflows/deploy-pages.yml` after pushes
+to `main`; run `36310861645` for commit `9388703` completed successfully. The
+repository has a `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` Actions secret for the
+browser map. The frontend/browser token and the Render routing token are
+separate credentials; do not place a browser token in a backend secret. The
+centralized API CORS defaults include `https://roysung0720.github.io`. See
+`docs/DEPLOYMENT.md` for setup, rotation, and presentation checks.
 
 **Audience:** Alex, project teammates, and coding agents joining the work.
 
