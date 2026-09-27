@@ -349,6 +349,7 @@ h2 {
 }
 
 .map-symbol__shape--station { background: var(--station); border-radius: 1px; }
+.map-symbol__shape--station-recommended { background: var(--deployment); border-radius: 1px; box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.28); }
 .map-symbol__shape--unit-available,
 .map-symbol__shape--unit-on-call,
 .map-symbol__shape--unit-unavailable { border-radius: 50%; }
@@ -369,7 +370,7 @@ h2 {
 .map-symbol__shape--incident-uncovered { clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0 50%); height: 11px; width: 11px; }
 .map-symbol__shape--incident-covered { background: var(--coverage-covered); }
 .map-symbol__shape--incident-uncovered { background: var(--coverage-uncovered); }
-.map-symbol__shape--rendezvous { background: var(--rendezvous); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.map-symbol__shape--rendezvous { background: var(--rendezvous); clip-path: polygon(50% 0, 100% 100%, 0 100%); height: 5px; width: 6px; }
 .map-symbol__shape--live-incident { background: var(--live-incident); clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); }
 .map-symbol__shape--live-incident::after { content: "!"; }
 
@@ -773,8 +774,8 @@ h2 {
 .map-marker--incident { background: var(--incident); clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0 50%); height: 10px; opacity: 0.58; width: 10px; }
 .map-marker--incident-covered { background: var(--coverage-covered); clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0 50%); height: 11px; opacity: 0.74; width: 11px; }
 .map-marker--incident-uncovered { background: var(--coverage-uncovered); box-shadow: 0 0 0 2px rgba(209, 106, 39, 0.18); clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0 50%); height: 11px; opacity: 0.78; width: 11px; }
-.map-marker--rendezvous { background: var(--rendezvous); border: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); height: 18px; width: 20px; }
-.map-marker--rendezvous-recommended { background: var(--rendezvous); border: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); filter: drop-shadow(0 0 4px rgba(119, 93, 168, 0.72)); height: 24px; width: 26px; }
+.map-marker--rendezvous { background: var(--rendezvous); border: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); height: 5px; width: 6px; }
+.map-marker--rendezvous-recommended { background: var(--rendezvous); border: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); filter: drop-shadow(0 0 1px rgba(119, 93, 168, 0.72)); height: 7px; width: 8px; }
 .map-marker--live-incident { background: var(--live-incident); border: 0; box-shadow: 0 0 0 5px rgba(181, 46, 76, 0.22); clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); color: #ffffff; height: 22px; width: 22px; }
 .map-marker--live-incident::after { content: "!"; font-size: 13px; }
 .map-marker--live-incident-selected { background: #ffffff; border: 4px solid var(--live-incident); box-shadow: 0 0 0 7px rgba(181, 46, 76, 0.26); clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); color: var(--live-incident); height: 28px; width: 28px; }

@@ -287,6 +287,7 @@ export default function HomePage() {
             <span>{scenario.metadata.geographic_area}</span>
           </div>
           <MapSymbols
+            coverageView={coverageView}
             visibleLayers={visibleLayers}
             onChange={setVisibleLayers}
           />

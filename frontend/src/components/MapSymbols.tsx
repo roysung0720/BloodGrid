@@ -1,6 +1,6 @@
 import { Eye, EyeOff, Layers3 } from "lucide-react";
 
-import type { LayerKey, LayerVisibility } from "../lib/types";
+import type { CoverageView, LayerKey, LayerVisibility } from "../lib/types";
 
 type SymbolVariant = {
   kind: string;
@@ -15,7 +15,11 @@ type SymbolGroup = {
 };
 
 const SYMBOL_GROUPS: SymbolGroup[] = [
-  { key: "stations", kind: "station", label: "Stations" },
+  {
+    key: "stations",
+    kind: "station",
+    label: "Stations",
+  },
   {
     key: "units",
     kind: "unit-available",
@@ -41,11 +45,16 @@ const SYMBOL_GROUPS: SymbolGroup[] = [
 ];
 
 type MapSymbolsProps = {
+  coverageView: CoverageView;
   visibleLayers: LayerVisibility;
   onChange: (layers: LayerVisibility) => void;
 };
 
-export function MapSymbols({ visibleLayers, onChange }: MapSymbolsProps) {
+export function MapSymbols({
+  coverageView,
+  visibleLayers,
+  onChange,
+}: MapSymbolsProps) {
   function toggleLayer(layer: LayerKey) {
     onChange({ ...visibleLayers, [layer]: !visibleLayers[layer] });
   }
@@ -59,6 +68,13 @@ export function MapSymbols({ visibleLayers, onChange }: MapSymbolsProps) {
       <div className="map-symbols__items">
         {SYMBOL_GROUPS.map((group) => {
           const visible = visibleLayers[group.key];
+          const variants = [
+            ...(group.variants ?? []),
+            ...(group.key === "stations" && coverageView === "strategic"
+              ? [{ kind: "station-recommended", label: "Recommended staging" }]
+              : []),
+          ];
+
           return (
             <button
               aria-pressed={visible}
@@ -80,9 +96,9 @@ export function MapSymbols({ visibleLayers, onChange }: MapSymbolsProps) {
               ) : (
                 <EyeOff size={15} aria-hidden="true" />
               )}
-              {group.variants ? (
+              {variants.length > 0 ? (
                 <span className="map-symbol__variants">
-                  {group.variants.map((variant) => (
+                  {variants.map((variant) => (
                     <span className="map-symbol__variant" key={variant.kind}>
                       <span
                         aria-hidden="true"
