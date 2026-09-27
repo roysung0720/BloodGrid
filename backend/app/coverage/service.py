@@ -54,6 +54,16 @@ def assess_resource_eligibility(
     )
 
 
+def eligible_response_units(scenario: ScenarioData) -> list[ResponseUnit]:
+    """Return only units that satisfy the shared BloodGrid eligibility rule."""
+
+    return [
+        unit
+        for unit in scenario.response_units
+        if assess_resource_eligibility(unit, scenario.blood_units).eligible
+    ]
+
+
 def calculate_baseline_coverage(
     scenario: ScenarioData, routing_provider: RoutingProvider
 ) -> BaselineCoverageResult:
@@ -69,8 +79,7 @@ def calculate_baseline_coverage(
             unit=unit,
             valid_blood_units=eligibility_by_unit[unit.unit_id].valid_blood_units,
         )
-        for unit in scenario.response_units
-        if eligibility_by_unit[unit.unit_id].eligible
+        for unit in eligible_response_units(scenario)
     ]
     target_minutes = coverage_target_minutes(scenario.metadata.target_coverage_minutes)
 

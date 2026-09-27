@@ -5,17 +5,24 @@ import { useEffect, useState } from "react";
 
 import { FeatureDetails } from "../components/FeatureDetails";
 import { CoveragePanel } from "../components/CoveragePanel";
+import { DeploymentPanel } from "../components/DeploymentPanel";
 import { IncidentPanel } from "../components/IncidentPanel";
 import { LayerControls } from "../components/LayerControls";
 import { OperationsMap } from "../components/OperationsMap";
 import { ResourcePanel } from "../components/ResourcePanel";
 import { ScenarioLegend } from "../components/ScenarioLegend";
-import { getBaselineCoverage, getScenario } from "../lib/api";
+import {
+  getBaselineCoverage,
+  getScenario,
+  getStrategicDeployment,
+} from "../lib/api";
 import type {
   BaselineCoverageResult,
+  CoverageView,
   FeatureSelection,
   LayerVisibility,
   ScenarioData,
+  StrategicDeploymentResult,
 } from "../lib/types";
 
 const DEFAULT_LAYERS: LayerVisibility = {
@@ -30,6 +37,8 @@ const DEFAULT_LAYERS: LayerVisibility = {
 export default function HomePage() {
   const [scenario, setScenario] = useState<ScenarioData | null>(null);
   const [coverage, setCoverage] = useState<BaselineCoverageResult | null>(null);
+  const [deployment, setDeployment] = useState<StrategicDeploymentResult | null>(null);
+  const [coverageView, setCoverageView] = useState<CoverageView>("baseline");
   const [selectedFeature, setSelectedFeature] = useState<FeatureSelection | null>(
     null,
   );
@@ -37,6 +46,7 @@ export default function HomePage() {
     useState<LayerVisibility>(DEFAULT_LAYERS);
   const [error, setError] = useState<string | null>(null);
   const [coverageError, setCoverageError] = useState<string | null>(null);
+  const [deploymentError, setDeploymentError] = useState<string | null>(null);
 
   useEffect(() => {
     getScenario()
@@ -45,6 +55,9 @@ export default function HomePage() {
     getBaselineCoverage()
       .then(setCoverage)
       .catch((requestError: Error) => setCoverageError(requestError.message));
+    getStrategicDeployment()
+      .then(setDeployment)
+      .catch((requestError: Error) => setDeploymentError(requestError.message));
   }, []);
 
   const activeUnitCount = coverage ? coverage.eligible_resource_count : "-";
@@ -102,6 +115,8 @@ export default function HomePage() {
           <OperationsMap
             scenario={scenario}
             coverage={coverage}
+            deployment={deployment}
+            coverageView={coverageView}
             visibleLayers={visibleLayers}
             onFeatureSelect={setSelectedFeature}
           />
@@ -113,7 +128,7 @@ export default function HomePage() {
             visibleLayers={visibleLayers}
             onChange={setVisibleLayers}
           />
-          <ScenarioLegend />
+          <ScenarioLegend coverageView={coverageView} />
         </section>
 
         <aside className="operations-rail" aria-label="Current scenario details">
@@ -139,11 +154,20 @@ export default function HomePage() {
           </section>
 
           <CoveragePanel coverage={coverage} error={coverageError} />
+          <DeploymentPanel
+            baseline={coverage}
+            deployment={deployment}
+            error={deploymentError}
+            view={coverageView}
+            onViewChange={setCoverageView}
+          />
           <ResourcePanel scenario={scenario} onSelect={setSelectedFeature} />
           <IncidentPanel scenario={scenario} onSelect={setSelectedFeature} />
           <FeatureDetails
             scenario={scenario}
             coverage={coverage}
+            deployment={deployment}
+            coverageView={coverageView}
             selection={selectedFeature}
           />
         </aside>

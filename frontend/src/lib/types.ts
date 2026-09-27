@@ -156,3 +156,37 @@ export type BaselineCoverageResult = {
   resource_eligibility: ResourceEligibility[];
   demand_points: BaselineCoveragePoint[];
 };
+
+export type StrategicAssignment = {
+  unit_id: string;
+  station_id: string;
+  station_name: string;
+  mobilization_minutes: number;
+};
+
+export type StrategicCoveragePoint = {
+  incident_id: string;
+  status: CoverageStatus;
+  covered: boolean;
+  best_resource_id: string | null;
+  staged_station_id: string | null;
+  driving_minutes: number | null;
+  mobilization_minutes: number | null;
+  total_response_minutes: number | null;
+  route_distance_miles: number | null;
+};
+
+export type StrategicDeploymentResult = {
+  scenario_id: string;
+  target_coverage_minutes: number;
+  routing_provider: string;
+  routing_profile: string;
+  solver_status: string;
+  eligible_resource_count: number;
+  optimized_covered_demand_count: number;
+  optimized_uncovered_demand_count: number;
+  assignments: StrategicAssignment[];
+  demand_points: StrategicCoveragePoint[];
+};
+
+export type CoverageView = "baseline" | "strategic";

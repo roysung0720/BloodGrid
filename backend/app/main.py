@@ -14,6 +14,8 @@ from .config import (
 )
 from .coverage.models import BaselineCoverageResult
 from .coverage.service import calculate_baseline_coverage
+from .deployment.models import StrategicDeploymentResult
+from .deployment.service import DeploymentError, calculate_strategic_deployment
 from .models import (
     BloodUnit,
     HistoricalIncident,
@@ -115,4 +117,14 @@ def baseline_coverage() -> BaselineCoverageResult:
     try:
         return calculate_baseline_coverage(get_active_scenario(), get_routing_provider())
     except (RoutingError, ValueError) as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@app.get("/deployment/strategic", response_model=StrategicDeploymentResult)
+def strategic_deployment() -> StrategicDeploymentResult:
+    try:
+        return calculate_strategic_deployment(
+            get_active_scenario(), get_routing_provider()
+        )
+    except (DeploymentError, RoutingError, ValueError) as error:
         raise HTTPException(status_code=503, detail=str(error)) from error

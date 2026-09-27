@@ -2,13 +2,17 @@ import { Crosshair, MapPin, ShieldCheck } from "lucide-react";
 
 import type {
   BaselineCoverageResult,
+  CoverageView,
   FeatureSelection,
   ScenarioData,
+  StrategicDeploymentResult,
 } from "../lib/types";
 
 type FeatureDetailsProps = {
   scenario: ScenarioData;
   coverage: BaselineCoverageResult | null;
+  deployment: StrategicDeploymentResult | null;
+  coverageView: CoverageView;
   selection: FeatureSelection | null;
 };
 
@@ -21,10 +25,19 @@ type Detail = {
 function findDetails(
   scenario: ScenarioData,
   coverage: BaselineCoverageResult | null,
+  deployment: StrategicDeploymentResult | null,
+  coverageView: CoverageView,
   selection: FeatureSelection,
 ): Detail | null {
   if (selection.type === "station") {
     const station = scenario.stations.find((item) => item.station_id === selection.id);
+    const assignedUnits = deployment?.assignments
+      .filter((assignment) => assignment.station_id === selection.id)
+      .map((assignment) => assignment.unit_id);
+    const recommendationEntries: Array<[string, string]> =
+      coverageView === "strategic" && assignedUnits?.length
+        ? [["Recommendation", assignedUnits.join(", ")]]
+        : [];
     return station
       ? {
           title: station.name,
@@ -33,6 +46,7 @@ function findDetails(
             ["Type", station.station_type.replace("_", " ")],
             ["Capacity", `${station.capacity} unit`],
             ["Status", station.active ? "Active" : "Inactive"],
+            ...recommendationEntries,
           ],
         }
       : null;
@@ -72,13 +86,28 @@ function findDetails(
     const incident = scenario.historical_incidents.find(
       (item) => item.incident_id === selection.id,
     );
-    const coveragePoint = coverage?.demand_points.find(
+    const coveragePoints =
+      coverageView === "strategic" && deployment
+        ? deployment.demand_points
+        : coverage?.demand_points;
+    const coveragePoint = coveragePoints?.find(
       (item) => item.incident_id === selection.id,
     );
+    const stagedStationId =
+      coverageView === "strategic"
+        ? deployment?.demand_points.find((item) => item.incident_id === selection.id)
+            ?.staged_station_id
+        : null;
+    const stagedStationEntries: Array<[string, string]> =
+      stagedStationId
+        ? [["Staged at", stagedStationId]]
+        : [];
     const coverageEntries: Array<[string, string]> = coveragePoint
       ? [
           ["Coverage", coveragePoint.covered ? "Covered" : "Not covered"],
+          ["View", coverageView === "strategic" ? "Recommended staging" : "Current staging"],
           ["Fastest resource", coveragePoint.best_resource_id ?? "None"],
+          ...stagedStationEntries,
           [
             "Response estimate",
             coveragePoint.total_response_minutes === null
@@ -146,8 +175,16 @@ function findDetails(
     : null;
 }
 
-export function FeatureDetails({ scenario, coverage, selection }: FeatureDetailsProps) {
-  const detail = selection ? findDetails(scenario, coverage, selection) : null;
+export function FeatureDetails({
+  scenario,
+  coverage,
+  deployment,
+  coverageView,
+  selection,
+}: FeatureDetailsProps) {
+  const detail = selection
+    ? findDetails(scenario, coverage, deployment, coverageView, selection)
+    : null;
 
   return (
     <section className="rail-section feature-section">

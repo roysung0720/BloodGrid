@@ -36,3 +36,9 @@ Blood is represented simply enough for the MVP to determine usability: reserve s
 `GET /coverage/baseline` produces a calculated view, not a new source-data file. For each synthetic demand proxy, it returns the coverage status, fastest eligible response unit, estimated driving minutes, on-call mobilization minutes, combined response estimate, and road distance. The result also exposes each unit's eligibility assessment and the scenario coverage target.
 
 The calculation uses the provider-neutral routing interface. Mapbox-specific response data stays inside `backend/app/routing/`; coverage logic consumes only standardized duration and distance estimates.
+
+## Strategic deployment result
+
+`GET /deployment/strategic` returns a calculated strategic plan, not a new source-data file. It records one recommended active station for every eligible response unit, the optimized coverage count, and each demand point's fastest staged resource, station, and estimated response-time breakdown.
+
+The first objective is intentionally narrow and inspectable: maximize the number of synthetic demand points reachable within the configured target. The optimizer enforces one assignment per eligible unit and respects declared station capacity. It does not yet weight incident severity, model repositioning cost, or make any real-world deployment order.

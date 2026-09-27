@@ -11,6 +11,7 @@
   --incident: #d86933;
   --coverage-covered: #208b70;
   --coverage-uncovered: #c94a45;
+  --deployment: #0f766e;
   --rendezvous: #775da8;
   --live-incident: #b52e4c;
   --alert-soft: #fff1ed;
@@ -252,6 +253,8 @@ h2 {
   width: 9px;
 }
 
+.legend-symbol--station { background: var(--station); }
+.legend-symbol--station-recommended { background: var(--deployment); border-radius: 50%; height: 11px; width: 11px; }
 .legend-symbol--unit-available { background: var(--unit-available); border-radius: 50%; }
 .legend-symbol--unit-on-call { background: var(--unit-on-call); border-radius: 50%; }
 .legend-symbol--hospital { background: var(--hospital); transform: rotate(45deg); }
@@ -345,6 +348,70 @@ h2 {
   font-size: 12px;
   line-height: 1.45;
 }
+
+.view-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 14px;
+}
+
+.view-toggle__button {
+  background: #f5f8f9;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  min-height: 32px;
+}
+
+.view-toggle__button + .view-toggle__button { border-left: 0; }
+
+.view-toggle__button.is-active {
+  background: var(--deployment);
+  border-color: var(--deployment);
+  color: #ffffff;
+}
+
+.deployment-comparison {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.deployment-comparison div:first-child { text-align: left; }
+.deployment-comparison div:last-child { text-align: right; }
+
+.deployment-comparison span,
+.deployment-assignments span {
+  color: var(--muted);
+  display: block;
+  font-size: 11px;
+}
+
+.deployment-comparison strong {
+  display: block;
+  font-size: 21px;
+  margin-top: 4px;
+}
+
+.deployment-comparison svg { color: var(--deployment); }
+
+.deployment-assignments {
+  border-top: 1px solid var(--line);
+  margin-top: 14px;
+}
+
+.deployment-assignments div {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.deployment-assignments strong { font-size: 12px; }
+.deployment-assignments span { text-align: right; }
 
 .resource-list {
   border-top: 1px solid var(--line);
@@ -454,6 +521,7 @@ h2 {
 
 .map-marker:hover { transform: scale(1.35); z-index: 1; }
 .map-marker--station { background: var(--station); border-radius: 2px; }
+.map-marker--station-recommended { background: var(--deployment); border-radius: 50%; height: 22px; width: 22px; }
 .map-marker--unit-available { background: var(--unit-available); border-radius: 50%; height: 19px; width: 19px; }
 .map-marker--unit-on-call { background: var(--unit-on-call); border-radius: 50%; height: 19px; width: 19px; }
 .map-marker--hospital { background: var(--hospital); border-radius: 2px; transform: rotate(45deg); }
@@ -493,7 +561,7 @@ h2 {
   .operations-layout { grid-template-columns: 1fr; }
   .map-stage { min-height: 66vh; }
   .operations-rail { min-height: 0; }
-  .coverage-section, .resource-section, .incident-section, .feature-section { min-height: 0; }
+  .coverage-section, .deployment-section, .resource-section, .incident-section, .feature-section { min-height: 0; }
 }
 
 @media (max-width: 620px) {

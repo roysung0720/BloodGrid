@@ -23,6 +23,13 @@ It must not decide whether blood is medically indicated, select a product or dos
 - Mapbox's `mapbox/driving` Matrix profile supplies estimated road duration and distance. The MVP does not model emergency vehicle driving privileges, live traffic, road closures, weather, dispatch workload, handoff time, or clinical readiness beyond the explicit synthetic records.
 - A covered result means only that the modeled unit meets the configured synthetic logistics target. It is not a dispatch order, clinical assessment, guarantee, or real-world service-level claim.
 
+## Strategic deployment assumptions
+
+- The strategic plan is a planning comparison for the synthetic scenario, not a live reallocation order.
+- Every currently eligible unit is assigned to one active station, and station capacity is enforced.
+- The first objective maximizes modeled target-time demand coverage only. Severity weighting, repositioning burden, fairness, time-of-day demand, expiration risk, and real operational approval are outside this MVP step.
+- The existing on-call mobilization delay remains attached to the unit even when the optimizer changes its staging location.
+
 ## Explainability
 
 Every recommendation should expose the calculated facts behind it: eligible status, travel times, time-to-blood, wait times, direct-hospital baseline, and added hospital delay. The MVP does not require an LLM to explain these results.

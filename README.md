@@ -6,12 +6,12 @@ It is decision support for logistics, not a clinical decision-maker. BloodGrid d
 
 ## Project status
 
-The project foundation, first versioned demo dataset, map-first operations dashboard, and road-based baseline coverage calculation are in place. The next milestone is strategic deployment recommendations.
+The project foundation, first versioned demo dataset, map-first operations dashboard, road-based baseline coverage calculation, and strategic deployment recommendation are in place. The next milestone is live incident and approved-rendezvous evaluation.
 
 ## Planned application
 
 - `frontend/`: Next.js map-first operations dashboard.
-- `backend/`: FastAPI API, routing adapter, coverage calculations, strategic optimizer, and rendezvous logic.
+- `backend/`: FastAPI API, routing adapter, coverage calculations, strategic optimizer, and the future rendezvous evaluator.
 - `data/`: documented source data, schemas, and versioned runnable scenarios.
 - `scripts/`: repeatable data preparation and demo-scenario utilities.
 - `tests/`: deterministic tests for core decisions.
@@ -50,4 +50,4 @@ Copy `.env.example` to `.env` and supply a Mapbox access token before testing ro
 
 `BLOODGRID_SCENARIO` identifies the data bundle the backend will load. The initial bundle is `rural_ga_initial_v1`; see `data/scenarios/` for its contents and provenance.
 
-The map dashboard uses `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`. The baseline coverage endpoint uses the Mapbox Matrix API through the backend and returns estimated road time, road distance, and the fastest eligible unit for each synthetic demand point.
+The map dashboard uses `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`. The backend uses the Mapbox Matrix API for baseline coverage and strategic staging. The dashboard compares the current synthetic arrangement with an OR-Tools recommendation that assigns eligible units to active stations to maximize target-time demand coverage.

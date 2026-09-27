@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-26
 
-**Current phase:** Routing and baseline coverage complete; strategic deployment is next.
+**Current phase:** Strategic deployment complete; live incident and approved-rendezvous evaluation is next.
 
 **Audience:** Alex, project teammates, and coding agents joining the work.
 
@@ -60,6 +60,10 @@ Completed foundation work:
 - `GET /coverage/baseline` added. It uses the scenario target by default, returns a result for every synthetic demand point, and keeps Mapbox-specific code outside coverage logic.
 - Dashboard coverage panel, covered/uncovered demand markers, and point-level response-time details added.
 - Backend tests, frontend type check, production frontend build, and a live Mapbox routing request passed.
+- OR-Tools CP-SAT strategic deployment service added under `backend/app/deployment/`.
+- `GET /deployment/strategic` assigns each eligible unit to one active station without exceeding station capacity, then maximizes synthetic target-time coverage using the existing routing and eligibility interfaces.
+- Dashboard strategic deployment panel added with a current/recommended view toggle, before/after coverage counts, and unit-to-station assignments.
+- Deployment tests cover maximum coverage, station capacity, exclusion of an ineligible unit, and the effect of on-call mobilization delay.
 
 The scenario uses synthetic modeled rural-Georgia geography and operational data. It must not be presented as live or facility-accurate information.
 
@@ -67,8 +71,8 @@ The scenario uses synthetic modeled rural-Georgia geography and operational data
 
 | Location | Purpose now | What will go there next |
 | --- | --- | --- |
-| `frontend/` | Runnable Next.js operations dashboard | Routing results and later decision controls |
-| `backend/` | FastAPI scenario API, routing adapter, and baseline coverage | Strategic optimizer and rendezvous logic |
+| `frontend/` | Runnable Next.js dashboard with baseline and strategic views | Live incident and rendezvous decision controls |
+| `backend/` | FastAPI scenario API, routing adapter, coverage, and deployment optimizer | Live rendezvous evaluator |
 | `data/raw/` | Empty | Untouched public source datasets |
 | `data/processed/` | Empty | Cleaned geographic and demand-proxy data |
 | `data/synthetic/` | Empty | Demo inventory, staffing, availability, and simulated incidents |
@@ -83,7 +87,7 @@ The scenario uses synthetic modeled rural-Georgia geography and operational data
 - **Backend:** Python and FastAPI.
 - **Routing:** Mapbox Matrix API for MVP road travel, hidden behind a provider-neutral routing interface. The provider batches the current three units and 30 demand points into two requests because Mapbox permits 25 coordinates per matrix request.
 - **Baseline coverage:** Fastest eligible unit by estimated `mapbox/driving` duration plus configured on-call mobilization. The initial scenario has a 20-minute target. Local `BLOODGRID_COVERAGE_TARGET_MINUTES` may override that target for demonstration only.
-- **Strategic optimizer:** Google OR-Tools CP-SAT.
+- **Strategic optimizer:** Google OR-Tools CP-SAT in `backend/app/deployment/`. It assigns every eligible unit to one active station, respects station capacity, and maximizes the number of demand points covered within the target. Routing and eligibility remain outside the optimizer.
 - **Live rendezvous:** straightforward deterministic candidate evaluation, not OR-Tools.
 - **Persistence:** CSV and JSON for the MVP; no database required.
 - **Optional AI:** only a later explanation layer, never core decision logic.
@@ -97,6 +101,18 @@ With the initial synthetic scenario and its 20-minute target, the live Mapbox ve
 - 19 of 30 synthetic demand points outside the target.
 
 These values are reproducible from the current scenario and routing provider but should still be described as synthetic prototype output, not an operational coverage claim. `mapbox/driving` supplies estimated road travel time without live-traffic, emergency-driving, weather, closure, dispatch-workload, or handoff-time modeling.
+
+## Current Strategic Result
+
+With the same initial synthetic scenario and 20-minute target, the live strategic deployment verification produced an `OPTIMAL` plan:
+
+- Current arrangement: 11 of 30 synthetic demand points covered.
+- Recommended arrangement: 18 of 30 synthetic demand points covered.
+- `BR-01` -> Riverbend EMS (`S-04`).
+- `BR-02` -> Pine Valley EMS (`S-03`).
+- `BR-03` -> Highland EMS (`S-07`), retaining its 8-minute on-call mobilization delay.
+
+This is a strategic planning comparison, not a real deployment command. It uses one narrow, explicit objective: maximize target-time coverage while respecting the synthetic station capacities.
 
 ## Working Across Agents
 
@@ -127,9 +143,10 @@ This section is the practical integration contract for Alex, Claude, Codex, and 
 - The dashboard calls the FastAPI backend at `http://localhost:8000` by default.
 - The root `.env` contains local configuration. `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` is used by the browser map. `MAPBOX_ACCESS_TOKEN` is preferred for backend routing; the local backend can temporarily fall back to the browser token.
 - `GET /coverage/baseline` returns typed results for all 30 synthetic demand points. It uses the scenario's `target_coverage_minutes` unless `BLOODGRID_COVERAGE_TARGET_MINUTES` is set locally.
+- `GET /deployment/strategic` returns the OR-Tools result for the same scenario. Its core code is `backend/app/deployment/service.py`; tests must use a fake `RoutingProvider`, not live Mapbox requests.
 - The current routing profile is `mapbox/driving`, and `MapboxMatrixProvider` batches the initial three eligible units and 30 demand points into two Matrix API requests.
 - The coverage result is a logistics estimate only. It does not provide a dispatch order, clinical recommendation, hospital selection, or real-world response guarantee.
-- The next approved work is strategic deployment. It should consume the existing provider-neutral travel estimates and coverage concepts, while keeping OR-Tools code separate from the routing adapter.
+- The next approved work is live incident and approved-rendezvous evaluation. It must consume the existing provider-neutral travel estimates and eligibility rule, use only `rendezvous_points.csv` candidates, compare against direct transport to the supplied destination, and keep hospital choice outside BloodGrid.
 
 ### Required Handoff From an Agent
 
@@ -159,13 +176,13 @@ For dashboard changes, also start the backend and frontend locally and inspect `
 
 ## Next Recommended Work
 
-Build strategic deployment recommendations:
+Build live incident and approved-rendezvous evaluation:
 
-1. Define which station locations are valid staging candidates and confirm the objective uses only the synthetic historical demand proxies.
-2. Add OR-Tools as an explicit strategic optimizer dependency, separate from the routing and coverage packages.
-3. Select staging locations for the available eligible units to maximize modeled demand coverage at the configured target.
-4. Add deterministic optimizer tests using fixed travel-time matrices.
-5. Display the current baseline beside the optimized synthetic scenario, including the changed coverage count and a transparent explanation of the constraints.
+1. Add typed data for a calculated incident comparison without modifying the supplied destination hospital.
+2. Use the existing routing interface to compare direct patient transport with each approved, active rendezvous point.
+3. Include response-resource eligibility, on-call mobilization time, patient wait, resource wait, time-to-blood, and added hospital delay as explicit calculated facts.
+4. Eliminate infeasible candidates, deterministically score the remaining ones with centralized assumptions, and allow direct transport to win.
+5. Add fake-routing tests for infeasible candidates, on-call delay, direct-transport selection, and explainable output before showing the result in the dashboard.
 
 ## Important Decisions Still Open
 

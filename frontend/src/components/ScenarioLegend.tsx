@@ -1,4 +1,6 @@
-const LEGEND_ITEMS = [
+import type { CoverageView } from "../lib/types";
+
+const BASE_LEGEND_ITEMS = [
   ["station", "Station"],
   ["unit-available", "Available unit"],
   ["unit-on-call", "On-call unit"],
@@ -9,12 +11,25 @@ const LEGEND_ITEMS = [
   ["live-incident", "Blood requested"],
 ] as const;
 
-export function ScenarioLegend() {
+type ScenarioLegendProps = {
+  coverageView: CoverageView;
+};
+
+export function ScenarioLegend({ coverageView }: ScenarioLegendProps) {
+  const legendItems =
+    coverageView === "strategic"
+      ? ([
+          ["station", "Station"],
+          ["station-recommended", "Recommended staging"],
+          ...BASE_LEGEND_ITEMS.slice(1),
+        ] as const)
+      : BASE_LEGEND_ITEMS;
+
   return (
     <section className="scenario-legend" aria-label="Map legend">
       <p>Scenario markers</p>
       <div className="scenario-legend__grid">
-        {LEGEND_ITEMS.map(([kind, label]) => (
+        {legendItems.map(([kind, label]) => (
           <div key={kind}>
             <span className={`legend-symbol legend-symbol--${kind}`} />
             <span>{label}</span>

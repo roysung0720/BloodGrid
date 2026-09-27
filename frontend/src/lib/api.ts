@@ -1,4 +1,8 @@
-import type { BaselineCoverageResult, ScenarioData } from "./types";
+import type {
+  BaselineCoverageResult,
+  ScenarioData,
+  StrategicDeploymentResult,
+} from "./types";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_BACKEND_BASE_URL ?? "http://localhost:8000";
@@ -20,4 +24,15 @@ export async function getBaselineCoverage(): Promise<BaselineCoverageResult> {
     throw new Error(errorBody?.detail ?? `Coverage service returned ${response.status}.`);
   }
   return response.json() as Promise<BaselineCoverageResult>;
+}
+
+export async function getStrategicDeployment(): Promise<StrategicDeploymentResult> {
+  const response = await fetch(`${API_BASE_URL}/deployment/strategic`);
+  if (!response.ok) {
+    const errorBody = (await response.json().catch(() => null)) as {
+      detail?: string;
+    } | null;
+    throw new Error(errorBody?.detail ?? `Deployment service returned ${response.status}.`);
+  }
+  return response.json() as Promise<StrategicDeploymentResult>;
 }

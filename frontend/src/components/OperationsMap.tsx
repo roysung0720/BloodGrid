@@ -5,15 +5,19 @@ import { useEffect, useRef } from "react";
 
 import type {
   BaselineCoverageResult,
+  CoverageView,
   FeatureSelection,
   LayerKey,
   LayerVisibility,
   ScenarioData,
+  StrategicDeploymentResult,
 } from "../lib/types";
 
 type OperationsMapProps = {
   scenario: ScenarioData;
   coverage: BaselineCoverageResult | null;
+  deployment: StrategicDeploymentResult | null;
+  coverageView: CoverageView;
   visibleLayers: LayerVisibility;
   onFeatureSelect: (selection: FeatureSelection) => void;
 };
@@ -46,6 +50,8 @@ function createMarkerElement(
 export function OperationsMap({
   scenario,
   coverage,
+  deployment,
+  coverageView,
   visibleLayers,
   onFeatureSelect,
 }: OperationsMapProps) {
@@ -78,8 +84,20 @@ export function OperationsMap({
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-left");
 
+    const activeCoverage =
+      coverageView === "strategic" && deployment
+        ? deployment.demand_points
+        : coverage?.demand_points;
     const coverageByIncident = new Map(
-      coverage?.demand_points.map((point) => [point.incident_id, point]),
+      activeCoverage?.map((point) => [point.incident_id, point]),
+    );
+    const assignmentsByStation = new Map<string, string[]>(
+      deployment?.assignments.reduce((assignments, assignment) => {
+        const units = assignments.get(assignment.station_id) ?? [];
+        units.push(assignment.unit_id);
+        assignments.set(assignment.station_id, units);
+        return assignments;
+      }, new Map<string, string[]>()) ?? new Map<string, string[]>(),
     );
     const markerDefinitions: MarkerDefinition[] = [
       ...scenario.stations.map((station) => ({
@@ -87,9 +105,17 @@ export function OperationsMap({
         layer: "stations" as const,
         longitude: station.longitude,
         latitude: station.latitude,
-        title: `${station.name} station`,
+        title:
+          coverageView === "strategic" && assignmentsByStation.has(station.station_id)
+            ? `${station.name} recommended staging for ${assignmentsByStation
+                .get(station.station_id)
+                ?.join(", ")}`
+            : `${station.name} station`,
         type: "station" as const,
-        variant: "station",
+        variant:
+          coverageView === "strategic" && assignmentsByStation.has(station.station_id)
+            ? "station-recommended"
+            : "station",
       })),
       ...scenario.response_units.map((unit) => ({
         id: unit.unit_id,
@@ -116,8 +142,8 @@ export function OperationsMap({
         latitude: incident.latitude,
         title: coverageByIncident.has(incident.incident_id)
           ? coverageByIncident.get(incident.incident_id)?.covered
-            ? `${incident.incident_type.replace("_", " ")} demand proxy: covered`
-            : `${incident.incident_type.replace("_", " ")} demand proxy: not covered`
+            ? `${incident.incident_type.replace("_", " ")} demand proxy: ${coverageView} coverage`
+            : `${incident.incident_type.replace("_", " ")} demand proxy: outside ${coverageView} target`
           : `${incident.incident_type.replace("_", " ")} demand proxy: coverage unavailable`,
         type: "incident" as const,
         variant: coverageByIncident.get(incident.incident_id)?.covered
@@ -161,7 +187,7 @@ export function OperationsMap({
       markers.forEach((marker) => marker.remove());
       map.remove();
     };
-  }, [coverage, scenario, visibleLayers]);
+  }, [coverage, coverageView, deployment, scenario, visibleLayers]);
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) {
     return (

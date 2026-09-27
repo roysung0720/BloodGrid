@@ -16,9 +16,9 @@ The Next.js dashboard and FastAPI data service load `rural_ga_initial_v1` throug
 
 The Mapbox Matrix adapter is isolated behind a provider-neutral routing interface. The baseline coverage service evaluates valid blood, vehicle availability, clinician qualification, and allowable crew status; adds on-call mobilization delay; and compares each synthetic demand point with the scenario's configured target. The dashboard displays covered and uncovered demand points with inspectable timing details.
 
-## 5. Strategic deployment
+## 5. Strategic deployment - complete
 
-Implement and test OR-Tools placement recommendations, then display before/after coverage.
+The OR-Tools CP-SAT deployment model assigns each eligible unit to one active station without exceeding station capacity. It maximizes synthetic demand points reachable within the target, reuses the shared eligibility and routing interfaces, and returns an explainable assignment. The dashboard compares the current baseline with the optimized coverage and can switch its map view between them.
 
 ## 6. Live incident and rendezvous
 
