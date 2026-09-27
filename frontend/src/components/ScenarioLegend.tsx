@@ -1,6 +1,8 @@
 import type { CoverageView } from "../lib/types";
 
-const BASE_LEGEND_ITEMS = [
+type LegendItem = [string, string];
+
+const BASE_LEGEND_ITEMS: LegendItem[] = [
   ["station", "Station"],
   ["unit-available", "Available unit"],
   ["unit-on-call", "On-call unit"],
@@ -9,21 +11,31 @@ const BASE_LEGEND_ITEMS = [
   ["incident-uncovered", "Uncovered demand"],
   ["rendezvous", "Approved rendezvous"],
   ["live-incident", "Blood requested"],
-] as const;
+];
 
 type ScenarioLegendProps = {
   coverageView: CoverageView;
+  recommendedRendezvousId: string | null;
 };
 
-export function ScenarioLegend({ coverageView }: ScenarioLegendProps) {
-  const legendItems =
+export function ScenarioLegend({
+  coverageView,
+  recommendedRendezvousId,
+}: ScenarioLegendProps) {
+  const strategicLegendItems: LegendItem[] =
     coverageView === "strategic"
-      ? ([
-          ["station", "Station"],
-          ["station-recommended", "Recommended staging"],
-          ...BASE_LEGEND_ITEMS.slice(1),
-        ] as const)
-      : BASE_LEGEND_ITEMS;
+      ? [["station-recommended", "Recommended staging"]]
+      : [];
+  const rendezvousLegendItems: LegendItem[] = recommendedRendezvousId
+    ? [["rendezvous-recommended", "Recommended rendezvous"]]
+    : [];
+  const legendItems: LegendItem[] = [
+    ...BASE_LEGEND_ITEMS.slice(0, 1),
+    ...strategicLegendItems,
+    ...BASE_LEGEND_ITEMS.slice(1, 7),
+    ...rendezvousLegendItems,
+    ...BASE_LEGEND_ITEMS.slice(7),
+  ];
 
   return (
     <section className="scenario-legend" aria-label="Map legend">

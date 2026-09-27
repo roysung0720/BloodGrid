@@ -30,3 +30,24 @@ def coverage_target_minutes(scenario_target_minutes: int) -> int:
     if target_minutes < 1:
         raise ValueError("BLOODGRID_COVERAGE_TARGET_MINUTES must be at least 1")
     return target_minutes
+
+
+def rendezvous_max_added_hospital_delay_minutes() -> float:
+    """Return the largest modeled hospital-arrival delay allowed for an intercept."""
+
+    return _nonnegative_float(
+        "BLOODGRID_RENDEZVOUS_MAX_ADDED_HOSPITAL_DELAY_MINUTES", "10"
+    )
+
+
+def rendezvous_hospital_delay_weight() -> float:
+    """Return the configured score penalty for modeled hospital-arrival delay."""
+
+    return _nonnegative_float("BLOODGRID_RENDEZVOUS_HOSPITAL_DELAY_WEIGHT", "0.5")
+
+
+def _nonnegative_float(variable_name: str, default: str) -> float:
+    value = float(os.getenv(variable_name, default))
+    if value < 0:
+        raise ValueError(f"{variable_name} must be zero or greater")
+    return value

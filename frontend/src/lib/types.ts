@@ -190,3 +190,52 @@ export type StrategicDeploymentResult = {
 };
 
 export type CoverageView = "baseline" | "strategic";
+
+export type RendezvousCandidateStatus =
+  | "RECOMMENDED"
+  | "NOT_SELECTED"
+  | "INELIGIBLE_POINT"
+  | "NO_ELIGIBLE_RESOURCE"
+  | "NO_ROUTE"
+  | "TOO_LATE"
+  | "EXCESSIVE_DETOUR";
+
+export type RendezvousCandidate = {
+  rendezvous_id: string;
+  rendezvous_name: string;
+  status: RendezvousCandidateStatus;
+  reason: string;
+  resource_id: string | null;
+  patient_to_rendezvous_minutes: number | null;
+  resource_driving_minutes: number | null;
+  mobilization_minutes: number | null;
+  resource_arrival_minutes: number | null;
+  patient_wait_minutes: number | null;
+  resource_wait_minutes: number | null;
+  time_to_blood_minutes: number | null;
+  rendezvous_to_hospital_minutes: number | null;
+  hospital_arrival_minutes: number | null;
+  added_hospital_delay_minutes: number | null;
+  score: number | null;
+};
+
+export type LiveRendezvousResult = {
+  scenario_id: string;
+  incident_id: string;
+  patient_unit_id: string;
+  destination_hospital_id: string;
+  destination_hospital_name: string;
+  destination_trauma_level: string;
+  destination_valid: boolean;
+  routing_provider: string;
+  routing_profile: string;
+  eligible_resource_count: number;
+  direct_transport_minutes: number;
+  direct_route_distance_miles: number;
+  max_added_hospital_delay_minutes: number;
+  hospital_delay_weight: number;
+  recommendation: "RENDEZVOUS" | "DIRECT_TRANSPORT";
+  recommendation_reason: string;
+  recommended_rendezvous_id: string | null;
+  candidates: RendezvousCandidate[];
+};

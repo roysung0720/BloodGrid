@@ -261,6 +261,7 @@ h2 {
 .legend-symbol--incident-covered { background: var(--coverage-covered); border-radius: 50%; height: 8px; width: 8px; }
 .legend-symbol--incident-uncovered { background: var(--coverage-uncovered); border-radius: 50%; height: 8px; width: 8px; }
 .legend-symbol--rendezvous { background: #ffffff; border: 2px solid var(--rendezvous); border-radius: 50%; }
+.legend-symbol--rendezvous-recommended { background: var(--rendezvous); border: 2px solid #ffffff; border-radius: 50%; height: 11px; width: 11px; }
 .legend-symbol--live-incident { background: var(--live-incident); border-radius: 50%; box-shadow: 0 0 0 3px rgba(181, 46, 76, 0.2); }
 
 .operations-rail {
@@ -487,6 +488,90 @@ h2 {
 .incident-summary strong { font-size: 14px; }
 .incident-summary__destination { gap: 5px; }
 
+.rendezvous-destination {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.rendezvous-destination span,
+.rendezvous-destination small,
+.rendezvous-recommendation span,
+.rendezvous-timings span,
+.rendezvous-candidates > span,
+.rendezvous-candidate div span,
+.rendezvous-candidate__time {
+  color: var(--muted);
+  display: block;
+  font-size: 11px;
+}
+
+.rendezvous-destination strong {
+  display: block;
+  font-size: 13px;
+  margin: 3px 0;
+}
+
+.rendezvous-recommendation {
+  border-left: 3px solid var(--rendezvous);
+  margin: 13px 0;
+  padding: 2px 0 2px 10px;
+}
+
+.rendezvous-recommendation strong {
+  display: block;
+  font-size: 14px;
+  margin-top: 3px;
+}
+
+.rendezvous-recommendation p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 5px 0 0;
+}
+
+.rendezvous-timings {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.rendezvous-timings strong {
+  display: block;
+  font-size: 17px;
+  margin-top: 3px;
+}
+
+.rendezvous-timings svg { color: var(--rendezvous); }
+
+.rendezvous-candidates {
+  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  padding-top: 10px;
+}
+
+.rendezvous-candidates > span { font-weight: 700; text-transform: uppercase; }
+
+.rendezvous-candidate {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  padding: 9px 0;
+  text-align: left;
+  width: 100%;
+}
+
+.rendezvous-candidate:hover { background: #f5f8f9; }
+.rendezvous-candidate.is-recommended strong { color: var(--rendezvous); }
+.rendezvous-candidate div strong { display: block; font-size: 12px; margin-bottom: 3px; }
+.rendezvous-candidate__time { line-height: 1.35; text-align: right; }
+
 .feature-section { min-height: 182px; }
 
 .feature-detail > div { margin-bottom: 13px; }
@@ -530,6 +615,7 @@ h2 {
 .map-marker--incident-covered { background: var(--coverage-covered); border-radius: 50%; height: 12px; width: 12px; }
 .map-marker--incident-uncovered { background: var(--coverage-uncovered); border-radius: 50%; box-shadow: 0 0 0 3px rgba(201, 74, 69, 0.18); height: 12px; width: 12px; }
 .map-marker--rendezvous { background: #ffffff; border: 3px solid var(--rendezvous); border-radius: 50%; }
+.map-marker--rendezvous-recommended { background: var(--rendezvous); border: 3px solid #ffffff; border-radius: 50%; box-shadow: 0 0 0 4px rgba(119, 93, 168, 0.24); height: 22px; width: 22px; }
 .map-marker--live-incident { background: var(--live-incident); border-radius: 50%; box-shadow: 0 0 0 5px rgba(181, 46, 76, 0.22); height: 22px; width: 22px; }
 
 .startup-state {
@@ -561,7 +647,7 @@ h2 {
   .operations-layout { grid-template-columns: 1fr; }
   .map-stage { min-height: 66vh; }
   .operations-rail { min-height: 0; }
-  .coverage-section, .deployment-section, .resource-section, .incident-section, .feature-section { min-height: 0; }
+  .coverage-section, .deployment-section, .resource-section, .incident-section, .rendezvous-section, .feature-section { min-height: 0; }
 }
 
 @media (max-width: 620px) {

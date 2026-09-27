@@ -30,6 +30,14 @@ It must not decide whether blood is medically indicated, select a product or dos
 - The first objective maximizes modeled target-time demand coverage only. Severity weighting, repositioning burden, fairness, time-of-day demand, expiration risk, and real operational approval are outside this MVP step.
 - The existing on-call mobilization delay remains attached to the unit even when the optimizer changes its staging location.
 
+## Live rendezvous assumptions
+
+- A live evaluation starts only after the synthetic incident already records an authorized blood request.
+- The incident's hospital is supplied input. BloodGrid validates that it is an active known record, displays its recorded trauma level as context, and never selects, replaces, or clinically evaluates a destination.
+- Only rendezvous points explicitly marked both approved and active are considered. BloodGrid never invents a midpoint or public meeting location.
+- A point must deliver an eligible resource before the modeled direct-hospital arrival and remain within the configured maximum added hospital-delay limit. Otherwise, the transparent result is direct transport.
+- The score is a logistics comparison: `time_to_blood + hospital_delay_weight * added_hospital_delay`. It does not determine treatment, transfusion, or clinical benefit.
+
 ## Explainability
 
 Every recommendation should expose the calculated facts behind it: eligible status, travel times, time-to-blood, wait times, direct-hospital baseline, and added hospital delay. The MVP does not require an LLM to explain these results.

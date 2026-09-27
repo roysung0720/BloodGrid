@@ -9,6 +9,7 @@ import type {
   FeatureSelection,
   LayerKey,
   LayerVisibility,
+  LiveRendezvousResult,
   ScenarioData,
   StrategicDeploymentResult,
 } from "../lib/types";
@@ -17,6 +18,7 @@ type OperationsMapProps = {
   scenario: ScenarioData;
   coverage: BaselineCoverageResult | null;
   deployment: StrategicDeploymentResult | null;
+  rendezvous: LiveRendezvousResult | null;
   coverageView: CoverageView;
   visibleLayers: LayerVisibility;
   onFeatureSelect: (selection: FeatureSelection) => void;
@@ -51,6 +53,7 @@ export function OperationsMap({
   scenario,
   coverage,
   deployment,
+  rendezvous,
   coverageView,
   visibleLayers,
   onFeatureSelect,
@@ -99,6 +102,7 @@ export function OperationsMap({
         return assignments;
       }, new Map<string, string[]>()) ?? new Map<string, string[]>(),
     );
+    const recommendedRendezvousId = rendezvous?.recommended_rendezvous_id;
     const markerDefinitions: MarkerDefinition[] = [
       ...scenario.stations.map((station) => ({
         id: station.station_id,
@@ -157,9 +161,15 @@ export function OperationsMap({
         layer: "rendezvous" as const,
         longitude: point.longitude,
         latitude: point.latitude,
-        title: `${point.name} rendezvous point`,
+        title:
+          point.rendezvous_id === recommendedRendezvousId
+            ? `${point.name} recommended approved rendezvous point`
+            : `${point.name} rendezvous point`,
         type: "rendezvous" as const,
-        variant: "rendezvous",
+        variant:
+          point.rendezvous_id === recommendedRendezvousId
+            ? "rendezvous-recommended"
+            : "rendezvous",
       })),
       ...scenario.live_incidents.map((incident) => ({
         id: incident.incident_id,
@@ -187,7 +197,7 @@ export function OperationsMap({
       markers.forEach((marker) => marker.remove());
       map.remove();
     };
-  }, [coverage, coverageView, deployment, scenario, visibleLayers]);
+  }, [coverage, coverageView, deployment, rendezvous, scenario, visibleLayers]);
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) {
     return (

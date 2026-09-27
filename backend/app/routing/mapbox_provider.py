@@ -48,7 +48,9 @@ class MapboxMatrixProvider:
             if (origin.location_id, destination.location_id) not in self._cache
         ]
         if missing_pairs:
-            self._fetch_missing_pairs(origins, destinations)
+            self._fetch_missing_pairs(
+                origins, _matrix_destinations(origins, destinations)
+            )
 
         return {
             (origin.location_id, destination.location_id): self._cache[
@@ -104,7 +106,10 @@ class MapboxMatrixProvider:
             with urlopen(request, timeout=self._timeout_seconds) as response:  # noqa: S310
                 payload = json.loads(response.read().decode("utf-8"))
         except HTTPError as error:
-            raise RoutingError(f"Mapbox routing request failed with HTTP {error.code}.") from error
+            detail = _http_error_detail(error)
+            raise RoutingError(
+                f"Mapbox routing request failed with HTTP {error.code}: {detail}"
+            ) from error
         except URLError as error:
             raise RoutingError("Mapbox routing request could not reach the provider.") from error
         except (TimeoutError, json.JSONDecodeError) as error:
@@ -157,3 +162,32 @@ class MapboxMatrixProvider:
                     duration_seconds=float(duration),
                     distance_meters=float(distance),
                 )
+
+
+def _http_error_detail(error: HTTPError) -> str:
+    """Return a concise provider detail without including request credentials."""
+
+    try:
+        payload = json.loads(error.read().decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return "Unknown provider error"
+    return str(payload.get("message") or payload.get("code") or "Unknown provider error")
+
+
+def _matrix_destinations(
+    origins: Sequence[RoutingLocation], destinations: Sequence[RoutingLocation]
+) -> Sequence[RoutingLocation]:
+    """Pad a single-pair request for Mapbox's two-element Matrix API minimum."""
+
+    if len(origins) != 1 or len(destinations) != 1:
+        return destinations
+
+    destination = destinations[0]
+    return [
+        destination,
+        RoutingLocation(
+            location_id=f"__matrix_padding__{destination.location_id}",
+            latitude=destination.latitude,
+            longitude=destination.longitude,
+        ),
+    ]

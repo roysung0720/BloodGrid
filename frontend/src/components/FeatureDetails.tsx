@@ -4,6 +4,7 @@ import type {
   BaselineCoverageResult,
   CoverageView,
   FeatureSelection,
+  LiveRendezvousResult,
   ScenarioData,
   StrategicDeploymentResult,
 } from "../lib/types";
@@ -12,6 +13,7 @@ type FeatureDetailsProps = {
   scenario: ScenarioData;
   coverage: BaselineCoverageResult | null;
   deployment: StrategicDeploymentResult | null;
+  rendezvous: LiveRendezvousResult | null;
   coverageView: CoverageView;
   selection: FeatureSelection | null;
 };
@@ -26,6 +28,7 @@ function findDetails(
   scenario: ScenarioData,
   coverage: BaselineCoverageResult | null,
   deployment: StrategicDeploymentResult | null,
+  rendezvous: LiveRendezvousResult | null,
   coverageView: CoverageView,
   selection: FeatureSelection,
 ): Detail | null {
@@ -146,6 +149,29 @@ function findDetails(
     const point = scenario.rendezvous_points.find(
       (item) => item.rendezvous_id === selection.id,
     );
+    const candidate = rendezvous?.candidates.find(
+      (item) => item.rendezvous_id === selection.id,
+    );
+    const evaluationEntries: Array<[string, string]> = candidate
+      ? [
+          ["Evaluation", candidate.status.replaceAll("_", " ")],
+          ["Resource", candidate.resource_id ?? "None"],
+          [
+            "Time to blood",
+            candidate.time_to_blood_minutes === null
+              ? "Not available"
+              : `${candidate.time_to_blood_minutes} min`,
+          ],
+          [
+            "Hospital delay",
+            candidate.added_hospital_delay_minutes === null
+              ? "Not available"
+              : candidate.added_hospital_delay_minutes <= 0
+                ? "No added delay"
+                : `+${candidate.added_hospital_delay_minutes} min`,
+          ],
+        ]
+      : [];
     return point
       ? {
           title: point.name,
@@ -154,6 +180,7 @@ function findDetails(
             ["Type", point.location_type.replaceAll("_", " ")],
             ["Approval", point.approved ? "Approved" : "Not approved"],
             ["Status", point.active ? "Active" : "Inactive"],
+            ...evaluationEntries,
           ],
         }
       : null;
@@ -162,14 +189,28 @@ function findDetails(
   const liveIncident = scenario.live_incidents.find(
     (item) => item.incident_id === selection.id,
   );
+  const incidentResult = rendezvous?.incident_id === selection.id ? rendezvous : null;
+  const incidentEvaluationEntries: Array<[string, string]> = incidentResult
+    ? [
+        ["Destination validation", incidentResult.destination_valid ? "Active supplied destination" : "Unavailable"],
+        ["Direct transport", `${incidentResult.direct_transport_minutes} min`],
+        [
+          "Logistics result",
+          incidentResult.recommendation === "RENDEZVOUS"
+            ? "Approved rendezvous"
+            : "Continue direct",
+        ],
+      ]
+    : [];
   return liveIncident
     ? {
         title: "Blood request",
         subtitle: liveIncident.incident_id,
         entries: [
           ["Transport unit", liveIncident.patient_unit_id],
-          ["Destination", liveIncident.destination_hospital_id],
-          ["Status", liveIncident.status],
+            ["Destination", liveIncident.destination_hospital_id],
+            ["Status", liveIncident.status],
+            ...incidentEvaluationEntries,
         ],
       }
     : null;
@@ -179,11 +220,12 @@ export function FeatureDetails({
   scenario,
   coverage,
   deployment,
+  rendezvous,
   coverageView,
   selection,
 }: FeatureDetailsProps) {
   const detail = selection
-    ? findDetails(scenario, coverage, deployment, coverageView, selection)
+    ? findDetails(scenario, coverage, deployment, rendezvous, coverageView, selection)
     : null;
 
   return (

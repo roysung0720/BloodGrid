@@ -41,8 +41,8 @@ export function IncidentPanel({ scenario, onSelect }: IncidentPanelProps) {
         </span>
       </button>
       <p className="panel-note panel-note--plain">
-        Route and intercept recommendations are intentionally not calculated in
-        this display phase.
+        The destination is supplied by the scenario. BloodGrid evaluates logistics
+        only and does not select a hospital.
       </p>
     </section>
   );

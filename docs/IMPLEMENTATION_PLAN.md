@@ -20,9 +20,9 @@ The Mapbox Matrix adapter is isolated behind a provider-neutral routing interfac
 
 The OR-Tools CP-SAT deployment model assigns each eligible unit to one active station without exceeding station capacity. It maximizes synthetic demand points reachable within the target, reuses the shared eligibility and routing interfaces, and returns an explainable assignment. The dashboard compares the current baseline with the optimized coverage and can switch its map view between them.
 
-## 6. Live incident and rendezvous
+## 6. Live incident and rendezvous - complete
 
-Simulate a blood request, compare direct hospital transport with approved intercept candidates, and return an explainable recommendation.
+The deterministic live evaluator validates the supplied active hospital record, compares direct transport with every approved active rendezvous point, includes resource eligibility, on-call mobilization, both vehicles' wait time, time-to-blood, and added hospital delay, then returns either the best feasible point or direct transport. The dashboard makes every candidate inspectable and marks the selected point on the map.
 
 ## 7. Dynamic availability
 

@@ -42,3 +42,9 @@ The calculation uses the provider-neutral routing interface. Mapbox-specific res
 `GET /deployment/strategic` returns a calculated strategic plan, not a new source-data file. It records one recommended active station for every eligible response unit, the optimized coverage count, and each demand point's fastest staged resource, station, and estimated response-time breakdown.
 
 The first objective is intentionally narrow and inspectable: maximize the number of synthetic demand points reachable within the configured target. The optimizer enforces one assignment per eligible unit and respects declared station capacity. It does not yet weight incident severity, model repositioning cost, or make any real-world deployment order.
+
+## Live rendezvous result
+
+`GET /live-incidents/{incident_id}/rendezvous` returns a calculated comparison for an already-authorized synthetic blood request. It preserves the incident's supplied destination hospital, verifies that the record exists and is active, and reports its name and trauma level as context only.
+
+The result includes direct transport time, the configured maximum added hospital delay and score weight, and one record for every rendezvous point. Each point explains whether it was unavailable, unroutable, too late to beat direct arrival, an excessive detour, an eligible alternative, or the selected recommendation. For viable points, it exposes patient and resource travel, on-call mobilization, wait times, time-to-blood, modeled hospital arrival, and the added delay against direct transport.

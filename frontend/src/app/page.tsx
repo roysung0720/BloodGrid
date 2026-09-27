@@ -10,9 +10,11 @@ import { IncidentPanel } from "../components/IncidentPanel";
 import { LayerControls } from "../components/LayerControls";
 import { OperationsMap } from "../components/OperationsMap";
 import { ResourcePanel } from "../components/ResourcePanel";
+import { RendezvousPanel } from "../components/RendezvousPanel";
 import { ScenarioLegend } from "../components/ScenarioLegend";
 import {
   getBaselineCoverage,
+  getLiveRendezvous,
   getScenario,
   getStrategicDeployment,
 } from "../lib/api";
@@ -21,6 +23,7 @@ import type {
   CoverageView,
   FeatureSelection,
   LayerVisibility,
+  LiveRendezvousResult,
   ScenarioData,
   StrategicDeploymentResult,
 } from "../lib/types";
@@ -38,6 +41,7 @@ export default function HomePage() {
   const [scenario, setScenario] = useState<ScenarioData | null>(null);
   const [coverage, setCoverage] = useState<BaselineCoverageResult | null>(null);
   const [deployment, setDeployment] = useState<StrategicDeploymentResult | null>(null);
+  const [rendezvous, setRendezvous] = useState<LiveRendezvousResult | null>(null);
   const [coverageView, setCoverageView] = useState<CoverageView>("baseline");
   const [selectedFeature, setSelectedFeature] = useState<FeatureSelection | null>(
     null,
@@ -47,10 +51,16 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [coverageError, setCoverageError] = useState<string | null>(null);
   const [deploymentError, setDeploymentError] = useState<string | null>(null);
+  const [rendezvousError, setRendezvousError] = useState<string | null>(null);
 
   useEffect(() => {
     getScenario()
-      .then(setScenario)
+      .then((loadedScenario) => {
+        setScenario(loadedScenario);
+        getLiveRendezvous(loadedScenario.metadata.default_live_incident_id)
+          .then(setRendezvous)
+          .catch((requestError: Error) => setRendezvousError(requestError.message));
+      })
       .catch((requestError: Error) => setError(requestError.message));
     getBaselineCoverage()
       .then(setCoverage)
@@ -116,6 +126,7 @@ export default function HomePage() {
             scenario={scenario}
             coverage={coverage}
             deployment={deployment}
+            rendezvous={rendezvous}
             coverageView={coverageView}
             visibleLayers={visibleLayers}
             onFeatureSelect={setSelectedFeature}
@@ -128,7 +139,10 @@ export default function HomePage() {
             visibleLayers={visibleLayers}
             onChange={setVisibleLayers}
           />
-          <ScenarioLegend coverageView={coverageView} />
+          <ScenarioLegend
+            coverageView={coverageView}
+            recommendedRendezvousId={rendezvous?.recommended_rendezvous_id ?? null}
+          />
         </section>
 
         <aside className="operations-rail" aria-label="Current scenario details">
@@ -163,10 +177,16 @@ export default function HomePage() {
           />
           <ResourcePanel scenario={scenario} onSelect={setSelectedFeature} />
           <IncidentPanel scenario={scenario} onSelect={setSelectedFeature} />
+          <RendezvousPanel
+            result={rendezvous}
+            error={rendezvousError}
+            onSelect={setSelectedFeature}
+          />
           <FeatureDetails
             scenario={scenario}
             coverage={coverage}
             deployment={deployment}
+            rendezvous={rendezvous}
             coverageView={coverageView}
             selection={selectedFeature}
           />

@@ -16,6 +16,8 @@ from .coverage.models import BaselineCoverageResult
 from .coverage.service import calculate_baseline_coverage
 from .deployment.models import StrategicDeploymentResult
 from .deployment.service import DeploymentError, calculate_strategic_deployment
+from .rendezvous.models import LiveRendezvousResult
+from .rendezvous.service import RendezvousError, calculate_live_rendezvous
 from .models import (
     BloodUnit,
     HistoricalIncident,
@@ -127,4 +129,18 @@ def strategic_deployment() -> StrategicDeploymentResult:
             get_active_scenario(), get_routing_provider()
         )
     except (DeploymentError, RoutingError, ValueError) as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@app.get(
+    "/live-incidents/{incident_id}/rendezvous", response_model=LiveRendezvousResult
+)
+def live_incident_rendezvous(incident_id: str) -> LiveRendezvousResult:
+    try:
+        return calculate_live_rendezvous(
+            get_active_scenario(), incident_id, get_routing_provider()
+        )
+    except RendezvousError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except (RoutingError, ValueError) as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
