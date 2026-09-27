@@ -45,6 +45,21 @@ The initial map dashboard, baseline coverage calculation, strategic deployment r
 - `frontend/src/components/IncidentPanel.tsx` selects one synthetic blood request and displays its supplied hospital context. Changing it refreshes only the live rendezvous evaluation and map emphasis.
 - `frontend/src/components/RendezvousPanel.tsx` shows that selected request's live logistics recommendation, direct-transport reference, and every approved-point result; the selected point is marked on the map.
 - `frontend/src/components/AvailabilityProfilePanel.tsx` selects an explicit synthetic demo case and refreshes all calculated dashboard views together.
+
+## Ambulance UI Slice
+
+The crew-facing Ambulance UI (`/ambulance`) sits beside the System UI (`/`). Each page has a top-bar button that switches to the other. See `docs/AMBULANCE_UI_SPEC.md`.
+
+- `backend/app/blood_requests/` holds crew requests in memory only. It creates a synthetic `LiveIncident` for each request, adds it to a *copy* of the active scenario, and calls the unchanged `calculate_live_rendezvous`.
+  - It also serves ambulance options, hospital options (ordered only by drive time), blood-product options, and resource blips, reusing the shared eligibility rule.
+- `backend/app/routing/coordinate_keyed.py` wraps any `RoutingProvider` so that cached travel times are keyed by coordinates. Crew requests use it so that a generic location label cannot return another place's cached time.
+- `RoutingProvider.get_route()` returns drawable geometry and turn steps. Only `mapbox_provider.py` calls the Mapbox Directions API.
+- The Ambulance UI endpoints are `GET /ambulance/settings`, `/ambulances`, `/hospital-options`, `/blood-products`, `/resource-options`, `/route`, and `/route/options` (up to three distinct roads for the Reroute dropdown, built from `RoutingProvider.get_route_options()` and `get_route_via()`; see `routing/geometry.py` and the `ROUTE_OPTION_*` settings), plus `POST`/`GET /requests` and `POST /requests/{id}/position`, `/blood-received`, and `/cancel`. CORS now allows `POST` from the configured frontend origins.
+- On the frontend:
+  - `frontend/src/app/ambulance/page.tsx` renders `components/ambulance/AmbulanceApp.tsx`, which owns the crew flow and the simulated or GPS location.
+  - `lib/navigation.ts` does display-only route geometry.
+  - `components/AmbulanceRequestsPanel.tsx` shows crew requests in the System UI.
+  - The browser still makes no eligibility, hospital-ordering, or rendezvous decisions.
 - The frontend reads all map data from the backend. It does not duplicate scenario CSV files.
 - `data/raw/` retains untouched public-source snapshots; `data/processed/` holds
   traceable derived reference rows; hybrid scenarios carry a `sources.json`

@@ -6,7 +6,7 @@ It is decision support for logistics, not a clinical decision-maker. BloodGrid d
 
 ## Project status
 
-The project foundation, two versioned demo datasets, map-first operations dashboard, road-based baseline coverage calculation, strategic deployment recommendation, multi-incident live rendezvous evaluation, and dynamic availability simulation are in place. The current milestone is data improvement and polish.
+The project foundation, two versioned demo datasets, map-first operations dashboard, road-based baseline coverage calculation, strategic deployment recommendation, multi-incident live rendezvous evaluation, and dynamic availability simulation are in place. A working crew-facing Ambulance UI (`/ambulance`, reached with the **Ambulance view** button) lets a crew send a blood request and follow navigation to the rendezvous point and hospital. The current milestone is data improvement and polish.
 
 ## Planned application
 
@@ -27,6 +27,7 @@ The project foundation, two versioned demo datasets, map-first operations dashbo
 - `docs/HANDOFF.md`: current project state and teammate/agent handoff context.
 - `docs/IMPLEMENTATION_PLAN.md`: build order and milestones.
 - `docs/DEMO_PLAN.md`: intended demo narrative.
+- `docs/AMBULANCE_UI_SPEC.md`: the System UI / Ambulance UI split and the crew-facing request and navigation flow, including how it was built.
 
 ## Local development
 

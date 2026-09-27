@@ -20,3 +20,6 @@ coverage/
 !backend/app/coverage/
 !backend/app/coverage/**
 .DS_Store
+
+# Python bytecode anywhere (after the coverage exception above)
+__pycache__/

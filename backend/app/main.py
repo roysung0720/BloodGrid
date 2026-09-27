@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import lru_cache
 
 from fastapi import FastAPI, HTTPException
@@ -34,6 +35,29 @@ from .models import (
 )
 from .scenario_loader import ScenarioLoadError, list_scenarios, load_scenario
 from .routing.mapbox_provider import MapboxMatrixProvider, RoutingError
+from .blood_requests.models import (
+    AmbulanceOption,
+    AmbulanceSettings,
+    BloodProductOption,
+    BloodRequest,
+    CreateBloodRequest,
+    HospitalOption,
+    PositionUpdate,
+    ResourceOption,
+    RouteResult,
+)
+from .blood_requests.service import (
+    BloodRequestError,
+    BloodRequestNotFound,
+    BloodRequestStore,
+    blood_product_options,
+    hospital_options,
+    list_ambulances,
+    resource_options,
+    route_between,
+    route_options_between,
+)
+from .config import ambulance_settings
 
 
 app = FastAPI(
@@ -46,7 +70,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=FRONTEND_ORIGINS,
     allow_credentials=False,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -179,3 +203,146 @@ def live_incident_rendezvous(
         raise HTTPException(status_code=422, detail=str(error)) from error
     except (RoutingError, ValueError) as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+# ----- Ambulance UI -------------------------------------------------------------
+# Crew requests live in memory only and are lost when the backend restarts.
+
+BLOOD_REQUESTS = BloodRequestStore()
+
+
+@app.get("/ambulance/settings", response_model=AmbulanceSettings)
+def ambulance_ui_settings() -> AmbulanceSettings:
+    try:
+        return AmbulanceSettings(**ambulance_settings())
+    except ValueError as error:
+        raise HTTPException(status_code=500, detail=str(error)) from error
+
+
+@app.get("/ambulances", response_model=list[AmbulanceOption])
+def ambulances(scenario_id: str = SCENARIO_ID) -> list[AmbulanceOption]:
+    return list_ambulances(get_active_scenario(scenario_id))
+
+
+@app.get("/hospital-options", response_model=list[HospitalOption])
+def ambulance_hospital_options(
+    lat: float,
+    lon: float,
+    scenario_id: str = SCENARIO_ID,
+    availability_profile: str = "baseline",
+) -> list[HospitalOption]:
+    try:
+        return hospital_options(
+            get_active_scenario(scenario_id, availability_profile),
+            lat,
+            lon,
+            get_routing_provider(),
+        )
+    except RoutingError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@app.get("/blood-products", response_model=list[BloodProductOption])
+def ambulance_blood_products(
+    scenario_id: str = SCENARIO_ID, availability_profile: str = "baseline"
+) -> list[BloodProductOption]:
+    return blood_product_options(get_active_scenario(scenario_id, availability_profile))
+
+
+@app.get("/resource-options", response_model=list[ResourceOption])
+def ambulance_resource_options(
+    lat: float,
+    lon: float,
+    scenario_id: str = SCENARIO_ID,
+    availability_profile: str = "baseline",
+) -> list[ResourceOption]:
+    try:
+        return resource_options(
+            get_active_scenario(scenario_id, availability_profile),
+            lat,
+            lon,
+            get_routing_provider(),
+        )
+    except RoutingError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@app.get("/route", response_model=RouteResult)
+def road_route(
+    from_lat: float, from_lon: float, to_lat: float, to_lon: float
+) -> RouteResult:
+    try:
+        route = route_between(get_routing_provider(), from_lat, from_lon, to_lat, to_lon)
+    except RoutingError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    if route is None:
+        raise HTTPException(status_code=404, detail="No road route is available.")
+    return route
+
+
+@app.get("/route/options", response_model=list[RouteResult])
+def road_route_options(
+    from_lat: float, from_lon: float, to_lat: float, to_lon: float
+) -> list[RouteResult]:
+    """Fastest route first, then alternative roads between the same two points (Reroute)."""
+
+    try:
+        return route_options_between(get_routing_provider(), from_lat, from_lon, to_lat, to_lon)
+    except RoutingError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@app.post("/requests", response_model=BloodRequest)
+def create_blood_request(submission: CreateBloodRequest) -> BloodRequest:
+    try:
+        return BLOOD_REQUESTS.create(
+            get_active_scenario(
+                submission.scenario_id or SCENARIO_ID, submission.availability_profile
+            ),
+            submission,
+            get_routing_provider(),
+        )
+    except (BloodRequestError, RendezvousError) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except (RoutingError, ValueError) as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@app.get("/requests", response_model=list[BloodRequest])
+def blood_requests() -> list[BloodRequest]:
+    return BLOOD_REQUESTS.list()
+
+
+@app.get("/requests/{request_id}", response_model=BloodRequest)
+def blood_request(request_id: str) -> BloodRequest:
+    return _request_action(lambda: BLOOD_REQUESTS.get(request_id))
+
+
+@app.post("/requests/{request_id}/position", response_model=BloodRequest)
+def blood_request_position(request_id: str, position: PositionUpdate) -> BloodRequest:
+    radius = ambulance_settings()["arrival_radius_meters"]
+    return _request_action(
+        lambda: BLOOD_REQUESTS.update_position(
+            request_id, position.latitude, position.longitude, radius
+        )
+    )
+
+
+@app.post("/requests/{request_id}/blood-received", response_model=BloodRequest)
+def blood_request_received(request_id: str) -> BloodRequest:
+    return _request_action(lambda: BLOOD_REQUESTS.mark_blood_received(request_id))
+
+
+@app.post("/requests/{request_id}/cancel", response_model=BloodRequest)
+def blood_request_cancel(request_id: str, by: str = "crew") -> BloodRequest:
+    reason = "Cancelled by operations." if by == "operations" else "Ended by the crew."
+    return _request_action(lambda: BLOOD_REQUESTS.cancel(request_id, reason))
+
+
+def _request_action(action: Callable[[], BloodRequest]) -> BloodRequest:
+    try:
+        return action()
+    except BloodRequestNotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except BloodRequestError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error

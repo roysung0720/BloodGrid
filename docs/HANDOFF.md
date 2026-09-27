@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-26
 
-**Current phase:** In-app scenario selection and public-geography hybrid scenario complete; demo polish remains.
+**Current phase:** In-app scenario selection and public-geography hybrid scenario complete; demo polish remains. A working crew-facing Ambulance UI has been added (see **Ambulance UI** below).
 
 **Audience:** Alex, project teammates, and coding agents joining the work.
 
@@ -96,6 +96,8 @@ Completed foundation work:
   plus raw road snapshots, source hashes, and loader checks for road-class
   balance and source-road variety. This is public road geometry only, not crash,
   traffic, CAD, or patient data.
+- Crew-facing **Ambulance UI** added at `/ambulance`, with an **Ambulance view** / **System view** button at the top of each UI. See the **Ambulance UI** section below and `docs/AMBULANCE_UI_SPEC.md` section 14.
+- A blank `BLOODGRID_COVERAGE_TARGET_MINUTES=` line (as in `.env.example`) now means "use the scenario default" instead of crashing coverage; covered by `backend/tests/test_config.py`.
 
 The scenario uses synthetic modeled rural-Georgia geography and operational data. It must not be presented as live or facility-accurate information.
 
@@ -257,6 +259,59 @@ Validate and polish the data-improvement demo:
 4. Keep all synthetic operational values visibly labeled and do not add clinical destination or treatment recommendations.
 5. Update the demo script, provenance notes, and screenshots only after the tested MVP behavior remains intact.
 
+## Ambulance UI (working model, 2026-09-26)
+
+Open `http://localhost:3000` and press **Ambulance view**, or go straight to `http://localhost:3000/ambulance?unit=MEDIC-12`.
+
+**The crew flow:**
+
+1. A live map shows the ambulance and pulsing blips for eligible Blood Response Units.
+2. The crew presses **MAKE REQUEST** and chooses a blood product and a destination hospital. Hospitals are listed by drive time only and never labelled "recommended".
+3. The crew presses **GO**. The request is evaluated by the **unchanged** `calculate_live_rendezvous`.
+4. A route overview shows the whole plan: the ambulance's route, the blood unit's route, the rendezvous point, and the hospital. Nothing moves until the crew presses **Start navigation**.
+5. Heading-up, turn-by-turn navigation leads to the approved rendezvous point. **Watch BR-02** frames both vehicles live so the blood unit can be seen moving. A compact bar shows the ETA to the blood point and the ETA to the hospital, both taken from the evaluator's numbers. The crew taps **Blood received**.
+6. Navigation continues to the hospital, where the request closes as ARRIVED. At any point while driving, **Reroute** opens a dropdown of up to three distinct roads to the same point or hospital, with their times, using `GET /route/options`.
+7. When the evaluator returns direct transport, the overview says so and navigation goes straight to the hospital.
+
+The System UI's **Ambulance requests** panel lists every request and lets operations cancel one.
+
+**Where it lives:**
+
+- Backend: `backend/app/blood_requests/` and `backend/app/routing/coordinate_keyed.py`, plus `get_route()` on `RoutingProvider` (Mapbox Directions, in `mapbox_provider.py` only).
+- New endpoints are at the end of `main.py`.
+- Frontend: `frontend/src/app/ambulance/page.tsx`, `frontend/src/components/ambulance/`, `frontend/src/lib/ambulanceApi.ts`, `frontend/src/lib/navigation.ts`, and `frontend/src/components/AmbulanceRequestsPanel.tsx`.
+- Tests: `backend/tests/test_blood_requests.py`.
+
+**Works with both demo data sets (2026-09-27).**
+- The System UI's **Ambulance view** button passes the selected **Demo data set** as `?scenario=<scenario_id>`.
+- Every Ambulance endpoint (`/ambulances`, `/hospital-options`, `/blood-products`, `/resource-options`, `POST /requests`) accepts the same optional `scenario_id` as the other endpoints.
+- Each crew request records its `scenario_id`, and the System UI's Ambulance requests panel shows only requests for the selected data set.
+- Verified with `rural_ga_initial_v1` and `echols_valdosta_public_geography_v1`, including the real SGMC hospital references in the second.
+
+**Limits:**
+
+- Requests are held **in memory** and are lost when the backend restarts.
+- Location is **simulated by default**. The ambulance drives the route at 5x real time by default (`BLOODGRID_AMBULANCE_SIM_SPEED_MULTIPLIER`); the **Demo** menu in the top bar switches between x1, x2, x5, and x10 during a demo. Use `?sim=0` for browser GPS, which only works on HTTPS or localhost.
+- The ambulances are the `patient_unit_id` values in `live_incidents.csv`.
+- The blood product is recorded but does not filter units (only `O_NEG` exists).
+- The System UI shows requests in a panel only, not yet as map markers.
+
+## Known Issues Found 2026-09-26 (not yet changed)
+
+These are in code outside the Ambulance UI and were left for their owner to confirm.
+
+1. **Rendezvous results depend on evaluation order.**
+   - **Cause:** `backend/app/rendezvous/service.py` gives every supplied hospital the location ID `"destination"`. `MapboxMatrixProvider` caches by location ID, so after one incident is evaluated, a later incident going to a *different* hospital reuses the first hospital's point-to-hospital times.
+   - **Reproduced:** evaluated alone, `LIVE-003` gives `DIRECT_TRANSPORT`. Evaluated after `LIVE-001`, which the dashboard loads first, it gives `RENDEZVOUS` at `RV-03`. This explains why this handoff's `LIVE-003` result was not reproducible.
+   - **Suggested fix:** use `hospital.hospital_id` as the location ID in `_hospital_location()`, and replace the hard-coded `"destination"` key in `_evaluate_candidate()` with that ID.
+   - Crew requests already avoid this through `CoordinateKeyedProvider`.
+2. **Blank rendezvous settings crash the calculation.** Blank `BLOODGRID_RENDEZVOUS_MAX_ADDED_HOSPITAL_DELAY_MINUTES=` and `BLOODGRID_RENDEZVOUS_HOSPITAL_DELAY_WEIGHT=` lines, as in `.env.example`, raise "could not convert string to float" in `_nonnegative_float()`, so anyone who copies the template gets a failing live-incident panel. Treating blank as the default (as `coverage_target_minutes()` now does) would fix it.
+3. **The System UI map can open off-center.** The map area stretches to the full height of the right-hand panel column, so its center can fall below the visible area and the map opens looking north of the demo region.
+
+**Fixed 2026-09-27: System UI markers drifting while panning.** `.map-marker` had `transition: transform 140ms`. Mapbox positions markers by rewriting their inline `transform` on every frame, so each marker eased toward its position and trailed the map by about 35 px during a drag. The transition is removed, and the hover effect now uses an outline. Measured lag while dragging went from 34 px to 0–1 px.
+
+The unused `transform: rotate(45deg)` and hover-scale rules were removed too. Mapbox's inline transform always overrode them, so hospital markers were already rendering as squares; the legend's diamond symbol is unchanged. Do not add `transform` or a transform transition to any Mapbox marker element.
+
 ## Important Decisions Still Open
 
 - Whether the Echols-Valdosta corridor should become the final live-demo scenario after a dashboard walkthrough.
@@ -264,6 +319,7 @@ Validate and polish the data-improvement demo:
 - Whether the default 10-minute maximum hospital delay and 0.5 hospital-delay weight should change for the final demo.
 - Whether to add a scenario selector in the dashboard or keep scenario switching as a presenter-only local configuration step.
 - Whether the final demo includes optional OpenAI-generated wording.
+- Whether the Ambulance UI is recorded as part of milestone 8 or as a new milestone 9 (`AMBULANCE_UI_SPEC.md` decision D6).
 
 These values should be centralized as configuration rather than hard-coded.
 

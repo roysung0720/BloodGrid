@@ -7,7 +7,12 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from .models import RouteEstimate, RoutingLocation
+from .models import Route, RouteEstimate, RouteStep, RoutingLocation
+
+
+# Four decimal places is roughly 10 m, so a moving vehicle reuses nearby routes.
+ROUTE_CACHE_DECIMALS = 4
+NO_ROUTE_CODES = {"NoRoute", "NoSegment"}
 
 
 class RoutingError(RuntimeError):
@@ -32,6 +37,72 @@ class MapboxMatrixProvider:
             10 if profile == "mapbox/driving-traffic" else self.max_coordinates_per_request
         )
         self._cache: dict[tuple[str, str], RouteEstimate | None] = {}
+        self._route_cache: dict[tuple[tuple[tuple[float, float], ...], bool], list[Route]] = {}
+
+    def get_route(
+        self, origin: RoutingLocation, destination: RoutingLocation
+    ) -> Route | None:
+        """Return Mapbox Directions geometry and turn steps for one origin-destination pair."""
+
+        routes = self._directions([origin, destination], alternatives=False)
+        return routes[0] if routes else None
+
+    def get_route_options(
+        self, origin: RoutingLocation, destination: RoutingLocation
+    ) -> list[Route]:
+        """Return the fastest route first, followed by any alternative roads Mapbox offers."""
+
+        return self._directions([origin, destination], alternatives=True)
+
+    def get_route_via(
+        self, origin: RoutingLocation, via: RoutingLocation, destination: RoutingLocation
+    ) -> Route | None:
+        """Return a route forced through a silent via point (no stop, no arrival step there)."""
+
+        routes = self._directions([origin, via, destination], alternatives=False)
+        return routes[0] if routes else None
+
+    def _directions(
+        self, points: Sequence[RoutingLocation], alternatives: bool
+    ) -> list[Route]:
+        rounded = tuple(
+            (round(point.longitude, ROUTE_CACHE_DECIMALS), round(point.latitude, ROUTE_CACHE_DECIMALS))
+            for point in points
+        )
+        key = (rounded, alternatives)
+        if key not in self._route_cache:
+            coordinates = ";".join(f"{longitude},{latitude}" for longitude, latitude in rounded)
+            parameters = {
+                "access_token": self._access_token,
+                "alternatives": "true" if alternatives else "false",
+                "geometries": "geojson",
+                "overview": "full",
+                "steps": "true",
+            }
+            if len(rounded) > 2:
+                # Only the first and last coordinates are stops; the rest are silent via points.
+                parameters["waypoints"] = f"0;{len(rounded) - 1}"
+            url = (
+                f"https://api.mapbox.com/directions/v5/{self.profile}/{coordinates}"
+                f"?{urlencode(parameters)}"
+            )
+            self._route_cache[key] = _parse_directions_options(self._get_json(url))
+        return self._route_cache[key]
+
+    def _get_json(self, url: str) -> dict[str, Any]:
+        try:
+            request = Request(url, headers={"User-Agent": "BloodGrid-HackGT/0.1"})
+            with urlopen(request, timeout=self._timeout_seconds) as response:  # noqa: S310
+                return json.loads(response.read().decode("utf-8"))
+        except HTTPError as error:
+            detail = _http_error_detail(error)
+            raise RoutingError(
+                f"Mapbox routing request failed with HTTP {error.code}: {detail}"
+            ) from error
+        except URLError as error:
+            raise RoutingError("Mapbox routing request could not reach the provider.") from error
+        except (TimeoutError, json.JSONDecodeError) as error:
+            raise RoutingError("Mapbox routing returned an unreadable response.") from error
 
     def get_travel_matrix(
         self,
@@ -191,3 +262,57 @@ def _matrix_destinations(
             longitude=destination.longitude,
         ),
     ]
+
+
+def _parse_directions(payload: dict[str, Any]) -> Route | None:
+    """Convert a Mapbox Directions payload into its first (fastest) provider-neutral Route."""
+
+    routes = _parse_directions_options(payload)
+    return routes[0] if routes else None
+
+
+def _parse_directions_options(payload: dict[str, Any]) -> list[Route]:
+    """Convert every route in a Mapbox Directions payload, fastest first."""
+
+    code = payload.get("code")
+    if code in NO_ROUTE_CODES:
+        return []
+    if code != "Ok":
+        message = payload.get("message", "Unknown Mapbox routing error")
+        raise RoutingError(f"Mapbox routing returned {code}: {message}")
+
+    routes = payload.get("routes")
+    if not isinstance(routes, list):
+        return []
+    return [_parse_route(route) for route in routes]
+
+
+def _parse_route(route: dict[str, Any]) -> Route:
+    coordinates = route.get("geometry", {}).get("coordinates")
+    if not isinstance(coordinates, list) or len(coordinates) < 2:
+        raise RoutingError("Mapbox routing response did not include route geometry.")
+
+    steps: list[RouteStep] = []
+    for leg in route.get("legs", []):
+        for step in leg.get("steps", []):
+            maneuver = step.get("maneuver", {})
+            longitude, latitude = maneuver.get("location", coordinates[0])
+            steps.append(
+                RouteStep(
+                    instruction=str(maneuver.get("instruction", "")),
+                    maneuver_type=str(maneuver.get("type", "")),
+                    modifier=str(maneuver.get("modifier", "")),
+                    road_name=str(step.get("name", "")),
+                    distance_meters=float(step.get("distance", 0)),
+                    duration_seconds=float(step.get("duration", 0)),
+                    longitude=float(longitude),
+                    latitude=float(latitude),
+                )
+            )
+
+    return Route(
+        duration_seconds=float(route.get("duration", 0)),
+        distance_meters=float(route.get("distance", 0)),
+        geometry=tuple((float(point[0]), float(point[1])) for point in coordinates),
+        steps=tuple(steps),
+    )

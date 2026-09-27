@@ -44,6 +44,17 @@ It must not decide whether blood is medically indicated, select a product or dos
 - A profile changes only an in-memory copy of the selected scenario. It never writes operational status back to source data or sends a recommendation to a field unit.
 - Every profile reuses the same explicit eligibility rule. A changed vehicle, crew, credential, mobilization, or blood status affects coverage, deployment, and rendezvous calculations consistently.
 
+## Ambulance UI assumptions
+
+- **Make Request** records a request the crew has already decided to make under its own protocol. BloodGrid never prompts for, suggests, or evaluates the need for blood.
+- The crew chooses the blood product and the destination hospital, and nothing is preselected.
+  - Hospitals are listed only by modeled road drive time, with their recorded trauma level as plain text. They are never labelled recommended, best, or closest.
+  - The product is recorded, not recommended.
+- **Go** runs the same deterministic live evaluator as the System UI. Direct transport is always compared and may win, and the screen then says so.
+- Turn-by-turn guidance is a display aid from normal-driving routes. It does not model emergency driving, traffic, or closures, and road rules, agency policy, and crew judgment take precedence.
+- The screen is designed for the attending crew member or partner, not the driver while the vehicle is moving.
+- Crew requests and positions are simulated demo records held in memory. The location is simulated by default. Nothing is sent to a real CAD, blood bank, or field unit.
+
 ## Explainability
 
 Every recommendation should expose the calculated facts behind it: eligible status, travel times, time-to-blood, wait times, direct-hospital baseline, and added hospital delay. The MVP does not require an LLM to explain these results.

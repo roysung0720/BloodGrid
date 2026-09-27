@@ -1,8 +1,10 @@
 "use client";
 
-import { Activity, Layers3, MapPinned } from "lucide-react";
+import { Activity, Ambulance, Layers3, MapPinned } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { AmbulanceRequestsPanel } from "../components/AmbulanceRequestsPanel";
 import { FeatureDetails } from "../components/FeatureDetails";
 import { CoveragePanel } from "../components/CoveragePanel";
 import { AvailabilityProfilePanel } from "../components/AvailabilityProfilePanel";
@@ -251,6 +253,17 @@ export default function HomePage() {
             selectedScenarioId={selectedScenarioId}
             onChange={selectScenario}
           />
+          <Link
+            className="view-switch"
+            href={
+              selectedScenarioId
+                ? `/ambulance?scenario=${encodeURIComponent(selectedScenarioId)}`
+                : "/ambulance"
+            }
+          >
+            <Ambulance size={15} aria-hidden="true" />
+            Ambulance view
+          </Link>
         </div>
       </header>
 
@@ -331,6 +344,7 @@ export default function HomePage() {
             error={rendezvousError}
             onSelect={setSelectedFeature}
           />
+          <AmbulanceRequestsPanel scenarioId={selectedScenarioId} />
           <FeatureDetails
             scenario={scenario}
             coverage={coverage}

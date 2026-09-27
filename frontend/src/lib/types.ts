@@ -264,3 +264,103 @@ export type LiveRendezvousResult = {
   recommended_rendezvous_id: string | null;
   candidates: RendezvousCandidate[];
 };
+
+// ----- Ambulance UI --------------------------------------------------------------
+
+export type AmbulanceSettings = {
+  arrival_radius_meters: number;
+  eta_refresh_seconds: number;
+  position_report_seconds: number;
+  request_poll_seconds: number;
+  sim_speed_multiplier: number;
+};
+
+export type AmbulanceOption = {
+  unit_id: string;
+  start_incident_id: string;
+  start_latitude: number;
+  start_longitude: number;
+};
+
+export type HospitalOption = {
+  hospital_id: string;
+  name: string;
+  trauma_level: string;
+  latitude: number;
+  longitude: number;
+  routable: boolean;
+  drive_minutes: number | null;
+  distance_miles: number | null;
+};
+
+export type BloodProductOption = {
+  product_type: string;
+  label: string;
+  available: boolean;
+  eligible_unit_count: number;
+};
+
+export type ResourceOption = {
+  unit_id: string;
+  latitude: number;
+  longitude: number;
+  eligible: boolean;
+  reasons: string[];
+  crew_status: string;
+  arrival_minutes: number | null;
+};
+
+export type RouteStep = {
+  instruction: string;
+  maneuver_type: string;
+  modifier: string;
+  road_name: string;
+  distance_meters: number;
+  duration_seconds: number;
+  longitude: number;
+  latitude: number;
+};
+
+export type RouteResult = {
+  duration_minutes: number;
+  distance_miles: number;
+  geometry: Array<[number, number]>;
+  steps: RouteStep[];
+};
+
+export type BloodRequestStatus =
+  | "ACTIVE_RENDEZVOUS"
+  | "ACTIVE_DIRECT"
+  | "BLOOD_RECEIVED"
+  | "ARRIVED"
+  | "CANCELLED";
+
+export type BloodRequest = {
+  request_id: string;
+  classification: "SIMULATED";
+  scenario_id: string;
+  unit_id: string;
+  blood_product: string;
+  destination_hospital_id: string;
+  destination_hospital_name: string;
+  destination_latitude: number;
+  destination_longitude: number;
+  availability_profile: string;
+  status: BloodRequestStatus;
+  ended_reason: string | null;
+  latitude: number;
+  longitude: number;
+  created_at: string;
+  updated_at: string;
+  rendezvous: LiveRendezvousResult;
+};
+
+export type CreateBloodRequest = {
+  unit_id: string;
+  latitude: number;
+  longitude: number;
+  blood_product: string;
+  destination_hospital_id: string;
+  availability_profile: string;
+  scenario_id: string | null;
+};

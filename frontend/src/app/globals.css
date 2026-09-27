@@ -666,24 +666,29 @@ h2 {
   line-height: 1.35;
 }
 
+/*
+ * Mapbox positions each marker by rewriting its inline `transform` on every frame.
+ * Never transition or set `transform` here: a transform transition made markers trail
+ * the map by ~35 px and slide into place while panning. Hover uses outline instead.
+ */
 .map-marker {
   border: 2px solid #ffffff;
   box-shadow: 0 1px 6px rgba(24, 43, 54, 0.35);
   cursor: pointer;
   height: 15px;
+  outline: 0 solid rgba(23, 63, 95, 0.35);
   padding: 0;
-  transition: transform 140ms ease;
+  transition: outline-width 140ms ease;
   width: 15px;
 }
 
-.map-marker:hover { transform: scale(1.35); z-index: 1; }
+.map-marker:hover { outline-width: 4px; z-index: 1; }
 .map-marker--station { background: var(--station); border-radius: 2px; }
 .map-marker--station-recommended { background: var(--deployment); border-radius: 50%; height: 22px; width: 22px; }
 .map-marker--unit-available { background: var(--unit-available); border-radius: 50%; height: 19px; width: 19px; }
 .map-marker--unit-on-call { background: var(--unit-on-call); border-radius: 50%; height: 19px; width: 19px; }
 .map-marker--unit-unavailable { background: var(--coverage-uncovered); border-radius: 50%; height: 19px; width: 19px; }
-.map-marker--hospital { background: var(--hospital); border-radius: 2px; transform: rotate(45deg); }
-.map-marker--hospital:hover { transform: rotate(45deg) scale(1.3); }
+.map-marker--hospital { background: var(--hospital); border-radius: 2px; }
 .map-marker--incident { background: var(--incident); border-radius: 50%; height: 10px; opacity: 0.82; width: 10px; }
 .map-marker--incident-covered { background: var(--coverage-covered); border-radius: 50%; height: 12px; width: 12px; }
 .map-marker--incident-uncovered { background: var(--coverage-uncovered); border-radius: 50%; box-shadow: 0 0 0 3px rgba(201, 74, 69, 0.18); height: 12px; width: 12px; }
@@ -734,4 +739,482 @@ h2 {
   .map-title { left: 10px; top: 10px; }
   .scenario-legend { bottom: 10px; left: 10px; width: 206px; }
   .operations-rail { border-left: 0; }
+}
+
+/* ----- View switch (System UI <-> Ambulance UI) ----------------------------------- */
+
+.view-switch,
+.amb-switch {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--navy);
+  color: var(--navy);
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 6px;
+  padding: 7px 11px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.view-switch:hover,
+.amb-switch:hover { background: #eef3f7; }
+
+/* ----- System UI: ambulance requests panel -------------------------------------- */
+
+.ambulance-requests { display: grid; gap: 8px; margin-bottom: 10px; }
+.ambulance-request {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--live-incident);
+  display: grid;
+  font-size: 12px;
+  gap: 4px;
+  padding: 9px 10px;
+}
+.ambulance-request > div { align-items: baseline; display: flex; gap: 8px; justify-content: space-between; }
+.ambulance-request span { color: var(--muted); }
+.ambulance-request.is-ended { border-left-color: var(--line); opacity: 0.7; }
+.ambulance-request .ambulance-request__status { color: var(--navy); font-weight: 700; }
+.ambulance-request__cancel.is-armed { background: #c8102e; border-color: #c8102e; color: #ffffff; }
+.ambulance-request__cancel {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  color: var(--hospital);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  justify-self: start;
+  margin-top: 3px;
+  padding: 5px 8px;
+}
+
+/* ----- Ambulance UI ---------------------------------------------------------------- */
+
+.amb-shell {
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.amb-topbar {
+  align-items: center;
+  background: #ffffff;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 14px;
+}
+.amb-topbar__unit { align-items: center; color: var(--navy); display: flex; font-size: 18px; gap: 8px; }
+.amb-topbar__meta { display: flex; flex: 1; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.amb-topbar .scenario-pill { font-size: 11px; padding: 5px 7px; }
+.amb-chip {
+  align-items: center;
+  background: #eef3f7;
+  border: 1px solid #c9d7e1;
+  color: var(--navy);
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 700;
+  gap: 5px;
+  padding: 5px 7px;
+}
+.amb-chip--warn { background: var(--alert-soft); border-color: #efc2b8; color: var(--hospital); }
+
+.amb-stage { flex: 1; min-height: 0; position: relative; }
+/*
+ * The map gets its own stacking context so marker z-indexes (the ambulance arrow, the
+ * assigned blood unit) only order markers against each other. Without this, a marker
+ * passing under the bottom panel drew on top of it and swallowed clicks on its dropdowns.
+ */
+.amb-map { inset: 0; isolation: isolate; position: absolute; z-index: 0; }
+.amb-maneuver,
+.amb-map-buttons,
+.amb-bottom { z-index: 10; }
+.amb-map .mapboxgl-ctrl-bottom-left,
+.amb-map .mapboxgl-ctrl-bottom-right { bottom: var(--amb-bottom-inset, 0px); }
+
+/* Compact turn banner: one line of instruction under the distance. */
+.amb-maneuver {
+  align-items: center;
+  background: #0b3a66;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(11, 58, 102, 0.35);
+  color: #ffffff;
+  display: flex;
+  gap: 12px;
+  left: 12px;
+  margin: 0 auto;
+  max-width: 560px;
+  padding: 9px 14px;
+  position: absolute;
+  right: 12px;
+  top: 10px;
+}
+.amb-maneuver > div { min-width: 0; }
+.amb-maneuver strong {
+  display: block;
+  font-size: 15px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.amb-maneuver__distance { display: block; font-size: 19px; font-weight: 800; line-height: 1.15; }
+
+/* Floating map buttons (Watch blood unit, Recenter), stacked at the top right. */
+.amb-map-buttons {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: absolute;
+  right: 12px;
+  top: 12px;
+}
+.amb-stage--navigating .amb-map-buttons { top: 84px; }
+.amb-map-button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  box-shadow: 0 4px 14px rgba(18, 33, 43, 0.2);
+  color: var(--navy);
+  cursor: pointer;
+  display: flex;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+}
+.amb-map-button.is-active { background: var(--rendezvous); border-color: var(--rendezvous); color: #ffffff; }
+
+.amb-bottom {
+  bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  left: 12px;
+  margin: 0 auto;
+  max-width: 560px;
+  position: absolute;
+  right: 12px;
+}
+
+.amb-primary {
+  align-items: center;
+  background: #c8102e;
+  border: 0;
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(200, 16, 46, 0.35);
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  font-size: 21px;
+  font-weight: 800;
+  gap: 8px;
+  justify-content: center;
+  letter-spacing: 0.06em;
+  min-height: 68px;
+  width: 100%;
+}
+.amb-primary:disabled { box-shadow: none; cursor: not-allowed; opacity: 0.45; }
+.amb-primary--go { font-size: 24px; min-height: 72px; }
+.amb-primary--start { font-size: 18px; letter-spacing: 0.02em; min-height: 54px; }
+
+.amb-sheet {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 12px 34px rgba(18, 33, 43, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 72dvh;
+  overflow-y: auto;
+  padding: 16px;
+}
+.amb-sheet__header { align-items: center; display: flex; justify-content: space-between; }
+.amb-sheet h2 { font-size: 19px; line-height: 1.25; }
+
+/* Compact panels for the route overview, navigation, and arrival. */
+.amb-panel {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(18, 33, 43, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+}
+.amb-panel h2 { font-size: 15px; line-height: 1.3; }
+.amb-panel__head { align-items: center; display: flex; justify-content: space-between; }
+.amb-panel__head p { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.amb-panel__sub {
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.amb-panel__actions { display: flex; gap: 6px; margin-left: auto; }
+
+.amb-etas { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; }
+.amb-eta {
+  align-items: center;
+  background: var(--surface);
+  border-radius: 10px;
+  display: flex;
+  gap: 7px;
+  padding: 5px 9px;
+}
+.amb-eta--blood svg { color: #c8102e; }
+.amb-eta--hospital svg { color: var(--hospital); }
+.amb-eta span { color: var(--muted); display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.amb-eta strong { display: block; font-size: 17px; line-height: 1.15; }
+.amb-eta small { color: var(--muted); display: block; font-size: 11px; }
+
+.amb-small-button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #b8c6ce;
+  border-radius: 10px;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 5px;
+  min-height: 42px;
+  padding: 0 11px;
+}
+.amb-small-button--go { background: var(--unit-available); border-color: var(--unit-available); color: #ffffff; }
+.amb-small-button:disabled { cursor: not-allowed; opacity: 0.5; }
+.amb-small-button--danger { background: #c8102e; border-color: #c8102e; color: #ffffff; }
+
+.amb-sheet__error { align-items: center; display: flex; gap: 10px; justify-content: space-between; }
+
+/* Reroute dropdown inside the navigation bar. */
+.amb-small-button__chevron { transition: transform 0.15s ease; }
+.amb-small-button.is-open { border-color: var(--navy); color: var(--navy); }
+.amb-small-button.is-open .amb-small-button__chevron { transform: rotate(180deg); }
+
+.amb-routes {
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 6px;
+  padding-bottom: 8px;
+}
+.amb-routes__head { align-items: center; display: flex; justify-content: space-between; }
+.amb-routes__head strong { font-size: 13px; }
+.amb-routes__note { color: var(--muted); font-size: 12px; }
+.amb-route-option {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto 1fr auto;
+  min-height: 48px;
+  padding: 6px 10px;
+  text-align: left;
+}
+.amb-route-option:hover:not(:disabled) { border-color: var(--navy); }
+.amb-route-option.is-current { background: #eaf2f8; border-color: #9cc0e0; cursor: default; }
+.amb-route-option__letter {
+  align-items: center;
+  background: #2f86eb;
+  border-radius: 50%;
+  color: #ffffff;
+  display: flex;
+  font-size: 12px;
+  font-weight: 800;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+}
+.amb-route-option__label { font-size: 14px; font-weight: 700; min-width: 0; }
+.amb-route-option__label small { color: var(--muted); display: block; font-size: 11px; font-weight: 600; }
+.amb-route-option strong { font-size: 16px; }
+
+/* Demo options menu (top bar). */
+.amb-demo { position: relative; }
+.amb-demo__menu {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(18, 33, 43, 0.25);
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  width: 250px;
+  z-index: 20;
+}
+.amb-demo__menu p { color: var(--ink); font-size: 13px; font-weight: 700; }
+.amb-demo__menu small { color: var(--muted); font-size: 11px; line-height: 1.4; }
+.amb-demo__speeds { display: grid; gap: 6px; grid-template-columns: repeat(4, 1fr); }
+.amb-demo__speeds button {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  min-height: 40px;
+}
+.amb-demo__speeds button.is-active { background: var(--navy); border-color: var(--navy); color: #ffffff; }
+.amb-demo__speeds button:disabled { cursor: not-allowed; opacity: 0.45; }
+
+.amb-why { color: var(--muted); font-size: 12px; line-height: 1.4; }
+.amb-why summary { color: var(--navy); cursor: pointer; font-weight: 700; }
+
+.amb-icon-button {
+  align-items: center;
+  background: var(--surface);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  height: 48px;
+  justify-content: center;
+  width: 48px;
+}
+
+.amb-field { display: grid; gap: 6px; }
+.amb-field > span { color: var(--ink); font-size: 15px; font-weight: 700; }
+.amb-field small { color: var(--muted); font-size: 13px; }
+.amb-field select {
+  background: #ffffff;
+  border: 1px solid #b8c6ce;
+  border-radius: 12px;
+  color: var(--ink);
+  font-size: 16px;
+  min-height: 58px;
+  padding: 0 12px;
+  width: 100%;
+}
+
+.amb-icon-button--small { height: 34px; width: 34px; }
+
+.amb-error { color: var(--hospital); font-size: 14px; font-weight: 600; }
+.amb-toast {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(18, 33, 43, 0.2);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px 14px;
+}
+.amb-toast--warn { border-left: 4px solid var(--hospital); color: var(--hospital); }
+
+.amb-center-message,
+.amb-picker {
+  display: grid;
+  gap: 10px;
+  margin: 40px auto;
+  max-width: 460px;
+  padding: 0 16px;
+  width: 100%;
+}
+.amb-center-message p,
+.amb-picker > p { color: var(--muted); font-size: 15px; }
+.amb-picker__option {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--ink);
+  display: grid;
+  gap: 2px 12px;
+  grid-template-columns: auto 1fr;
+  min-height: 64px;
+  padding: 10px 16px;
+  text-decoration: none;
+}
+.amb-picker__option svg { color: #c8102e; grid-row: span 2; }
+.amb-picker__option strong { font-size: 18px; }
+.amb-picker__option span { color: var(--muted); font-size: 13px; }
+.amb-picker__option:hover { border-color: var(--navy); }
+
+/* Map markers. Mapbox positions markers with transform, so these never set one. */
+.amb-self { color: #1f6feb; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45)); height: 30px; width: 30px; z-index: 3; }
+.amb-self svg path { fill: currentColor; stroke: #ffffff; stroke-linejoin: round; stroke-width: 1.6; }
+
+.amb-blip {
+  align-items: center;
+  border: 2px solid #ffffff;
+  border-radius: 13px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  font-size: 11px;
+  font-weight: 800;
+  height: 26px;
+  justify-content: center;
+  padding: 0 8px;
+}
+.amb-blip--eligible { animation: amb-pulse 1.8s ease-out infinite; background: var(--unit-available); }
+.amb-blip--ineligible { background: #8a969e; }
+.amb-blip--assigned {
+  animation: none;
+  background: var(--rendezvous);
+  font-size: 12px;
+  height: 30px;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+@keyframes amb-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(32, 139, 112, 0.55); }
+  70% { box-shadow: 0 0 0 16px rgba(32, 139, 112, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(32, 139, 112, 0); }
+}
+
+.amb-hospital {
+  align-items: center;
+  background: #ffffff;
+  border: 2px solid var(--hospital);
+  border-radius: 6px;
+  color: var(--hospital);
+  display: flex;
+  font-size: 13px;
+  font-weight: 800;
+  height: 26px;
+  justify-content: center;
+  width: 26px;
+}
+.amb-hospital--destination { background: var(--hospital); color: #ffffff; height: 34px; width: 34px; }
+
+.amb-rendezvous {
+  align-items: center;
+  background: var(--rendezvous);
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  color: #ffffff;
+  display: flex;
+  font-size: 15px;
+  font-weight: 800;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+}
+
+@media (max-width: 620px) {
+  .amb-topbar { flex-wrap: wrap; }
+  .amb-topbar__meta { justify-content: flex-start; order: 3; width: 100%; }
+  .amb-demo__menu { left: 0; right: auto; }
+  .amb-eta { padding: 5px 8px; }
+  .amb-eta strong { font-size: 16px; }
 }
