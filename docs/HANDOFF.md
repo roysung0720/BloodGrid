@@ -4,8 +4,15 @@
 
 **Current phase:** In-app scenario selection and public-geography hybrid scenario complete; demo polish remains. A working crew-facing Ambulance UI has been added (see **Ambulance UI** below).
 
-**Deployment readiness:** Public deployment configuration is prepared but no cloud
-service has been connected or deployed yet. See `docs/DEPLOYMENT.md`.
+**Deployment readiness:** The FastAPI API is deployed on Render at
+`https://bloodgrid-api.onrender.com` and its `/health` endpoint has been
+verified. GitHub Pages deployment is configured through
+`.github/workflows/deploy-pages.yml`; it builds the static dashboard from
+`frontend/` after a push to `main`. The repository now has the
+`NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` Actions secret. Before the first Pages demo,
+enable **GitHub Actions** as the repository Pages source, set Render's
+`BLOODGRID_FRONTEND_ORIGINS` to `https://roysung0720.github.io`, and verify the
+published map. See `docs/DEPLOYMENT.md`.
 
 **Audience:** Alex, project teammates, and coding agents joining the work.
 
@@ -58,6 +65,12 @@ Completed foundation work:
 - Read-only FastAPI endpoints added for the scenario and every map layer.
 - Next.js operations dashboard added with a real Mapbox basemap, scenario markers, layer controls, unit status, and marker details.
 - Local browser-map token wiring added through the root `.env` file; no token is stored in Git.
+- GitHub Pages static deployment workflow added. Its build uses the encrypted
+  repository `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` secret and the Render API URL;
+  the ambulance query-string screen was made static-export compatible without
+  changing its crew-facing behavior. The browser token and Render routing token
+  should remain separate. `next/font/google` was removed so deployment does not
+  rely on a Google Fonts build-time request.
 - Provider-neutral Mapbox Matrix routing adapter added under `backend/app/routing/`.
 - Deterministic baseline coverage service added under `backend/app/coverage/`. It requires valid onboard blood, an available vehicle, a qualified clinician, and either `AVAILABLE` or `ON_CALL` crew status. It adds an on-call unit's configured mobilization delay.
 - `GET /coverage/baseline` added. It uses the scenario target by default, returns a result for every synthetic demand point, and keeps Mapbox-specific code outside coverage logic.

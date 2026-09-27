@@ -55,7 +55,7 @@ body {
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--font-brand), "Poppins", Arial, Helvetica, sans-serif;
+  font-family: Inter, "Avenir Next", "Segoe UI", Arial, Helvetica, sans-serif;
 }
 
 ::selection { background: var(--brand); color: #ffffff; }

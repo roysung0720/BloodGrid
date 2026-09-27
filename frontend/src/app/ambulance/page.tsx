@@ -1,28 +1,26 @@
-import type { Metadata } from "next";
+"use client";
 
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { AmbulanceApp } from "../../components/ambulance/AmbulanceApp";
 
-export const metadata: Metadata = {
-  title: "BloodGrid Ambulance",
-  description: "Crew-facing blood request and navigation view (synthetic demo).",
-};
-
-function first(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
+export default function AmbulancePage() {
+  return (
+    <Suspense fallback={null}>
+      <AmbulancePageContent />
+    </Suspense>
+  );
 }
 
-export default async function AmbulancePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const params = await searchParams;
+function AmbulancePageContent() {
+  const searchParams = useSearchParams();
+
   return (
     <AmbulanceApp
-      availabilityProfile={first(params.availability_profile) ?? "baseline"}
-      scenarioId={first(params.scenario) ?? null}
-      simulated={first(params.sim) !== "0"}
-      unitId={first(params.unit) ?? null}
+      availabilityProfile={searchParams.get("availability_profile") ?? "baseline"}
+      scenarioId={searchParams.get("scenario")}
+      simulated={searchParams.get("sim") !== "0"}
+      unitId={searchParams.get("unit")}
     />
   );
 }
