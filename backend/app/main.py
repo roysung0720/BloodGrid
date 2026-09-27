@@ -17,7 +17,11 @@ from .availability.service import AvailabilityProfileError, apply_availability_p
 from .coverage.models import BaselineCoverageResult
 from .coverage.service import calculate_baseline_coverage
 from .deployment.models import StrategicDeploymentResult
-from .deployment.service import DeploymentError, calculate_strategic_deployment
+from .deployment.service import (
+    DeploymentError,
+    apply_strategic_staging,
+    calculate_strategic_deployment,
+)
 from .rendezvous.models import LiveRendezvousResult
 from .rendezvous.service import RendezvousError, calculate_live_rendezvous
 from .models import (
@@ -192,16 +196,24 @@ def live_incident_rendezvous(
     incident_id: str,
     scenario_id: str = SCENARIO_ID,
     availability_profile: str = "baseline",
+    recommended_staging: bool = False,
 ) -> LiveRendezvousResult:
     try:
+        scenario = get_active_scenario(scenario_id, availability_profile)
+        if recommended_staging:
+            deployment = calculate_strategic_deployment(scenario, get_routing_provider())
+            scenario = apply_strategic_staging(scenario, deployment)
         return calculate_live_rendezvous(
-            get_active_scenario(scenario_id, availability_profile),
+            scenario,
             incident_id,
             get_routing_provider(),
+            resource_positioning=(
+                "RECOMMENDED_STAGING" if recommended_staging else "CURRENT"
+            ),
         )
     except RendezvousError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
-    except (RoutingError, ValueError) as error:
+    except (DeploymentError, RoutingError, ValueError) as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
 
 

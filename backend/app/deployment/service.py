@@ -26,6 +26,37 @@ class AssignedResource:
     station: Station
 
 
+def apply_strategic_staging(
+    scenario: ScenarioData, deployment: StrategicDeploymentResult
+) -> ScenarioData:
+    """Return a copy whose assigned units start from their planned staging stations.
+
+    This is deliberately a simulation helper: it never writes to source scenario data or
+    changes a unit's availability. Callers can use it to ask what a live response would
+    look like after the strategic plan has been carried out.
+    """
+
+    stations_by_id = {station.station_id: station for station in scenario.stations}
+    assignment_by_unit = {
+        assignment.unit_id: assignment.station_id for assignment in deployment.assignments
+    }
+    staged_units = []
+    for unit in scenario.response_units:
+        station_id = assignment_by_unit.get(unit.unit_id)
+        station = stations_by_id.get(station_id) if station_id else None
+        staged_units.append(
+            unit.model_copy(
+                update={
+                    "current_latitude": station.latitude,
+                    "current_longitude": station.longitude,
+                }
+            )
+            if station
+            else unit
+        )
+    return scenario.model_copy(update={"response_units": staged_units})
+
+
 def calculate_strategic_deployment(
     scenario: ScenarioData, routing_provider: RoutingProvider
 ) -> StrategicDeploymentResult:

@@ -75,9 +75,15 @@ export async function getLiveRendezvous(
   incidentId: string,
   scenarioId: string,
   availabilityProfile = "baseline",
+  recommendedStaging = false,
 ): Promise<LiveRendezvousResult> {
+  const query = new URLSearchParams({
+    scenario_id: scenarioId,
+    availability_profile: availabilityProfile,
+    ...(recommendedStaging ? { recommended_staging: "true" } : {}),
+  });
   const response = await fetch(
-    `${API_BASE_URL}/live-incidents/${encodeURIComponent(incidentId)}/rendezvous${scenarioQuery(scenarioId, availabilityProfile)}`,
+    `${API_BASE_URL}/live-incidents/${encodeURIComponent(incidentId)}/rendezvous?${query.toString()}`,
   );
   if (!response.ok) {
     const errorBody = (await response.json().catch(() => null)) as {

@@ -72,7 +72,7 @@ export function DeploymentPanel({
           </div>
           <div className="panel-note">
             <MapPinned size={14} aria-hidden="true" />
-            <span>Recommended view updates demand coverage and staging markers.</span>
+            <span>Recommended view moves eligible units to their planned staging sites for this simulation.</span>
           </div>
         </>
       ) : error ? (

@@ -30,7 +30,7 @@ from ..routing.coordinate_keyed import CoordinateKeyedProvider
 from ..routing.geometry import distance_meters, distance_to_route, point_along
 from ..routing.models import RouteEstimate, RoutingLocation
 from ..routing.provider import RoutingProvider
-from .models import LiveRendezvousResult, RendezvousCandidate
+from .models import LiveRendezvousResult, RendezvousCandidate, ResourcePositioning
 
 
 class RendezvousError(ValueError):
@@ -75,6 +75,7 @@ def calculate_live_rendezvous(
     incident_id: str,
     routing_provider: RoutingProvider,
     meeting_spots: list[MeetingSpot] | None = None,
+    resource_positioning: ResourcePositioning = "CURRENT",
 ) -> LiveRendezvousResult:
     """Compare meeting spots with direct transport for an authorized blood request."""
 
@@ -122,6 +123,7 @@ def calculate_live_rendezvous(
             destination_valid=True,
             routing_provider=provider.provider_name,
             routing_profile=provider.profile,
+            resource_positioning=resource_positioning,
             eligible_resource_count=len(units),
             direct_transport_minutes=round(direct_minutes, 1),
             direct_route_distance_miles=round(direct.distance_meters / METERS_PER_MILE, 1),

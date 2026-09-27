@@ -2,6 +2,7 @@ import { ArrowRight, MapPin, Route, Timer } from "lucide-react";
 
 import { CATEGORY_LABELS } from "../lib/meetingSpots";
 import type {
+  CoverageView,
   FeatureSelection,
   LiveRendezvousResult,
   RendezvousCandidate,
@@ -10,6 +11,7 @@ import type {
 type RendezvousPanelProps = {
   result: LiveRendezvousResult | null;
   error: string | null;
+  coverageView: CoverageView;
   onSelect: (selection: FeatureSelection) => void;
 };
 
@@ -51,7 +53,24 @@ function Heading() {
   );
 }
 
-export function RendezvousPanel({ result, error, onSelect }: RendezvousPanelProps) {
+export function RendezvousPanel({
+  result,
+  error,
+  coverageView,
+  onSelect,
+}: RendezvousPanelProps) {
+  if (coverageView === "baseline") {
+    return (
+      <section className="rail-section rendezvous-section">
+        <Heading />
+        <p className="panel-note panel-note--plain">
+          Current view shows direct ambulance transport to the supplied hospital. Switch to
+          Recommended to simulate a meeting plan from the planned unit staging locations.
+        </p>
+      </section>
+    );
+  }
+
   if (error) {
     return (
       <section className="rail-section rendezvous-section">
@@ -85,7 +104,7 @@ export function RendezvousPanel({ result, error, onSelect }: RendezvousPanelProp
         <small>{result.destination_trauma_level.replace("_", " ")}</small>
       </div>
       <div className="rendezvous-recommendation">
-        <span>{recommended ? "Meet on the way" : "Continue direct"}</span>
+        <span>{recommended ? "Meet on the way" : "Continue direct"} · simulated recommended staging</span>
         <strong>
           {recommended
             ? `${recommended.resource_id} at ${recommended.rendezvous_name}`

@@ -277,6 +277,13 @@ h2 {
   gap: 7px;
 }
 
+.map-route-key__mode {
+  color: #b9f1df;
+  font-size: 10px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
 .map-route-key__line {
   border-radius: 999px;
   display: inline-block;
@@ -285,6 +292,7 @@ h2 {
 }
 
 .map-route-key__line--ambulance { background: #2f86eb; }
+.map-route-key__line--hospital { background: #8b5cf6; }
 .map-route-key__line--resource { background: #087f76; }
 
 .map-overlay__heading {
@@ -815,6 +823,7 @@ h2 {
 .map-marker--incident-uncovered { background: var(--coverage-uncovered); box-shadow: 0 0 0 2px rgba(209, 106, 39, 0.18); clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0 50%); height: 11px; opacity: 0.78; width: 11px; }
 .map-marker--rendezvous { background: var(--rendezvous); border: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); height: 5px; width: 6px; }
 .map-marker--rendezvous-recommended { background: var(--rendezvous); border: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); filter: drop-shadow(0 0 1px rgba(119, 93, 168, 0.72)); height: 7px; width: 8px; }
+.map-marker--rendezvous-active { background: #a78bfa; border: 2px solid #ffffff; box-shadow: 0 0 0 5px rgba(139, 92, 246, 0.38); clip-path: polygon(50% 0, 100% 100%, 0 100%); height: 18px; width: 20px; }
 .map-marker--live-incident { background: var(--live-incident); border: 0; box-shadow: 0 0 0 5px rgba(181, 46, 76, 0.22); clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); color: #ffffff; height: 22px; width: 22px; }
 .map-marker--live-incident::after { content: "!"; font-size: 13px; }
 .map-marker--live-incident-selected { background: #ffffff; border: 4px solid var(--live-incident); box-shadow: 0 0 0 7px rgba(181, 46, 76, 0.26); clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); color: var(--live-incident); height: 28px; width: 28px; }

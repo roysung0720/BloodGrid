@@ -127,12 +127,11 @@ export function OperationsMap({
         )
       : null;
 
-    if (!showRoutePreview || !incident || !hospital || !selectedRendezvous) {
+    if (!showRoutePreview || !incident || !hospital) {
       return () => {
         cancelled = true;
       };
     }
-    const routeRendezvous: LiveRendezvousResult = selectedRendezvous;
 
     const incidentLocation = {
       latitude: incident.latitude,
@@ -144,6 +143,24 @@ export function OperationsMap({
     };
 
     async function loadRoutePreview() {
+      // Current view is intentionally an honest direct-transport display. The more
+      // elaborate meeting plan is only simulated after units are staged as recommended.
+      if (coverageView === "baseline") {
+        const directRoute = await getRoute(incidentLocation, hospitalLocation);
+        if (!cancelled) {
+          setRoutePreview({
+            ambulanceToRendezvous: null,
+            ambulanceToHospital: directRoute,
+            resourceToRendezvous: null,
+          });
+        }
+        return;
+      }
+
+      if (!selectedRendezvous) {
+        return;
+      }
+      const routeRendezvous: LiveRendezvousResult = selectedRendezvous;
       if (
         routeRendezvous.recommendation !== "RENDEZVOUS" ||
         !routeRendezvous.recommended_rendezvous_id
@@ -168,6 +185,14 @@ export function OperationsMap({
             (unit) => unit.unit_id === recommendedCandidate.resource_id,
           )
         : null;
+      const assignedStationId = recommendedCandidate?.resource_id
+        ? deployment?.assignments.find(
+            (assignment) => assignment.unit_id === recommendedCandidate.resource_id,
+          )?.station_id
+        : null;
+      const assignedStation = assignedStationId
+        ? scenario.stations.find((station) => station.station_id === assignedStationId)
+        : null;
 
       if (!recommendedCandidate) {
         return;
@@ -184,8 +209,8 @@ export function OperationsMap({
           resource
             ? getRoute(
                 {
-                  latitude: resource.current_latitude,
-                  longitude: resource.current_longitude,
+                  latitude: assignedStation?.latitude ?? resource.current_latitude,
+                  longitude: assignedStation?.longitude ?? resource.current_longitude,
                 },
                 rendezvousLocation,
               )
@@ -210,7 +235,7 @@ export function OperationsMap({
     return () => {
       cancelled = true;
     };
-  }, [rendezvous, scenario, selectedLiveIncidentId, showRoutePreview]);
+  }, [coverageView, deployment, rendezvous, scenario, selectedLiveIncidentId, showRoutePreview]);
 
   useEffect(() => {
     const mapToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
@@ -256,6 +281,12 @@ export function OperationsMap({
         return assignments;
       }, new Map<string, string[]>()) ?? new Map<string, string[]>(),
     );
+    const assignmentByUnit = new Map(
+      deployment?.assignments.map((assignment) => [assignment.unit_id, assignment.station_id]) ?? [],
+    );
+    const stationById = new Map(
+      scenario.stations.map((station) => [station.station_id, station]),
+    );
     const recommendedRendezvousId = rendezvous?.recommended_rendezvous_id;
     const recommendedSpot = rendezvous?.candidates.find(
       (candidate) => candidate.status === "RECOMMENDED",
@@ -287,14 +318,20 @@ export function OperationsMap({
       ...scenario.response_units.map((unit) => {
         const eligibility = eligibilityByUnit.get(unit.unit_id);
         const unavailable = eligibility ? !eligibility.eligible : false;
+        const stagedStation =
+          coverageView === "strategic"
+            ? stationById.get(assignmentByUnit.get(unit.unit_id) ?? "")
+            : null;
         return {
           id: unit.unit_id,
           layer: "units" as const,
-          longitude: unit.current_longitude,
-          latitude: unit.current_latitude,
+          longitude: stagedStation?.longitude ?? unit.current_longitude,
+          latitude: stagedStation?.latitude ?? unit.current_latitude,
           title: unavailable
             ? `${unit.unit_id} not eligible: ${eligibility?.reasons[0]}`
-            : `${unit.unit_id} Blood Response Unit`,
+            : stagedStation
+              ? `${unit.unit_id} simulated at ${stagedStation.name} recommended staging`
+              : `${unit.unit_id} Blood Response Unit`,
           type: "unit" as const,
           variant: unavailable
             ? "unit-unavailable"
@@ -340,8 +377,12 @@ export function OperationsMap({
             : `${point.name} known meeting site`,
         type: "rendezvous" as const,
         variant:
-          point.rendezvous_id === recommendedRendezvousId
-            ? "rendezvous-recommended"
+          point.rendezvous_id === recommendedRendezvousId &&
+              coverageView === "strategic" &&
+              showRoutePreview
+            ? "rendezvous-active"
+            : point.rendezvous_id === recommendedRendezvousId
+              ? "rendezvous-recommended"
             : "rendezvous",
       })),
       // The rule may pick any public place (e.g. a parking lot), not only a known site.
@@ -355,7 +396,10 @@ export function OperationsMap({
               latitude: recommendedSpot.latitude,
               title: `${recommendedSpot.rendezvous_name} recommended meeting spot`,
               type: "rendezvous" as const,
-              variant: "rendezvous-recommended",
+              variant:
+                coverageView === "strategic" && showRoutePreview
+                  ? "rendezvous-active"
+                  : "rendezvous-recommended",
             },
           ]
         : []),
@@ -415,6 +459,7 @@ export function OperationsMap({
     rendezvous,
     scenario,
     selectedLiveIncidentId,
+    showRoutePreview,
     visibleLayers,
   ]);
 
@@ -434,9 +479,9 @@ export function OperationsMap({
       {
         sourceId: ROUTE_SOURCE_IDS.ambulanceToHospital,
         route: routePreview?.ambulanceToHospital ?? null,
-        color: "#2f86eb",
+        color: routePreview?.ambulanceToRendezvous ? "#8b5cf6" : "#2f86eb",
         width: 5,
-        dasharray: [1.2, 1.2],
+        dasharray: routePreview?.ambulanceToRendezvous ? [1.2, 1.2] : undefined,
       },
       {
         sourceId: ROUTE_SOURCE_IDS.resourceToRendezvous,
@@ -492,5 +537,42 @@ export function OperationsMap({
     );
   }
 
-  return <div className="map-canvas" ref={containerRef} />;
+  const directRoute = routePreview?.ambulanceToHospital;
+  const hasRendezvousRoute = Boolean(routePreview?.ambulanceToRendezvous);
+  const recommendedCandidate = rendezvous?.candidates.find(
+    (candidate) => candidate.status === "RECOMMENDED",
+  );
+  const ambulanceToMeetingMinutes =
+    recommendedCandidate?.patient_to_rendezvous_minutes ??
+    routePreview?.ambulanceToRendezvous?.duration_minutes;
+  const meetingToHospitalMinutes =
+    recommendedCandidate?.rendezvous_to_hospital_minutes ?? directRoute?.duration_minutes;
+
+  return (
+    <>
+      <div className="map-canvas" ref={containerRef} />
+      {showRoutePreview && routePreview ? (
+        <div className="map-route-key" aria-label="Selected incident route preview">
+          {hasRendezvousRoute ? (
+            <>
+              <strong className="map-route-key__mode">Recommended staging simulation</strong>
+              <span>
+                <i className="map-route-key__line map-route-key__line--ambulance" />
+                Ambulance to meeting spot: {ambulanceToMeetingMinutes} min
+              </span>
+              <span>
+                <i className="map-route-key__line map-route-key__line--hospital" />
+                Meeting spot to hospital: {meetingToHospitalMinutes} min
+              </span>
+            </>
+          ) : (
+            <span>
+              <i className="map-route-key__line map-route-key__line--ambulance" />
+              Ambulance to hospital: {directRoute?.duration_minutes} min
+            </span>
+          )}
+        </div>
+      ) : null}
+    </>
+  );
 }

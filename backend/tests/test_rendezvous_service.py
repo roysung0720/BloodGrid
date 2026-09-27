@@ -100,6 +100,17 @@ class MeetingRuleTests(unittest.TestCase):
         self.assertEqual(best.added_hospital_delay_minutes, 0)
         self.assertEqual(result.destination_hospital_id, "H-01")
 
+    def test_result_labels_a_recommended_staging_simulation(self) -> None:
+        result = calculate_live_rendezvous(
+            self.source,
+            self.incident.incident_id,
+            FakeRoutingProvider({("LIVE-001", "H-01"): 30}, default=6),
+            [],
+            resource_positioning="RECOMMENDED_STAGING",
+        )
+
+        self.assertEqual(result.resource_positioning, "RECOMMENDED_STAGING")
+
     def test_the_ambulance_may_swing_toward_a_unit_on_the_units_road(self) -> None:
         br01 = self.units["BR-01"]
         on_unit_road = self.spot("UNIT-ROAD", 0.3, toward=(br01.current_latitude, br01.current_longitude))

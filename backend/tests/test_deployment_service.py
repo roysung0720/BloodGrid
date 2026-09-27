@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import unittest
 
-from app.deployment.service import calculate_strategic_deployment
+from app.deployment.models import StrategicAssignment, StrategicDeploymentResult
+from app.deployment.service import apply_strategic_staging, calculate_strategic_deployment
 from app.models import ResponseUnit, ScenarioData, Station
 from app.routing.models import RouteEstimate, RoutingLocation
 from app.scenario_loader import load_scenario
@@ -109,6 +110,43 @@ class StrategicDeploymentTests(unittest.TestCase):
 
         self.assertEqual(result.eligible_resource_count, 1)
         self.assertEqual([assignment.unit_id for assignment in result.assignments], ["BR-01"])
+
+    def test_staging_simulation_moves_only_assigned_units_to_their_station(self) -> None:
+        br01, br02 = self.source.response_units[:2]
+        staged_station = self.source.stations[3]
+        deployment = StrategicDeploymentResult(
+            scenario_id=self.source.metadata.scenario_id,
+            target_coverage_minutes=20,
+            routing_provider="test-routing",
+            routing_profile="test-driving",
+            solver_status="OPTIMAL",
+            eligible_resource_count=1,
+            optimized_covered_demand_count=0,
+            optimized_uncovered_demand_count=0,
+            assignments=[
+                StrategicAssignment(
+                    unit_id=br01.unit_id,
+                    station_id=staged_station.station_id,
+                    station_name=staged_station.name,
+                    mobilization_minutes=br01.mobilization_minutes,
+                )
+            ],
+            demand_points=[],
+        )
+
+        staged = apply_strategic_staging(
+            self.source.model_copy(update={"response_units": [br01, br02]}), deployment
+        )
+        staged_br01, staged_br02 = staged.response_units
+
+        self.assertEqual(
+            (staged_br01.current_latitude, staged_br01.current_longitude),
+            (staged_station.latitude, staged_station.longitude),
+        )
+        self.assertEqual(
+            (staged_br02.current_latitude, staged_br02.current_longitude),
+            (br02.current_latitude, br02.current_longitude),
+        )
 
     def _scenario(
         self,

@@ -268,6 +268,7 @@ export type LiveRendezvousResult = {
   destination_valid: boolean;
   routing_provider: string;
   routing_profile: string;
+  resource_positioning: "CURRENT" | "RECOMMENDED_STAGING";
   eligible_resource_count: number;
   direct_transport_minutes: number;
   direct_route_distance_miles: number;

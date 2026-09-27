@@ -166,10 +166,17 @@ export default function HomePage() {
     setRendezvous(null);
     setRendezvousError(null);
 
+    if (coverageView !== "strategic") {
+      return () => {
+        cancelled = true;
+      };
+    }
+
     getLiveRendezvous(
       selectedIncident.incident_id,
       selectedScenarioId,
       availabilityProfileId,
+      true,
     )
       .then((result) => {
         if (!cancelled) {
@@ -185,7 +192,7 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [availabilityProfileId, selectedIncident, selectedScenarioId]);
+  }, [availabilityProfileId, coverageView, selectedIncident, selectedScenarioId]);
 
   function selectScenario(scenarioId: string) {
     setSelectedScenarioId(scenarioId);
@@ -290,13 +297,6 @@ export default function HomePage() {
             visibleLayers={visibleLayers}
             onChange={setVisibleLayers}
           />
-          {selectedFeature?.type === "liveIncident" &&
-          selectedFeature.id === selectedIncident?.incident_id ? (
-            <div className="map-route-key" aria-label="Selected incident route preview">
-              <span><i className="map-route-key__line map-route-key__line--ambulance" />Ambulance route</span>
-              <span><i className="map-route-key__line map-route-key__line--resource" />Blood Response Unit route</span>
-            </div>
-          ) : null}
         </section>
 
         <aside className="operations-rail" aria-label="Current scenario details">
@@ -348,6 +348,7 @@ export default function HomePage() {
           <RendezvousPanel
             result={rendezvous}
             error={rendezvousError}
+            coverageView={coverageView}
             onSelect={setSelectedFeature}
           />
           <AmbulanceRequestsPanel scenarioId={selectedScenarioId} />

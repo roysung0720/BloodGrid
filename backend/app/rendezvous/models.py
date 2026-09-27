@@ -21,6 +21,7 @@ RendezvousCandidateStatus = Literal[
     "NO_ELIGIBLE_RESOURCE",
 ]
 RendezvousRecommendation = Literal["RENDEZVOUS", "DIRECT_TRANSPORT"]
+ResourcePositioning = Literal["CURRENT", "RECOMMENDED_STAGING"]
 
 
 class RendezvousCandidate(BaseModel):
@@ -60,6 +61,9 @@ class LiveRendezvousResult(BaseModel):
     destination_valid: bool
     routing_provider: str
     routing_profile: str
+    # Indicates whether units were evaluated at their current scenario locations or
+    # at the strategic plan's assigned stations. This is logistics simulation only.
+    resource_positioning: ResourcePositioning = "CURRENT"
     eligible_resource_count: int = Field(ge=0)
     direct_transport_minutes: float = Field(ge=0)
     direct_route_distance_miles: float = Field(ge=0)
