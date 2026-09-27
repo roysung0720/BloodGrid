@@ -1,8 +1,11 @@
 # BloodGrid Handoff
 
-**Last updated:** 2026-09-26
+**Last updated:** 2026-09-27
 
 **Current phase:** In-app scenario selection and public-geography hybrid scenario complete; demo polish remains. A working crew-facing Ambulance UI has been added (see **Ambulance UI** below).
+
+**Deployment readiness:** Public deployment configuration is prepared but no cloud
+service has been connected or deployed yet. See `docs/DEPLOYMENT.md`.
 
 **Audience:** Alex, project teammates, and coding agents joining the work.
 
@@ -394,6 +397,20 @@ Marker identity must use static CSS such as color, `clip-path`, borders, and tex
 - Whether to add a scenario selector in the dashboard or keep scenario switching as a presenter-only local configuration step.
 - Whether the final demo includes optional OpenAI-generated wording.
 - Whether the Ambulance UI is recorded as part of milestone 8 or as a new milestone 9 (`AMBULANCE_UI_SPEC.md` decision D6).
+
+## Public Deployment Setup
+
+- `render.yaml` creates a Render FastAPI service rooted at `backend/`, with
+  `/health` as its health check.
+- The Next.js frontend already reads `NEXT_PUBLIC_BACKEND_BASE_URL`; set it to
+  the public Render API URL in Vercel before a production build.
+- Set `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` in Vercel and a separate private
+  `MAPBOX_ACCESS_TOKEN` in Render. Neither belongs in Git.
+- `BLOODGRID_FRONTEND_ORIGINS` is a comma-separated CORS allowlist. Set it in
+  Render to the exact production Vercel URL after Vercel provides that URL.
+- The expected hackathon hosting path is Vercel (frontend) + Render (backend)
+  on their free tiers. Render can sleep after inactivity; warm the link before
+  presenting.
 
 These values should be centralized as configuration rather than hard-coded.
 

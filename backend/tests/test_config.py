@@ -4,7 +4,7 @@ import os
 import unittest
 from unittest import mock
 
-from app.config import coverage_target_minutes
+from app.config import coverage_target_minutes, frontend_origins
 
 
 ENV_KEY = "BLOODGRID_COVERAGE_TARGET_MINUTES"
@@ -30,6 +30,29 @@ class CoverageTargetConfigTests(unittest.TestCase):
         with mock.patch.dict(os.environ, {ENV_KEY: "0"}):
             with self.assertRaises(ValueError):
                 coverage_target_minutes(20)
+
+
+class FrontendOriginsConfigTests(unittest.TestCase):
+    def test_unset_origins_use_local_development_defaults(self) -> None:
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("BLOODGRID_FRONTEND_ORIGINS", None)
+            self.assertEqual(
+                frontend_origins(), ["http://localhost:3000", "http://localhost:3001"]
+            )
+
+    def test_configured_origins_are_trimmed_and_normalized(self) -> None:
+        with mock.patch.dict(
+            os.environ,
+            {
+                "BLOODGRID_FRONTEND_ORIGINS": (
+                    " https://bloodgrid.example/ , https://preview.example "
+                )
+            },
+        ):
+            self.assertEqual(
+                frontend_origins(),
+                ["https://bloodgrid.example", "https://preview.example"],
+            )
 
 
 if __name__ == "__main__":

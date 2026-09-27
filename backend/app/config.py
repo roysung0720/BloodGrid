@@ -11,7 +11,18 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 DATA_SCENARIOS_DIR = PROJECT_ROOT / "data" / "scenarios"
 SCENARIO_ID = os.getenv("BLOODGRID_SCENARIO", "rural_ga_initial_v1")
-FRONTEND_ORIGINS = ["http://localhost:3000", "http://localhost:3001"]
+
+
+def frontend_origins() -> list[str]:
+    """Return the explicit browser origins allowed to call the public API."""
+
+    configured = os.getenv("BLOODGRID_FRONTEND_ORIGINS", "").strip()
+    if configured:
+        return [origin.strip().rstrip("/") for origin in configured.split(",") if origin.strip()]
+    return ["http://localhost:3000", "http://localhost:3001"]
+
+
+FRONTEND_ORIGINS = frontend_origins()
 MAPBOX_ACCESS_TOKEN = os.getenv("MAPBOX_ACCESS_TOKEN") or os.getenv(
     "NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN"
 )

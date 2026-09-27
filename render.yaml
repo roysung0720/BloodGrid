@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: bloodgrid-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: MAPBOX_ACCESS_TOKEN
+        sync: false
+      - key: BLOODGRID_FRONTEND_ORIGINS
+        sync: false
+      - key: BLOODGRID_SCENARIO
+        value: rural_ga_initial_v1
+      - key: MAPBOX_ROUTING_PROFILE
+        value: mapbox/driving
+      - key: ROUTING_TIMEOUT_SECONDS
+        value: "12"
