@@ -4,6 +4,8 @@ import mapboxgl from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 
 import type { LngLat, Position } from "../../lib/navigation";
+import { applyBrandMap, BRAND_MAP_STYLE } from "../../lib/brandMap";
+import { Glide, lerpAngle } from "../../lib/glide";
 import { formatMinutes } from "../../lib/navigation";
 import type { HospitalOption, ResourceOption } from "../../lib/types";
 
@@ -67,12 +69,7 @@ function markerElement(className: string, label?: string) {
 }
 
 function mapStyle() {
-  const dark =
-    typeof window !== "undefined" &&
-    window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-  return dark
-    ? "mapbox://styles/mapbox/navigation-night-v1"
-    : "mapbox://styles/mapbox/navigation-day-v1";
+  return BRAND_MAP_STYLE;
 }
 
 export function AmbulanceMap({
@@ -121,6 +118,7 @@ export function AmbulanceMap({
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-left");
     map.on("dragstart", () => onUserPanRef.current());
     map.on("style.load", () => {
+      applyBrandMap(map, "subtle");
       for (const sourceId of ROUTE_SOURCES) {
         map.addSource(sourceId, { type: "geojson", data: lineFeature(null) });
       }
@@ -129,28 +127,28 @@ export function AmbulanceMap({
         type: "line",
         source: "resource-route",
         layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": "#775da8", "line-width": 5, "line-opacity": 0.85, "line-dasharray": [0.8, 1.6] },
+        paint: { "line-color": "#b39ce6", "line-width": 5, "line-opacity": 0.9, "line-dasharray": [0.8, 1.6] },
       });
       map.addLayer({
         id: "upcoming-route",
         type: "line",
         source: "upcoming-route",
         layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": "#6f8fb3", "line-width": 6, "line-opacity": 0.75, "line-dasharray": [1, 1.4] },
+        paint: { "line-color": "#d8d8e0", "line-width": 5, "line-opacity": 0.55, "line-dasharray": [1, 1.4] },
       });
       map.addLayer({
         id: "active-route-casing",
         type: "line",
         source: "active-route",
         layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": "#0b3a66", "line-width": 11 },
+        paint: { "line-color": "#3d0509", "line-width": 12 },
       });
       map.addLayer({
         id: "active-route",
         type: "line",
         source: "active-route",
         layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": "#2f86eb", "line-width": 7 },
+        paint: { "line-color": "#ff4d57", "line-width": 7 },
       });
       setStyleReady(true);
     });
@@ -168,56 +166,106 @@ export function AmbulanceMap({
     };
   }, [token]);
 
-  // The ambulance itself. Rotation is relative to the map, so it points along the road.
+  // ----- Smooth motion ----------------------------------------------------------
+  // Positions arrive a few times a second. Each vehicle glides toward its newest
+  // position on every animation frame, so it moves continuously instead of jumping.
+  const selfGlide = useRef(new Glide());
+  const resourceGlide = useRef(new Glide());
+  const movingIdRef = useRef<string | null>(null);
+  const viewRef = useRef({ camera, follow, insets });
+  useEffect(() => {
+    viewRef.current = { camera, follow, insets };
+  }, [camera, follow, insets]);
+
+  useEffect(() => {
+    if (position) {
+      selfGlide.current.setTarget(position);
+    }
+  }, [position]);
+
+  useEffect(() => {
+    movingIdRef.current = movingResource?.unitId ?? null;
+    if (movingResource) {
+      resourceGlide.current.setTarget(movingResource);
+    }
+  }, [movingResource]);
+
+  // One frame loop draws the ambulance, the moving blood unit, and the navigate camera.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !position) {
+    if (!map) {
       return;
     }
-    if (!selfMarkerRef.current) {
-      const element = markerElement("amb-self");
-      element.innerHTML = ARROW_SVG;
-      selfMarkerRef.current = new mapboxgl.Marker({
-        element,
-        rotationAlignment: "map",
-        pitchAlignment: "map",
-      })
-        .setLngLat([position.longitude, position.latitude])
-        .addTo(map);
-    }
-    selfMarkerRef.current
-      .setLngLat([position.longitude, position.latitude])
-      .setRotation(position.heading ?? 0);
-  }, [position]);
+    let frame = 0;
+    let navigating = false;
+    const smoothed = { bearing: 0, zoom: 0, pitch: 0 };
+
+    const step = (now: number) => {
+      const self = selfGlide.current.sample(now);
+      if (self) {
+        if (!selfMarkerRef.current) {
+          const element = markerElement("amb-self");
+          element.innerHTML = ARROW_SVG;
+          // Rotation is relative to the map, so the arrow points along the road.
+          selfMarkerRef.current = new mapboxgl.Marker({
+            element,
+            rotationAlignment: "map",
+            pitchAlignment: "map",
+          })
+            .setLngLat([self.longitude, self.latitude])
+            .addTo(map);
+        }
+        selfMarkerRef.current
+          .setLngLat([self.longitude, self.latitude])
+          .setRotation(self.heading ?? 0);
+
+        // Navigate camera: heading-up, tilted, vehicle low on screen so the road ahead shows.
+        const view = viewRef.current;
+        if (view.camera === "navigate" && view.follow) {
+          if (!navigating) {
+            smoothed.bearing = map.getBearing();
+            smoothed.zoom = map.getZoom();
+            smoothed.pitch = map.getPitch();
+            navigating = true;
+          }
+          // Ease bearing, zoom, and tilt toward their targets so turns feel gradual.
+          smoothed.bearing = lerpAngle(smoothed.bearing, self.heading ?? smoothed.bearing, 0.12);
+          smoothed.zoom += (NAVIGATION_ZOOM - smoothed.zoom) * 0.08;
+          smoothed.pitch += (NAVIGATION_PITCH - smoothed.pitch) * 0.08;
+          const height = map.getContainer().clientHeight;
+          const visible = Math.max(0, height - view.insets.top - view.insets.bottom);
+          map.jumpTo({
+            center: [self.longitude, self.latitude],
+            bearing: smoothed.bearing,
+            zoom: smoothed.zoom,
+            pitch: smoothed.pitch,
+            padding: {
+              top: view.insets.top + visible * 0.45,
+              bottom: view.insets.bottom,
+              left: SIDE_PADDING,
+              right: SIDE_PADDING,
+            },
+          });
+        } else {
+          navigating = false;
+        }
+      }
+
+      const movingId = movingIdRef.current;
+      const resource = movingId ? resourceGlide.current.sample(now) : null;
+      if (movingId && resource) {
+        resourceMarkersRef.current.get(movingId)?.setLngLat([resource.longitude, resource.latitude]);
+      }
+      frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [token]);
 
   // Keep the Mapbox logo and attribution visible above the bottom panel.
   useEffect(() => {
     containerRef.current?.style.setProperty("--amb-bottom-inset", `${insets.bottom}px`);
   }, [insets.bottom]);
-
-  // Navigate camera: heading-up, tilted, vehicle placed low so the road ahead is visible.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !position || !follow || camera !== "navigate") {
-      return;
-    }
-    const height = map.getContainer().clientHeight;
-    const visible = Math.max(0, height - insets.top - insets.bottom);
-    map.easeTo({
-      center: [position.longitude, position.latitude],
-      bearing: position.heading ?? map.getBearing(),
-      pitch: NAVIGATION_PITCH,
-      zoom: NAVIGATION_ZOOM,
-      padding: {
-        top: insets.top + visible * 0.45,
-        bottom: insets.bottom,
-        left: SIDE_PADDING,
-        right: SIDE_PADDING,
-      },
-      duration: 300,
-      easing: (t) => t,
-    });
-  }, [position, follow, camera, insets.top, insets.bottom]);
 
   // Watch camera: re-frame both moving vehicles and the meeting point every tick.
   const watchKey = watchPoints.map((point) => point.map((value) => value.toFixed(5)).join(",")).join(";");
@@ -339,7 +387,10 @@ export function AmbulanceMap({
       if (marker.getElement().textContent !== text) {
         marker.getElement().textContent = text;
       }
-      marker.setLngLat(lngLat);
+      // The moving unit is positioned by the frame loop (smooth glide); the rest sit still.
+      if (!moving) {
+        marker.setLngLat(lngLat);
+      }
       marker.getPopup()?.setText(popupText);
     }
     for (const [unitId, marker] of markers) {

@@ -49,6 +49,7 @@ import type {
   RouteResult,
 } from "../../lib/types";
 import type { CameraMode, MovingResource } from "./AmbulanceMap";
+import { BrandLogo } from "../BrandLogo";
 import { AmbulanceMap } from "./AmbulanceMap";
 import type { RouteChoice } from "./NavigationPanels";
 import { ArrivedBar, ManeuverBanner, NavBar, RouteOverviewCard } from "./NavigationPanels";
@@ -712,8 +713,11 @@ export function AmbulanceApp({
   const topbar = (
     <header className="amb-topbar">
       <div className="amb-topbar__unit">
-        <Ambulance size={22} aria-hidden="true" />
-        <strong>{unitId ?? "Ambulance"}</strong>
+        <BrandLogo size={34} />
+        <div>
+          <span className="amb-topbar__brand">BloodGrid</span>
+          <strong>{unitId ?? "Ambulance"}</strong>
+        </div>
       </div>
       <div className="amb-topbar__meta">
         <span className="scenario-pill">

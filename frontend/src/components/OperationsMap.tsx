@@ -3,6 +3,8 @@
 import mapboxgl from "mapbox-gl";
 import { useEffect, useRef } from "react";
 
+import { applyBrandMap, BRAND_MAP_STYLE } from "../lib/brandMap";
+
 import type {
   BaselineCoverageResult,
   CoverageView,
@@ -77,15 +79,17 @@ export function OperationsMap({
     const map = new mapboxgl.Map({
       accessToken: mapToken,
       container: containerRef.current,
-      style: "mapbox://styles/mapbox/standard",
-      center: [
-        (bounds.min_longitude + bounds.max_longitude) / 2,
-        (bounds.min_latitude + bounds.max_latitude) / 2,
+      style: BRAND_MAP_STYLE,
+      // Open framed on the scenario's own area, so every data set fills the map.
+      bounds: [
+        [bounds.min_longitude, bounds.min_latitude],
+        [bounds.max_longitude, bounds.max_latitude],
       ],
-      zoom: 8.15,
+      fitBoundsOptions: { padding: { top: 90, bottom: 60, left: 240, right: 60 } },
       attributionControl: false,
     });
 
+    map.on("style.load", () => applyBrandMap(map, "full"));
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-left");
 
